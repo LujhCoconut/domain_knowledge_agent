@@ -11,6 +11,7 @@
 | `container-k8s/` | 容器与 Kubernetes | Docker、K8s 资源对象、调度、网络、存储、排错 |
 | `ci-cd-devops/` | CI/CD 与 DevOps | GitHub Actions、GitLab CI、制品管理、发布策略、IaC |
 | `incident-response/` | 故障响应 | On-call、故障定位流程、复盘模板、应急止血 |
+| `os-security/` | OS 安全与程序分析 | MAC 强制执行、内存沙箱(SFI)、动态追踪(MPK/DBI)、策略提取、移动端分析 |
 | `sre-practices/` | SRE 实践 | SLI/SLO/SLA、容量规划、混沌工程、变更管理 |
 
 ## 新增 skill 建议
