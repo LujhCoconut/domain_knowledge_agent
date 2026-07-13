@@ -256,3 +256,49 @@ CXL tiered memory (PACT/TMO/CAMP/M5) 和 LLM KV cache 层次化管理 (Strata(OS
 | 调度策略 | adaptive promotion binning | balanced batch + delay hit deferral |
 
 **核心教训**: 无论是 CPU 内存层级还是 GPU 内存层级，"冷热数据在不同 tier 之间搬运"这一问题是共通的——关键在于解决碎片化、平衡 I/O 与计算、并选择正确的反馈信号。
+
+---
+
+## 内存带宽隔离与弹性分配
+
+### 核心问题
+云计算中 CPU、存储、网络均可弹性分配，但内存带宽仍与容量绑定——云厂商按固定比率（GB/vCPU）提供 VM，缺乏带宽独立分配机制。90% 服务器平均带宽利用率 <44.5%，根源在于 spatial over-provisioning（独占硬件避免干扰）和 temporal over-provisioning（按峰值配置）。
+
+### 关键洞察
+
+1. **用通道替代采样/建模作为带宽控制基元**：
+   - 带宽与可用通道数线性相关（DIMM 和 CXL 皆如此）
+   - 硬件 all-ways interleaving 最大化单应用带宽但消除隔离可能
+   - 通过 BIOS 禁用通道交错 → 每通道独立地址空间 → 软件控制 page-to-channel 映射
+   - 来源：RamRyder(OSDI'26) §4.1
+
+2. **容量和带宽可（近似）独立分配**：
+   - DIMM 通道提供保证带宽，CXL 提供弹性容量和/或额外带宽
+   - Channel-weighted interleaving：按 DIMM/CXL 通道的带宽加权比例跨 tier 分配页面
+   - 来源：RamRyder(OSDI'26) §4.2
+
+3. **硬件节流（Intel MBA/AMD QoS）的不可靠性**：
+   - L2-LLC 间插延迟 → 不精确、非线性且浪费 CPU cycle
+   - 小 VM 的延迟反而因节流增加（"惩罚所有人"而非隔离少数）
+   - 来源：RamRyder(OSDI'26) §3.3, §6.1
+
+4. **CXL 作为弹性带宽资源**：
+   - CXL 通道也遵循带宽线性 scaling（~27 GB/s per channel）
+   - Channel hot-plug + lazy migration → 动态调整带宽而不改变容量
+   - 来源：RamRyder(OSDI'26) §4.3
+
+### 实践启发
+
+- **通道是带宽的最自然分配单位**：类似 PCIe lanes、NVLink lanes、network queues → partitionable resource
+- **硬件 interleaving 是双刃剑**：峰值性能 vs 隔离/弹性 → 软件定义交错（3.6% overhead）是更好的 tradeoff
+- **"通道"值得成为 OS 的一等抽象**：类似 NUMA node，channel 暴露给 guest OS 后可利用现有 NUMA 原语
+
+### CXL 全视角（5 篇 + RamRyder）
+
+| 论文 | CXL 用途 | 粒度 | 维度 |
+|------|---------|------|------|
+| TMO(ASPLOS'22) | Offloading 目标（swap 后端） | cgroup | 容量 |
+| PACT(ASPLOS'26) | Slow memory tier（page migration） | Page | 延迟归因 |
+| CAMP(ASPLOS'26) | Slowdown 预测目标 | Workload | 建模 |
+| M5(ASPLOS'25) | CXL controller 硬件追踪 | Page+Word | 观测 |
+| **RamRyder(OSDI'26)** | **弹性带宽 + 容量资源池** | **Channel** | **带宽+容量独立** |
