@@ -351,3 +351,4 @@ CXL tiered memory (PACT/TMO/CAMP/M5) 和 LLM KV cache 层次化管理 (Strata(OS
 | M5(ASPLOS'25) | CXL controller 硬件追踪 | Page+Word | 观测 |
 | RamRyder(OSDI'26) | 弹性带宽 + 容量资源池 | Channel | 带宽+容量独立 |
 | **MAC(OSDI'26)** | **NMP 加速内核元数据** | **Metadata node** | **Metadata latency** |
+| **NEMO(OSDI'26)** | **可编程 MC telemetry engine** | **任意 (mask-shift-add 可编程)** | **Observability** |
