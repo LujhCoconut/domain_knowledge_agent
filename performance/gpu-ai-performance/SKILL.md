@@ -9,6 +9,7 @@ GPU 与 AI/ML 推理和训练的性能优化知识。
 | LLM 层次化 KV Cache 管理 | GPU-assisted I/O, PagedAttention, layout decoupling, delay hit, TTFT | Strata(OSDI'26) |
 | LLM Serving 调度 | balanced batch, bubble filling, bundle hit, cache-aware scheduling | Strata(OSDI'26) |
 | GPU-CPU 数据传输 | PCIe bandwidth utilization, Little's Law, DMA vs kernel I/O | Strata(OSDI'26) |
+| 稀疏注意力 KV Cache 动态 Offloading | graph-friendly cache manager, EMA top-k prediction, lossless prefetching, warp specialization, DeepSeek DSA | ECHO(OSDI'26) |
 
 ---
 
@@ -108,10 +109,54 @@ GPU 与 AI/ML 推理和训练的性能优化知识。
 
 ---
 
-## 待补充
+## 稀疏注意力 KV Cache 动态 Offloading
 
-- GPU 训练性能优化（分布式训练、FSDP、TP/PP/EP 并行策略）
-- CUDA kernel 性能调优
-- GPU 显存管理
-- AI 编译器优化
-- MoE 推理优化
+### 核心问题
+Native sparse attention (DeepSeek DSA) 减少了注意力计算，但 KV cache 线性增长更陡峭（indexer 额外 K cache），GPU HBM 容量成为主要瓶颈。动态 token-level offloading 可以在同样 HBM 下支持更大 batch size，但面临两大挑战：管理开销破坏 CUDA Graph、top-k 语义阻碍 prefetching。
+
+### 关键洞察
+
+1. **Graph-Friendly Cache Manager**：
+   - 所有元数据用固定长度整数 tensor 存储于 GPU（非 CPU）
+   - Allocate: 并行 `atomicAdd`；Free: 并行 `argtopk + scatter`；Recall: scatter + UVM kernel 读取
+   - 完全兼容 CUDA Graph → 解码路径保持单图执行
+   - Per-layer metadata 管理（稀疏注意力每层选择不同 token）
+   - 来源：ECHO(OSDI'26) §4
+
+2. **EMA 预测 top-k 阈值实现无损 Intra-query Prefetch**：
+   - 核心洞察：k-th highest score 跨解码步高度可预测（EMA α=0.5）
+   - 将 top-k selection 近似为 top-p → 移除串行依赖
+   - 在 indexer 计算期间 start prefetch（indexer 用 GPU compute，recall 用 PCIe BW → 可重叠）
+   - 完全无损（不降低模型准确率，区别于 InfiniGen/FreeKV）
+   - 来源：ECHO(OSDI'26) §5.1
+
+3. **Inter-query Prefetch for Prefill**：
+   - Q blocks 顺序处理 → Q block i 的选中 token 在 Q block i+1 计算时并发预取
+   - 用 radix select 单轮粗粒度过滤（非精确 top-k）+ EMA score shift
+   - 来源：ECHO(OSDI'26) §5.2
+
+4. **Fused Kernels with Warp Specialization**：
+   - 3-stage software pipeline: TMA (load) → GEMM (compute scores) → Prefetch (compare + UVM load)
+   - 基于 DeepGEMM 改造
+   - 预取 warp 组额外 pipeline stage + 全局计数器防止过度预取
+   - 来源：ECHO(OSDI'26) §5.3
+
+### 实践启发
+
+- **"Graph-Friendly" 作为 GPU 系统设计约束**: 固定长度 tensor + 并行 GPU ops 替代动态 CPU 控制
+- **数值可预测性打破串行依赖**: EMA 预测 top-k 阈值可推广到任何 "先排序再选择" pipeline
+- **Per-layer 管理比 per-model 更精确**: 稀疏 attention 每层选择不同 token → 需要 per-layer state
+- **UVM kernel direct access**: 避免 host CPU 参与，保持 graph-compatible
+- **PD disaggregation 下的混合策略**: prefill 不开 offloading（低并发），decode 开 offloading（高并发）
+
+### Strata vs ECHO 对比
+
+| 维度 | Strata(OSDI'26) | ECHO(OSDI'26) |
+|------|----------------|---------------|
+| 目标模型 | Dense attention | Native sparse attention (DSA) |
+| Offloading 模式 | Static (request-level) | Dynamic (token-level, per-layer per-step) |
+| 缓存管理 | Layout decoupling + write policy | Graph-friendly per-layer metadata |
+| Prefetch | N/A | Lossless EMA prediction + fused pipelining |
+| 核心瓶颈 | PCIe BW 利用率低（碎片化） | GPU HBM 容量不足 |
+| 吞吐提升 | 3.2-5× vs vLLM-LMCache | 2.1-4.1× vs SGLang |
+| 延迟开销 | ~0（短上下文持平） | 0.28% decode (offload) / +15-19% e2e (low load) |
