@@ -1,44 +1,81 @@
 ---
 name: domain-knowledge
-description: 个人领域知识库，涵盖运维、性能优化、架构设计、知识整合方法论与阅读记录。当用户问题涉及 Linux/Kubernetes 运维、系统/并发/并行/数据库/网络/GPU 性能优化、分布式系统/微服务/云原生架构设计、论文阅读归档或故障排查时自动加载。
+description: 个人领域知识库路由 skill。当用户请求涉及论文/资料解析、Linux/Kubernetes 运维、性能优化（串行/并行/并发/系统/数据库/网络/GPU）、分布式系统/微服务/云原生架构设计、故障排查或检查清单时，自动判断请求类型并调用对应子目录的 skill。
 ---
 
-# Agent Skill Library
+# Domain Knowledge
 
-个人技能知识库，用于归档运维、性能优化、架构设计等领域的可复用经验。
+这是个人领域知识库的入口 skill。你的任务不是直接凭记忆回答，而是先判断用户请求的类型，再到对应子目录中检索相关 `SKILL.md` 和附属文件，最后基于检索到的内容给出结构化回答。
 
-## 目录结构
+## 请求类型判断与路由规则
 
-```
-agent_skill/
-├── operations/          # 运维与 SRE
-├── performance/         # 性能优化
-├── architecture/        # 架构设计
-├── common/              # 通用工具、模板、检查清单、知识整合方法论
-├── history/             # 阅读与解析记录
-└── knowledge/           # 早期归档目录（已清空并迁移）
-```
+收到用户请求后，先按以下分类判断意图：
 
-## 归档规范
+| 请求类型 | 判断特征 | 应检索的目录 |
+|----------|----------|--------------|
+| **论文/资料解析** | 用户提供了论文链接/PDF/标题，或要求“读这篇论文”“总结这篇文章”“写阅读笔记” | `common/knowledge-synthesis/` |
+| **阅读记录查询** | 用户问“我读过什么”“这篇论文读过吗”“某篇资料归档在哪” | `history/` |
+| **故障排查 / 运维问题** | 涉及系统报错、服务异常、部署失败、监控告警、Linux/K8s 运维 | `operations/` |
+| **性能优化问题** | 涉及 latency、throughput、CPU、内存、I/O、并发、并行、数据库、网络、GPU 性能 | `performance/` |
+| **架构设计问题** | 涉及分布式系统、微服务、数据系统、可靠性、云原生、容量设计 | `architecture/` |
+| **通用工具 / 检查清单 / 诊断手册** | 涉及脚本、常用命令、上线检查、排错流程 | `common/` |
+| **知识库组织问题** | 用户问“这个应该放哪”“如何归档”“skill 目录怎么设计” | 当前文件 + 各一级 `SKILL.md` |
 
-1. **每个 skill 一个子目录**，目录内必须包含 `SKILL.md` 作为入口。
-2. `SKILL.md` 中应说明：
-   - 这个 skill 解决什么问题
-   - 适用场景
-   - 核心知识点/命令/配置
-   - 常见坑与排查思路
-3. 优先把内容归到 **operations / performance / architecture** 三大领域；`common` 放置跨领域复用的工具、模板、检查清单。
-4. 避免在目录名中使用拼写错误或不一致的缩写。
+如果请求同时涉及多个类型，按以下优先级组合检索：
+1. 先定位主要类型（论文解析 / 运维 / 性能 / 架构 / 通用）。
+2. 再检索跨领域支持文件（如 `common/checklists/`、`common/diagnosis-playbooks/`）。
 
-## 快速导航
+## 检索与回答流程
 
-- [operations/README 与目录说明](./operations/SKILL.md)
-- [performance/README 与目录说明](./performance/SKILL.md)
-- [architecture/README 与目录说明](./architecture/SKILL.md)
-- [common/README 与目录说明](./common/SKILL.md)
+1. **读取对应一级入口**
+   - 论文解析：读取 `common/knowledge-synthesis/SKILL.md`
+   - 运维：读取 `operations/SKILL.md`
+   - 性能：读取 `performance/SKILL.md`
+   - 架构：读取 `architecture/SKILL.md`
+   - 通用：读取 `common/SKILL.md`
 
-## 新增 skill 方向建议
+2. **根据具体主题，深入二级子目录**
+   - 例如用户问“Linux I/O 调度优化”，在读取 `performance/SKILL.md` 后，进一步读取 `performance/system-tuning/SKILL.md`。
+   - 例如用户问“Kubernetes Pod 调度失败”，在读取 `operations/SKILL.md` 后，进一步读取 `operations/container-k8s/SKILL.md` 或 `operations/incident-response/SKILL.md`。
 
-- `operations/incident-response/<system>-failures`：某个系统的典型故障案例库。
-- `performance/optimization-paradigms/<workload>-case-study`：具体工作负载的串/并/并发优化案例。
-- `architecture/reliability-engineering/<pattern>-trade-offs`：某个可靠性模式的取舍分析。
+3. **如果存在案例/检查清单/脚本，一并读取**
+   - 故障排查类问题优先查看 `common/diagnosis-playbooks/`。
+   - 上线/变更类问题优先查看 `common/checklists/`。
+
+4. **基于检索内容组织回答**
+   - 先说明信息来源（引用了哪些 skill 文件）。
+   - 再按“问题定义 → 相关知识 → 具体建议/命令/配置 → 验证方式”输出。
+   - 如果是论文解析，按 `common/knowledge-synthesis/SKILL.md` 的模板输出。
+
+## 论文/资料解析的特殊处理
+
+当用户要求解析论文或技术资料时：
+
+1. 先读取 `common/knowledge-synthesis/SKILL.md`，按其中的快速阅读或深度阅读模板执行。
+2. 提取可复用启发后，判断应归档到 `operations/`、`performance/`、`architecture/` 还是 `common/` 下的具体 skill。
+3. 如果用户没有明确说“不要记录”，解析完成后在 `history/reading-log.md` 中追加一条记录。
+4. 如果现有 skill 无法覆盖新知，建议用户新建 skill 子目录，并给出推荐路径。
+
+## 输出规范
+
+- **引用来源**：回答开头或每节末尾说明参考了哪些 `SKILL.md` 或子目录。
+- **中文为主**，标准术语保留英文（如 throughput、latency、scalability、ablation、baseline）。
+- **区分事实与推断**：从 skill 中读到的内容是事实；你基于事实的推理要明确标注。
+- **结构化输出**：优先用 bullet、表格、代码块，避免大段散文。
+- **不确定时说明**：如果 skill 中没有相关信息，直接说“当前知识库没有覆盖这一点”，并建议用户补充到对应 skill。
+
+## 知识库维护建议
+
+当发现以下情况时，提示用户更新知识库：
+
+- 某个问题反复被问到，但对应 skill 里还没有答案 → 补充到对应 `SKILL.md`。
+- 论文/资料的启发没有被现有 skill 覆盖 → 新建 skill 子目录。
+- 现有 skill 目录结构不清晰 → 参考当前文件和各一级 `SKILL.md` 的目录说明重新设计。
+
+## 目录索引
+
+- `operations/SKILL.md` — 运维与 SRE
+- `performance/SKILL.md` — 性能优化
+- `architecture/SKILL.md` — 架构设计
+- `common/SKILL.md` — 通用工具、检查清单、诊断手册、知识整合方法论
+- `history/SKILL.md` — 阅读与解析记录说明
