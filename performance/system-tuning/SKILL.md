@@ -8,6 +8,7 @@
 |------|--------|------|
 | Tiered Memory 管理 | CXL, NUMA, page migration, hotness vs criticality | PACT(ASPLOS'26) |
 | 透明内存 Offloading | PSI, Senpai, swap, zswap, reclaim, memory tax | TMO(ASPLOS'22) |
+| CXL 硬件辅助追踪 | Hot-Page/Word Tracker, CXL controller, near-memory, sparse hot pages | M5(ASPLOS'25) |
 | 内存延迟归因 | CHA/TOR, MLP, PMU counters, PEBS, stall attribution | PACT(ASPLOS'26) |
 | 资源压力感知 | PSI some/full, cgroup 控制, feedback loop | TMO(ASPLOS'22) |
 
@@ -123,3 +124,51 @@
 | 策略 | proportional feedback (PSI→reclaim rate) | priority-based (PAC→bin→promote top) |
 | demotion | LRU 驱动 | eager demotion |
 | 部署 | Meta 生产（数百万服务器） | 实验环境（CloudLab） |
+
+---
+
+## CXL 硬件辅助内存追踪
+
+### 核心问题
+CPU 侧的热页追踪（PEBS 采样、PTE access bit 扫描）存在三个根本局限：采样精度不足（warm 被误判为 hot）、无法观测页内访问分布（稀疏热页造成 read amplification）、profiling 本身有 CPU 开销。
+
+### 关键洞察
+
+1. **"测量点靠近数据源"**：
+   - 将 hot-page/hot-word 追踪器嵌入 **CXL 内存控制器**（非 host CPU）
+   - 零 CPU 开销、精确计数（非采样）、透明（应用和 OS 无需修改）
+   - 来源：M5(ASPLOS'25)
+
+2. **稀疏热页 (Sparse Hot Pages)**：
+   - 许多应用（尤其 DLRM 推荐模型）中，一个 4KB 页内仅少量 64B word 真正热
+   - 整页迁移导致 read amplification：热的 64B 带上 4032B 冷数据占用 fast-tier
+   - 需要 per-word 粒度追踪才能发现这个现象
+   - 来源：M5(ASPLOS'25)
+
+3. **Hot-Page Tracker (HPT) + Hot-Word Tracker (HWT)**：
+   - HPT：跟踪 top-K 最热 4KB pages
+   - HWT：跟踪 top-K 最热 64B words
+   - 均为硬件 priority structure（类似 sorted heap），在 CXL controller 内
+   - M5-Manager（用户态软件）组合 HPT/HWT 输出驱动迁移策略
+   - 来源：M5(ASPLOS'25) §Design
+
+### 实践启发
+
+- **"热"是一个相对概念，需要精确区分 warm vs hot 才能有效利用有限的 fast-tier 空间**
+- **Word 粒度追踪揭示了 page 粒度不可见的浪费**：如果应用有稀疏热页特征，应考虑 cache-line 粒度迁移或 partial page pinning
+- **硬件 profiling 消除观察者效应**：CPU 侧的 profiling 自身消耗被测量资源，near-memory 追踪无此问题
+- **M5 验证了 PACT 的动机**：CPU 方案把 warm 当 hot → 印证了 frequency-based 方法不够精确
+
+### 三篇论文对比
+
+| 维度 | TMO(ASPLOS'22) | PACT(ASPLOS'26) | M5(ASPLOS'25) |
+|------|---------------|-----------------|---------------|
+| **方法** | 纯软件 | 软件 + 标准 PMU | 硬件(CXL controller) + 软件 |
+| **反馈信号** | PSI (% stall) | PAC (cycles/page) | HPT/HWT (精确访问计数) |
+| **粒度** | cgroup | page (4KB/2MB) | page (4KB) + word (64B) |
+| **CPU 开销** | 0.05% cycles | PEBS 采样开销 | 零（全部 offload） |
+| **可部署性** | 即插即用（Linux 主线） | 需要 Intel PMU | 需要新硬件 |
+| **核心洞察** | 直接测生产力损失 | hotness ≠ criticality | CPU 侧观测有精度瓶颈 |
+| **部署规模** | Meta 数百万台 | CloudLab 实验 | 实验环境 |
+
+**演进脉络**: TMO"不要猜，直接测" → PACT"不要数频率，算代价" → M5"不要在 CPU 侧测，到内存控制器里测"
