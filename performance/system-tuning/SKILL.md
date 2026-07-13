@@ -302,3 +302,52 @@ CXL tiered memory (PACT/TMO/CAMP/M5) 和 LLM KV cache 层次化管理 (Strata(OS
 | CAMP(ASPLOS'26) | Slowdown 预测目标 | Workload | 建模 |
 | M5(ASPLOS'25) | CXL controller 硬件追踪 | Page+Word | 观测 |
 | **RamRyder(OSDI'26)** | **弹性带宽 + 容量资源池** | **Channel** | **带宽+容量独立** |
+| **MAC(OSDI'26)** | **NMP 加速内核元数据回收** | **Page descriptor / Xarray node** | **Metadata latency** |
+
+---
+
+## CXL 内核元数据管理
+
+### 核心问题
+大容量 CXL DRAM 使系统总内存膨胀，内核元数据（page descriptors 1.6% + Xarray）随容量线性增长。在 DDR:CXL = 1:4 的典型配置下，元数据可占 DDR 容量的 **24-40%**，迫使其溢出到慢速 CXL DRAM → kswapd 回收效率 -42% → 应用被迫做前台回收 → p99.99 尾延迟 +2.8×。
+
+### 关键洞察
+
+1. **元数据溢出 → kswapd→foreground 连锁反应**：
+   - 元数据放在 CXL (2.4× latency) → kswapd 访问变慢 → free pages 不足 → 应用线程做 foreground reclamation (on critical path)
+   - Foreground reclamation frequency +6.5× → p99.99 tail latency +2.8×
+   - page descriptor traversal 慢 3.6×（超过 2.4× 差异 → 更深层效率损失）
+   - 来源：MAC(OSDI'26) §3
+
+2. **内核 direct-map 消除了 NMP 的地址转换成本**：
+   - Linux 内核将所有物理内存通过 direct-map 线性映射 → `__pa(vaddr)` 只需一次减法
+   - 这意味着 CXL 侧的 NMP 无需 MMU/page table walk → 可以直接用物理地址访问 metadata
+   - 来源：MAC(OSDI'26) §3.2
+
+3. **Pin metadata in DDR 的 hidden cost**：
+   - 强制将 Xarray node 分配 pin 到 DDR → slab allocation contention → allocation latency 从 2-4µs 涨到 10-600µs
+   - 反直觉：**把 metadata 放 CXL + NMP 加速 比 强制 pin 在 DDR 更好**
+   - 来源：MAC(OSDI'26) §5.3
+
+4. **标准 CXL.mem write 作为无协议修改的 NMP 触发**：
+   - 不定义新 CXL 协议命令 → 用 packet filter 匹配写的地址范围来识别 NMP 请求
+   - 完全兼容现有硬件，仅需 CXL controller 侧小改动
+   - 来源：MAC(OSDI'26) §4.2
+
+### 实践启发
+
+- **"元数据的元数据"是 scaling 中容易被忽视的瓶颈**: 系统总内存增长 → metadata 增长 → metadata access 成为瓶颈
+- **Kernel direct-map 是 NMP-friendly 的设计**: 任何 OS 内 NMP offload 都应优先考虑利用 direct-map
+- **简单+重复的 kernel 操作是最佳 NMP target**: page descriptor flag check (bitmask) + Xarray walk (arithmetic) — 无复杂控制流
+- **Second-order effect 陷阱**: 看起来"把 metadata 放回 DDR"是 obvious fix，但实际引发了 slab contention 的新瓶颈
+
+### CXL 全视角（6 篇 CXL 论文）
+
+| 论文 | CXL 用途 | 粒度 | 维度 |
+|------|---------|------|------|
+| TMO(ASPLOS'22) | Offloading 目标（swap 后端） | cgroup | 容量 |
+| PACT(ASPLOS'26) | Slow memory tier（page migration） | Page | 延迟归因 |
+| CAMP(ASPLOS'26) | Slowdown 预测目标 | Workload | 建模 |
+| M5(ASPLOS'25) | CXL controller 硬件追踪 | Page+Word | 观测 |
+| RamRyder(OSDI'26) | 弹性带宽 + 容量资源池 | Channel | 带宽+容量独立 |
+| **MAC(OSDI'26)** | **NMP 加速内核元数据** | **Metadata node** | **Metadata latency** |
