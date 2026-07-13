@@ -33,14 +33,13 @@ domain-knowledge/
 
 <!-- 以下区域由 /domain-knowledge 后置操作自动更新，请勿手动编辑本节 -->
 
-- **总计**: 23 篇
-- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 19 篇（'26）
+- **总计**: 24 篇
+- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 20 篇（'26）
 - **领域分布**:
   - CXL/内存系统/可观测性/回收理论: 9 篇
   - LLM 推理服务: 5 篇
-  - LLM 大规模训练: 3 篇（Tessera, Hetu-v2, Syncopate）
-  - 数据管线/存储基础设施: 1 篇（ByteDance DataPipeline）
-  - OS 安全/沙箱/追踪/程序分析: 5 篇 — 见 `security/os-security/KNOWLEDGE.md`
+  - LLM 大规模训练+数据管线: 4 篇（Tessera, Hetu-v2, Syncopate, ByteDance DataPipeline）
+  - OS 安全/隐私/程序分析: 6 篇 — 见 `security/os-security/KNOWLEDGE.md`
 - **最后更新**: 2026-07-13
 
 <!-- 自动更新区域结束 -->
