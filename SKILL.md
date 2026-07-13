@@ -1,6 +1,6 @@
 ---
 name: domain-knowledge
-description: 个人领域知识库路由 skill。当用户请求涉及论文/资料解析、Linux/Kubernetes 运维、性能优化（串行/并行/并发/系统/数据库/网络/GPU）、分布式系统/微服务/云原生架构设计、算法（调度/负载均衡/共识/优化/问题求解/图算法/流式算法）、故障排查或检查清单时，自动判断请求类型并调用对应子目录的 skill。
+description: 个人领域知识库路由 skill。当用户请求涉及论文/资料解析、Linux/Kubernetes 运维、性能优化（串行/并行/并发/系统/数据库/网络/GPU）、分布式系统/微服务/云原生架构设计、算法（调度/负载均衡/共识/优化/问题求解/图算法/流式算法）、OS 安全与程序分析（MAC/SFI/动态追踪/策略提取/移动端分析）、故障排查或检查清单时，自动判断请求类型并调用对应子目录的 skill。
 ---
 
 # Domain Knowledge
@@ -32,11 +32,12 @@ cd ~/.claude/skills/domain-knowledge && git pull --rebase
 | **性能优化问题** | 涉及 latency、throughput、CPU、内存、I/O、并发、并行、数据库、网络、GPU 性能 | `performance/` |
 | **架构设计问题** | 涉及分布式系统、微服务、数据系统、可靠性、云原生、容量设计 | `architecture/` |
 | **算法问题** | 涉及资源调度、负载均衡、共识、分布式算法、最优化、问题求解、图算法、流式算法、复杂度分析 | `algorithms/` |
+| **OS 安全与程序分析** | 涉及访问控制、内存沙箱、动态追踪/插桩、策略提取、二进制分析、移动端安全 | `security/` |
 | **通用工具 / 检查清单 / 诊断手册** | 涉及脚本、常用命令、上线检查、排错流程 | `common/` |
 | **知识库组织问题** | 用户问“这个应该放哪”“如何归档”“skill 目录怎么设计” | 当前文件 + 各一级 `SKILL.md` |
 
 如果请求同时涉及多个类型，按以下优先级组合检索：
-1. 先定位主要类型（论文解析 / 运维 / 性能 / 架构 / 算法 / 通用）。
+1. 先定位主要类型（论文解析 / 运维 / 性能 / 架构 / 算法 / 安全 / 通用）。
 2. 再检索跨领域支持文件（如 `common/checklists/`、`common/diagnosis-playbooks/`）。
 
 ## 检索与回答流程
@@ -47,6 +48,7 @@ cd ~/.claude/skills/domain-knowledge && git pull --rebase
    - 性能：读取 `performance/SKILL.md`
    - 架构：读取 `architecture/SKILL.md`
    - 算法：读取 `algorithms/SKILL.md`
+   - 安全：读取 `security/SKILL.md`
    - 通用：读取 `common/SKILL.md`
 
 2. **根据具体主题，深入二级子目录**
@@ -69,7 +71,7 @@ cd ~/.claude/skills/domain-knowledge && git pull --rebase
 
 1. 先读取 `common/knowledge-synthesis/SKILL.md`，按其中的快速阅读或深度阅读模板执行。
 2. **⚠️ 论文命名**: 必须从论文正文（标题+首页）提取方案名和会议信息，构造规范名称 `方案名(会议'年份)`，例如 `PACT(ASPLOS'26)`。**禁止使用 PDF 文件名或 URL 路径作为论文的引用名称**。详见 `common/knowledge-synthesis/SKILL.md` §0 论文命名规范。
-3. 提取可复用启发后，判断应归档到 `operations/`、`performance/`、`architecture/`、`algorithms/` 还是 `common/` 下的具体 skill。
+3. 提取可复用启发后，判断应归档到 `operations/`、`performance/`、`architecture/`、`algorithms/`、`security/` 还是 `common/` 下的具体 skill。
 4. 如果用户没有明确说”不要记录”，解析完成后在 `history/reading-log.md` 中追加一条记录（资料标题列填写规范名称）。
 5. 如果现有 skill 无法覆盖新知，建议用户新建 skill 子目录，并给出推荐路径。
 
@@ -95,6 +97,7 @@ cd ~/.claude/skills/domain-knowledge && git pull --rebase
 - `performance/SKILL.md` — 性能优化
 - `architecture/SKILL.md` — 架构设计
 - `algorithms/SKILL.md` — 算法
+- `security/SKILL.md` — OS 安全与程序分析
 - `common/SKILL.md` — 通用工具、检查清单、诊断手册、知识整合方法论
 - `history/SKILL.md` — 阅读与解析记录说明
 

@@ -25,7 +25,8 @@ domain-knowledge/
 ├── performance/              # 性能优化 → 内存系统、GPU/AI
 ├── architecture/             # 架构设计 → 云原生
 ├── operations/               # 运维与 SRE（待填充）
-└── algorithms/               # 算法（待填充）
+├── algorithms/               # 算法（待填充）
+└── security/                 # OS 安全与程序分析 → 访问控制、沙箱、追踪
 ```
 
 ## 已覆盖的领域知识
@@ -37,7 +38,7 @@ domain-knowledge/
 - **领域分布**:
   - CXL/内存系统/可观测性/回收理论: 9 篇
   - LLM 推理服务: 5 篇
-  - OS 安全/沙箱/追踪/移动分析: 5 篇（USEC, Mohabi, Ichnaea, Ote, iLand）
+  - OS 安全/沙箱/追踪/程序分析: 5 篇（USEC, Mohabi, Ichnaea, Ote, iLand） — 见 `security/os-security/SKILL.md`
 - **最后更新**: 2026-07-13
 
 <!-- 自动更新区域结束 -->
