@@ -32,12 +32,12 @@ domain-knowledge/
 
 <!-- 以下区域由 /domain-knowledge 后置操作自动更新，请勿手动编辑本节 -->
 
-- **总计**: 16 篇
-- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 12 篇（'26）
+- **总计**: 17 篇
+- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 13 篇（'26）
 - **领域分布**:
-  - CXL/内存系统/可观测性/回收理论: 9 篇（PACT, TMO, M5, CAMP, RamRyder, MAC, NEMO, OBASE, MDK）
-  - LLM 推理服务: 5 篇（Strata, ECHO, DirectKV, LMetric, Prism）
-  - OS 安全/沙箱: 2 篇（USEC, Mohabi）
+  - CXL/内存系统/可观测性/回收理论: 9 篇
+  - LLM 推理服务: 5 篇
+  - OS 安全/沙箱/追踪: 3 篇（USEC, Mohabi, Ichnaea）
 - **最后更新**: 2026-07-13
 
 <!-- 自动更新区域结束 -->
