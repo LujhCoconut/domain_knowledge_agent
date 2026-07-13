@@ -12,6 +12,7 @@ GPU 与 AI/ML 推理和训练的性能优化知识。
 | 稀疏注意力 KV Cache 动态 Offloading | graph-friendly cache manager, EMA top-k prediction, lossless prefetching, warp specialization, DeepSeek DSA | ECHO(OSDI'26) |
 | Zero-Copy KV Cache Offloading | CPU-memory-aware tiling, SMEM reuse, warp-level pipelining, fused P+A kernel, NVLink-C2C | DirectKV(OSDI'26) |
 | LLM 请求调度与路由 | multiplicative scheduling, KV$-awareness, load balancing, P-token × BS, hotspot detection | LMetric(OSDI'26) |
+| 多模型 GPU 显存共享 | memory ballooning, CUDA VMM, elastic tensor, KVPR, time/space sharing, bursty groups | Prism(OSDI'26) |
 
 ---
 
@@ -266,4 +267,54 @@ LLM 集群中 global scheduler 需同时平衡 KV$-awareness（路由到缓存 p
 | 核心 | GPU kernel I/O | Graph-friendly offload | CPU-aware tiling | P-token × BS |
 | 调参 | 全局配置 | 全局配置 | 无需 | **无需** |
 | 生产 | SGLang | N/A | N/A | **阿里百炼** |
-| 核心 insight | Layout decoupling | EMA 预测 top-k | SMEM stationary KV | Multiplication cancels λ |
+| 核心 insight | Layout decoupling | EMA 预测 top-k | SMEM stationary KV | Multiplication cancels λ | Memory ballooning unifies time & space |
+
+---
+
+## 多模型 GPU 显存共享
+
+### 核心问题
+推理提供商需同时维持数百上千模型的可用性，但 70%+ 时间模型处于空闲状态。Pure space sharing 锁死空闲模型内存；pure time sharing 在抢占性负载下导致 model thrashing。需要弹性显存管理来同时支持两种模式。
+
+### 关键洞察
+
+1. **Bursty groups — 生产负载的核心特征**：
+   - 23-50% 模型同时活跃，活跃组每小时变化 54-766 次
+   - 类似应用 working set：常驻模型 + 偶尔出现的模型
+   - 连续两天同一时间的 traffic Pearson correlation ≈ 0
+   - 来源：Prism(OSDI'26) §3
+
+2. **Memory ballooning 统一 time/space sharing**：
+   - Time sharing = swapping weights；Space sharing = scaling KV cache
+   - GPU 显存是二者的共同瓶颈 → 弹性化 GPU 显存 → 统一两种模式
+   - 类比虚拟化中的 balloon driver：hypervisor 从空闲 VM 回收内存给活跃 VM
+   - 来源：Prism(OSDI'26) §1, §5
+
+3. **kvcached — CUDA VMM 层的弹性内存**：
+   - 通过 CUDA VMM API 解耦虚拟/物理地址：engine 看到大段虚拟空间，物理页 on-demand 映射
+   - eTensor 抽象：22 行代码集成 SGLang，零 attention kernel 修改
+   - 2MB page + 连续虚拟布局 + 异步预分配缓冲池
+   - 来源：Prism(OSDI'26) §5.2
+
+4. **KVPR + Moore-Hodgson 双层控制**：
+   - Global: KVPR = `(token_rate × token_size / SLO) / shared_kv` → 驱动模型 placement
+   - Local: Moore-Hodgson deadline scheduling → 最大化 TTFT SLO 达成
+   - 来源：Prism(OSDI'26) §6
+
+### 实践启发
+
+- **下沉内存管理到驱动层**: 应用层（PagedAttention）跨模型不可见 → CUDA VMM 层是更好的抽象
+- **Memory ballooning 可推广**: FPGA、TPU、NPU 等加速器也有类似问题
+- **KVPR 作为需求/容量比的指标**: 将多维压缩为一个比较标量 → 适合贪心决策
+- **Engine pool 消除冷启动**: 预初始化资源池 + 按需分配，可推广到其他"状态重"的服务
+
+### OSDI '26 LLM Serving 全景（6 篇）
+
+| | Strata | ECHO | DirectKV | LMetric | Prism |
+|---|---|---|---|---|---|
+| 方向 | KV I/O | KV offloading | Zero-copy kernel | 请求调度 | **多模型显存共享** |
+| 层面 | App I/O | Framework | Kernel | Router | **Cluster GPU mgmt** |
+| 单/多模型 | 单 | 单 | 单 | 单（集群路由） | **多** |
+| 核心 | GPU kernel I/O | Graph metadata | CPU-aware tiling | P-token × BS | **Memory ballooning** |
+| 生产 | SGLang | — | — | 阿里百炼 | **10K+ GPU (kvcached)** |
+| 核心 insight | Layout decoupling | EMA top-k prediction | SMEM stationary KV | Multiplication cancels λ | **Ballooning unifies time & space** |
