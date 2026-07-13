@@ -352,3 +352,45 @@ CXL tiered memory (PACT/TMO/CAMP/M5) 和 LLM KV cache 层次化管理 (Strata(OS
 | RamRyder(OSDI'26) | 弹性带宽 + 容量资源池 | Channel | 带宽+容量独立 |
 | **MAC(OSDI'26)** | **NMP 加速内核元数据** | **Metadata node** | **Metadata latency** |
 | **NEMO(OSDI'26)** | **可编程 MC telemetry engine** | **任意 (mask-shift-add 可编程)** | **Observability** |
+
+---
+
+## 内存碎片化与 Frontend-Backend 解耦
+
+### 核心问题
+现有所有 tiering backend 都假定"页面级的 cold/hot 信号足够好"，但 Google 6 个生产 trace 显示活跃页中 **70-90% byte 从未被访问** — 根本原因是 allocator 按 size 分配对象，不考虑 access pattern → 热对象和冷对象在同一页内交错混合（hotness fragmentation）。
+
+### 关键洞察
+
+1. **Page utilization 是第一性瓶颈**：
+   - 如果 page utilization <20%，backend 识别"热页"也是假热 — 页内冷数据被"困"在快 tier
+   - 先提高页面质量再优化 tiering policy，顺序不能颠倒
+   - 来源：OBASE(OSDI'26) §2
+
+2. **Frontend-Backend 解耦 = Address-space engineering + Reclamation**：
+   - Frontend (OBASE): 组织 address space → HOT/COLD heap → 整页均匀热或冷
+   - Backend (kswapd/TMO/TPP/Memtis): 现有页面回收机制 → 面对均匀页面时决策质量倍增
+   - 零 backend 修改：COLD heap 页面自然被任何 backend 标记为 inactive
+   - 来源：OBASE(OSDI'26) §3
+
+3. **C++ 中实现 safe concurrent object migration**：
+   - Guide abstraction（替代 raw pointer）+ Epoch-based ATC + Optimistic CAS migration
+   - Thread 永不阻塞，迁移失败 → 对象留在原位
+   - Overhead 仅 2-5%（vs PEBS 采样的 >50% at >1% sample rate）
+   - 来源：OBASE(OSDI'26) §3.2, §3.5
+
+### 实践启发
+
+- **测量 page utilization 是 tiering 优化的第一步**：如果 page util 低，换个更好的 backend 也没用
+- **Tiering = Layout + Reclamation**: 将"哪些页该回收"的问题拆为两个子问题 — 前者优化数据组织，后者优化迁移决策
+- **OCC-style migration 在 OS-level 对象管理中实用**: 简单、无锁、失败安全
+
+### 内存层级论文 7 篇全景
+
+| 论文 | 优化层面 | 核心贡献 |
+|------|---------|---------|
+| **OBASE(OSDI'26)** | **Layout (frontend)** | **消除 hotness fragmentation，page util ↑ 2-4×** |
+| TMO/TPP/Memtis | Reclamation (backend) | 页级迁移策略 |
+| PACT(ASPLOS'26) | Reclamation (backend) | Criticality-driven migration |
+| CAMP(ASPLOS'26) | Modeling | Slowdown prediction |
+| M5/NEMO/MAC | Observability | 更好的 telemetry/追踪 |
