@@ -23,7 +23,9 @@
 
 | 日期 | 资料标题 | 类型 | 来源 | 解析 skill | 归档位置 | 备注 |
 |------|----------|------|------|------------|----------|------|
-| YYYY-MM-DD | 论文原始标题 | 论文-系统 | URL/PDF | knowledge-synthesis | performance/system-tuning/ | 关于 Linux I/O 调度优化 |
+| YYYY-MM-DD | <方案名(会议'年份)> | 论文-系统 | URL/PDF | knowledge-synthesis | performance/system-tuning/ | 一句话说明 |
+
+对于论文，「资料标题」列填写规范名称 `方案名(会议'年份)`（如 `PACT(ASPLOS'26)`），**不要填写 PDF 文件名**。详见 `common/knowledge-synthesis/SKILL.md` §0 论文命名规范。
 
 ### 字段说明
 

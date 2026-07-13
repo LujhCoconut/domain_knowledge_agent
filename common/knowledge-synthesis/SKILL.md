@@ -8,6 +8,41 @@
 
 ---
 
+## 0. 论文命名规范（⚠️ 必须遵守）
+
+**不要用 PDF 文件名或 URL 路径作为论文的引用名称**，因为这些命名不可控（可能乱码、缩写不一致、缺少会议信息）。每次处理论文时，必须从论文**正文中提取**以下信息来构造规范名称：
+
+### 提取来源（按优先级）
+
+1. 论文标题 → 提取方案/系统名称（通常是标题的首个专有名词或冒号前部分）
+2. 论文首页 → 提取会议/期刊缩写 + 年份（通常在页眉或版权声明区，如 "ASPLOS '26"）
+
+### 命名格式
+
+```
+方案名(会议'年份)
+```
+
+**示例**：
+
+| 论文标题 | PDF 文件名 ❌ | 规范名称 ✅ |
+|----------|--------------|-------------|
+| PACT: A Criticality-First Design for Tiered Memory | `PACT_ASPLOS.pdf` | `PACT(ASPLOS'26)` |
+| TPP: Transparent Page Placement for CXL-Enabled Tiered Memory | `tpp_final.pdf` | `TPP(ASPLOS'23)` |
+| Memtis: Efficient Memory Tiering with Dynamic Page Classification | `memtis-sosp23.pdf` | `Memtis(SOSP'23)` |
+
+### 适用范围
+
+此规范名称用于：
+- 深度阅读笔记文件名: `notes/PACT(ASPLOS'26).md`
+- 阅读日志中的「资料标题」列
+- 各 `SKILL.md` 中引用论文时的行文
+- commit message 中的论文标识
+
+**对于非论文资料**（技术博客、文档、源码），用原始标题或 URL 路径中可识别的名称即可，不需要套用此格式。
+
+---
+
 ## 1. 快速阅读流程
 
 ### 1.1 先判断资料类型
@@ -25,7 +60,7 @@
 适合第一次扫读，5-15 分钟完成：
 
 ```markdown
-# Quick Note: <资料标题>
+# Quick Note: <方案名(会议'年份)>
 
 - **来源**: <URL / PDF / 会议>
 - **类型**: 论文-方法 / 论文-系统 / 博客 / 源码 / 分享
@@ -43,7 +78,7 @@
 需要写正式笔记时使用，参考你给的 cs-paper-notes 结构：
 
 ```markdown
-# <资料标题>
+# <方案名(会议'年份)>
 
 - 来源 / 年份 / 版本
 - 一句话 TL;DR

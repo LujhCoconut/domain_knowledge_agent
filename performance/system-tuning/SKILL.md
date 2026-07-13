@@ -6,8 +6,8 @@
 
 | 主题 | 关键词 | 来源 |
 |------|--------|------|
-| Tiered Memory 管理 | CXL, NUMA, page migration, hotness vs criticality | PACT (ASPLOS '26) |
-| 内存延迟归因 | CHA/TOR, MLP, PMU counters, PEBS, stall attribution | PACT (ASPLOS '26) |
+| Tiered Memory 管理 | CXL, NUMA, page migration, hotness vs criticality | PACT(ASPLOS'26) |
+| 内存延迟归因 | CHA/TOR, MLP, PMU counters, PEBS, stall attribution | PACT(ASPLOS'26) |
 
 ---
 
@@ -21,23 +21,23 @@
 1. **Hotness (access frequency) 不等于 Performance Impact**：
    - 相同访问频率的页面，stall 代价可差 65×（取决于 MLP）
    - 顺序遍历（高 MLP）可隐藏延迟，指针追踪（低 MLP）完全暴露延迟
-   - 启发来自 PACT §3 (violin plots), PACT_ASPLOS.pdf
+   - 启发来自 PACT §3 (violin plots), PACT(ASPLOS'26)
 
 2. **PAC (Per-page Access Criticality) 建模**：
    - 核心公式: `LLC-stalls = k × (LLC-misses / MLP)`
    - `k` 是 per-tier 系数（捕获延迟 + 架构开销）
    - 在 96 workloads × 3 延迟配置下，Pearson > 0.98
-   - 来源: PACT §4.2, PACT_ASPLOS.pdf
+   - 来源: PACT §4.2, PACT(ASPLOS'26)
 
 3. **Per-tier MLP 观测**：
    - Intel: 用 CHA 的 TOR_OCCUPANCY / TOR_OCCUPANCY_COUNTER0 计算 per-tier MLP
    - AMD (无 TOR): 用 Little's Law 近似 `MLP ≈ Latency × Bandwidth`
-   - 来源: PACT §4.2.2, PACT_ASPLOS.pdf
+   - 来源: PACT §4.2.2, PACT(ASPLOS'26)
 
 4. **MLP Phase Stability**：
    - MLP 在 tens-of-ms 尺度上保持稳定
    - 这允许在短窗口（20ms）内按访问频率比例属性 stall 到各页面
-   - 来源: PACT §4.3, PACT_ASPLOS.pdf
+   - 来源: PACT §4.3, PACT(ASPLOS'26)
 
 ### 实践启发
 

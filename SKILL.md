@@ -68,9 +68,10 @@ cd ~/.claude/skills/domain-knowledge && git pull --rebase
 当用户要求解析论文或技术资料时：
 
 1. 先读取 `common/knowledge-synthesis/SKILL.md`，按其中的快速阅读或深度阅读模板执行。
-2. 提取可复用启发后，判断应归档到 `operations/`、`performance/`、`architecture/`、`algorithms/` 还是 `common/` 下的具体 skill。
-3. 如果用户没有明确说“不要记录”，解析完成后在 `history/reading-log.md` 中追加一条记录。
-4. 如果现有 skill 无法覆盖新知，建议用户新建 skill 子目录，并给出推荐路径。
+2. **⚠️ 论文命名**: 必须从论文正文（标题+首页）提取方案名和会议信息，构造规范名称 `方案名(会议'年份)`，例如 `PACT(ASPLOS'26)`。**禁止使用 PDF 文件名或 URL 路径作为论文的引用名称**。详见 `common/knowledge-synthesis/SKILL.md` §0 论文命名规范。
+3. 提取可复用启发后，判断应归档到 `operations/`、`performance/`、`architecture/`、`algorithms/` 还是 `common/` 下的具体 skill。
+4. 如果用户没有明确说”不要记录”，解析完成后在 `history/reading-log.md` 中追加一条记录（资料标题列填写规范名称）。
+5. 如果现有 skill 无法覆盖新知，建议用户新建 skill 子目录，并给出推荐路径。
 
 ## 输出规范
 
