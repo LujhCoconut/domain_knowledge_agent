@@ -7,7 +7,7 @@
 | 目录 | 主题 | 适合归档的内容 |
 |------|------|----------------|
 | `linux-system-admin/` | Linux 系统管理 | 文件系统、进程、systemd、权限、内核参数、常用命令行技巧 |
-| `monitoring-observability/` | 监控与可观测性 | Metrics/Logs/Traces、Prometheus/Grafana、告警规则、日志聚合 |
+| `monitoring-observability/` | 监控与可观测性 | Metrics/Logs/Traces、Prometheus/Grafana、告警规则、日志聚合、网络 RCA、根因分析 |
 | `container-k8s/` | 容器与 Kubernetes | Docker、K8s 资源对象、调度、网络、存储、排错 |
 | `ci-cd-devops/` | CI/CD 与 DevOps | GitHub Actions、GitLab CI、制品管理、发布策略、IaC |
 | `storage-infrastructure/` | 存储基础设施与数据管线 | HDFS、大规模数据供给、checkpoint 管理、跨 DC 数据复制、训练数据预处理 |
