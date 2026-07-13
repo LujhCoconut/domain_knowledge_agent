@@ -13,6 +13,7 @@ GPU 与 AI/ML 推理和训练的性能优化知识。
 | Zero-Copy KV Cache Offloading | CPU-memory-aware tiling, SMEM reuse, warp-level pipelining, fused P+A kernel, NVLink-C2C | DirectKV(OSDI'26) |
 | LLM 请求调度与路由 | multiplicative scheduling, KV$-awareness, load balancing, P-token × BS, hotspot detection | LMetric(OSDI'26) |
 | 多模型 GPU 显存共享 | memory ballooning, CUDA VMM, elastic tensor, KVPR, time/space sharing, bursty groups | Prism(OSDI'26) |
+| 万亿参数 MoE 训练 | overlap-aware partition, synthesized overlap schedule, dynamic bubble filling, pipeline parallelism | Tessera(OSDI'26) |
 
 ---
 
@@ -318,3 +319,40 @@ LLM 集群中 global scheduler 需同时平衡 KV$-awareness（路由到缓存 p
 | 核心 | GPU kernel I/O | Graph metadata | CPU-aware tiling | P-token × BS | **Memory ballooning** |
 | 生产 | SGLang | — | — | 阿里百炼 | **10K+ GPU (kvcached)** |
 | 核心 insight | Layout decoupling | EMA top-k prediction | SMEM stationary KV | Multiplication cancels λ | **Ballooning unifies time & space** |
+
+---
+
+## 万亿参数 MoE 训练 (Pipeline Parallelism)
+
+### 核心问题
+训练 Qwen3-Next 等千亿参数模型时，模型架构从 uniform Transformer blocks 演变为异质组合（DeltaNet + softmax attention + dense FFN + sparse MoE）。这种异质性打破现有 PP 系统的均匀性假设：不同层组合的 compute-communication 比例不同 → uniform overlap strategy 在某些组合中仅有 14% 的通信被隐藏。
+
+### 关键洞察
+
+1. **Overlap-aware partitioning 优于 compute-aware partitioning**：
+   - 传统 PP partitioner 按 serial computation cost 均分 stage → 忽略 overlap 后的实际剩余通信
+   - Tessera 离线 profile 每种层组合的 post-overlap cost → 用这个 cost 驱动 partition → 所有 stage 平衡
+   - 来源：Tessera(OSDI'26) §overlap-aware partitioner
+
+2. **Per-layer-combination synthesized overlap schedule**：
+   - 为每对 (layer_type_A, layer_type_B) 单独合成最优 compute-communication 交错
+   - 利用 virtual stages（同一物理 rank 多个虚拟 stage）实现细粒度重叠
+   - 替代传统的 uniform 1F1B 策略
+   - 来源：Tessera(OSDI'26) §overlap scheduler
+
+3. **Dynamic bubble filling for MoE routing skew**：
+   - MoE routing 产生各 stage 间的 token 负载不均衡 → transient idle slots
+   - Dynamic bubble optimizer 监控 routing metadata → 在 idle slot 中插入可移动任务（gradient sync 等）
+   - 来源：Tessera(OSDI'26) §dynamic bubble optimizer
+
+### 实践启发
+
+- **"Overlap-aware" 是通信密集并行的正确决策维度**：仅看 serial cost 不够
+- **异质架构需要异质优化**：uniform strategy 在 certain 组合上必定次优
+- **Dynamic bubble filling 可推广**：任何 "static plan + dynamic load skew" 系统都可受益
+
+### 生产数据 (Alibaba Cloud)
+- 10,000+ GPUs, Qwen3/Qwen3-Next pre-training
+- 5 workloads at 4,096–12,288 GPUs: +20-33% throughput
+- Trillion-parameter model: 39% MFU
+- vs Megatron-Core: 1.24× MFU
