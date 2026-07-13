@@ -14,7 +14,8 @@ GPU 与 AI/ML 推理和训练的性能优化知识。
 | LLM 请求调度与路由 | multiplicative scheduling, KV$-awareness, load balancing, P-token × BS, hotspot detection | LMetric(OSDI'26) |
 | 多模型 GPU 显存共享 | memory ballooning, CUDA VMM, elastic tensor, KVPR, time/space sharing, bursty groups | Prism(OSDI'26) |
 | 万亿参数 MoE 训练 | overlap-aware partition, synthesized overlap schedule, dynamic bubble filling, pipeline parallelism | Tessera(OSDI'26) |
-| 异质分布式训练 (SPMD) | asymmetric sharding, hierarchical communication, graph specialization, dynamic switching | Hetu v2(OSDI'26) |
+| 异质分布式训练 (SPMD) | asymmetric sharding, hierarchical communication, graph specialization, dynamic switching | Hetu-v2(OSDI'26) |
+| 内核级 Compute-Comm Overlap | chunk-centric overlap, in-kernel communication, tile schedule reshaping, Triton compiler | Syncopate(OSDI'26) |
 
 ---
 
@@ -374,8 +375,31 @@ SPMD 范式假设"所有设备同构且所有输入等量"——但在混合 GPU
 
 ### 与 Tessera 的关系
 
-| | Tessera(OSDI'26) | Hetu v2(OSDI'26) |
+| | Tessera(OSDI'26) | Hetu-v2(OSDI'26) |
 |---|---|---|
 | 异质性来源 | 模型架构 (不同层类型) | 设备 (GPU 代际/故障) + 数据 (变长) |
 | 并行维度 | Pipeline Parallelism | SPMD (DP/TP/Sharding) |
 | 核心机制 | Overlap-aware partition + dynamic bubble | Asymmetric sharding + graph specialization/switching |
+
+---
+
+## 内核级 Compute-Communication Overlap
+
+### 核心问题
+当前分布式 GPU 编译器在内核级别重叠通信（NCCL streams + 多内核拆分）。这强制设备范围的同步、产生额外的内核启动开销，并且当波内最慢的瓦片延长通信尾部时，产生大量空闲时间。需要在内核**内部**以更细的粒度进行重叠。
+
+### 关键洞察
+
+1. **通信块抽象解耦粒度**：将 "通信应该以什么粒度发生" 作为独立于 "内核如何结构化" 的维度 → 块级方案可重用、可移植
+2. **内核内部通信注入**：直接从融合内核内部发出通信操作（而非调用外部 NCCL）→ 消除内核启动开销，最小粒度降低数百倍
+3. **瓦片调度重塑**：重新排列内核内部的瓦片执行顺序以优先处理已就绪的数据 → 同时保持寄存器/共享内存/缓存局部性
+4. **多后端显式选择**：编译器为每个传输选择最优硬件后端（复制引擎/TMA/CUDA cores）
+- 来源：Syncopate(OSDI'26)
+
+### OSDI '26 GPU 系统三篇堆栈
+
+| | Tessera | Hetu-v2 | **Syncopate** |
+|---|---|---|---|
+| 抽象级别 | PP 调度 (microbatch) | SPMD 分片 (device) | **内核 (tile/chunk)** |
+| 通信重叠 | microbatch 之间 | inter-DP group | **intra-kernel tiles** |
+| 加速 | 1.2-1.33× | matches specialized sys | **1.3× avg, 4.7× max** |
