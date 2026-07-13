@@ -1,6 +1,6 @@
 ---
 name: domain-knowledge
-description: 个人领域知识库路由 skill。当用户请求涉及论文/资料解析、Linux/Kubernetes 运维、性能优化（串行/并行/并发/系统/数据库/网络/GPU）、分布式系统/微服务/云原生架构设计、故障排查或检查清单时，自动判断请求类型并调用对应子目录的 skill。
+description: 个人领域知识库路由 skill。当用户请求涉及论文/资料解析、Linux/Kubernetes 运维、性能优化（串行/并行/并发/系统/数据库/网络/GPU）、分布式系统/微服务/云原生架构设计、算法（调度/负载均衡/共识/优化/问题求解/图算法/流式算法）、故障排查或检查清单时，自动判断请求类型并调用对应子目录的 skill。
 ---
 
 # Domain Knowledge
@@ -18,11 +18,12 @@ description: 个人领域知识库路由 skill。当用户请求涉及论文/资
 | **故障排查 / 运维问题** | 涉及系统报错、服务异常、部署失败、监控告警、Linux/K8s 运维 | `operations/` |
 | **性能优化问题** | 涉及 latency、throughput、CPU、内存、I/O、并发、并行、数据库、网络、GPU 性能 | `performance/` |
 | **架构设计问题** | 涉及分布式系统、微服务、数据系统、可靠性、云原生、容量设计 | `architecture/` |
+| **算法问题** | 涉及资源调度、负载均衡、共识、分布式算法、最优化、问题求解、图算法、流式算法、复杂度分析 | `algorithms/` |
 | **通用工具 / 检查清单 / 诊断手册** | 涉及脚本、常用命令、上线检查、排错流程 | `common/` |
 | **知识库组织问题** | 用户问“这个应该放哪”“如何归档”“skill 目录怎么设计” | 当前文件 + 各一级 `SKILL.md` |
 
 如果请求同时涉及多个类型，按以下优先级组合检索：
-1. 先定位主要类型（论文解析 / 运维 / 性能 / 架构 / 通用）。
+1. 先定位主要类型（论文解析 / 运维 / 性能 / 架构 / 算法 / 通用）。
 2. 再检索跨领域支持文件（如 `common/checklists/`、`common/diagnosis-playbooks/`）。
 
 ## 检索与回答流程
@@ -32,11 +33,13 @@ description: 个人领域知识库路由 skill。当用户请求涉及论文/资
    - 运维：读取 `operations/SKILL.md`
    - 性能：读取 `performance/SKILL.md`
    - 架构：读取 `architecture/SKILL.md`
+   - 算法：读取 `algorithms/SKILL.md`
    - 通用：读取 `common/SKILL.md`
 
 2. **根据具体主题，深入二级子目录**
    - 例如用户问“Linux I/O 调度优化”，在读取 `performance/SKILL.md` 后，进一步读取 `performance/system-tuning/SKILL.md`。
    - 例如用户问“Kubernetes Pod 调度失败”，在读取 `operations/SKILL.md` 后，进一步读取 `operations/container-k8s/SKILL.md` 或 `operations/incident-response/SKILL.md`。
+   - 例如用户问“一致性哈希怎么做负载均衡”，在读取 `algorithms/SKILL.md` 后，进一步读取 `algorithms/load-balancing/SKILL.md`。
 
 3. **如果存在案例/检查清单/脚本，一并读取**
    - 故障排查类问题优先查看 `common/diagnosis-playbooks/`。
@@ -52,7 +55,7 @@ description: 个人领域知识库路由 skill。当用户请求涉及论文/资
 当用户要求解析论文或技术资料时：
 
 1. 先读取 `common/knowledge-synthesis/SKILL.md`，按其中的快速阅读或深度阅读模板执行。
-2. 提取可复用启发后，判断应归档到 `operations/`、`performance/`、`architecture/` 还是 `common/` 下的具体 skill。
+2. 提取可复用启发后，判断应归档到 `operations/`、`performance/`、`architecture/`、`algorithms/` 还是 `common/` 下的具体 skill。
 3. 如果用户没有明确说“不要记录”，解析完成后在 `history/reading-log.md` 中追加一条记录。
 4. 如果现有 skill 无法覆盖新知，建议用户新建 skill 子目录，并给出推荐路径。
 
@@ -77,5 +80,6 @@ description: 个人领域知识库路由 skill。当用户请求涉及论文/资
 - `operations/SKILL.md` — 运维与 SRE
 - `performance/SKILL.md` — 性能优化
 - `architecture/SKILL.md` — 架构设计
+- `algorithms/SKILL.md` — 算法
 - `common/SKILL.md` — 通用工具、检查清单、诊断手册、知识整合方法论
 - `history/SKILL.md` — 阅读与解析记录说明
