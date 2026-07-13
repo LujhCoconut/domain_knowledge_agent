@@ -394,3 +394,41 @@ CXL tiered memory (PACT/TMO/CAMP/M5) 和 LLM KV cache 层次化管理 (Strata(OS
 | PACT(ASPLOS'26) | Reclamation (backend) | Criticality-driven migration |
 | CAMP(ASPLOS'26) | Modeling | Slowdown prediction |
 | M5/NEMO/MAC | Observability | 更好的 telemetry/追踪 |
+| **MDK(OSDI'26)** | **Theory/Policy** | **OPP + MPC + eviction properties — 回收策略设计框架** |
+
+---
+
+## 数据中心内存回收理论
+
+### 核心洞察
+传统内存管理是"给定固定内存，最小化 miss rate"；数据中心的问题是反过来的——在满足 per-window 性能 SLO（如 promotion rate）的前提下最大化内存节省。这使得 OPT/VMIN 不再是最优（它们将 page faults 聚类在少数 window 中违反 SLO），MRC 也不再适用。
+
+### 关键知识
+
+1. **优化目标翻转**：
+   - 传统: `min miss_rate s.t. cache_size ≤ M`
+   - 数据中心: `max memory_savings s.t. promotion_rate ≤ target per window`
+   - 来源：MDK(OSDI'26) §2
+
+2. **OPP — 反问题的最优策略**：
+   - 两遍算法：统计 per-window unique pages → 对每次 access 决定回收（当且仅当未来不违反 promotion rate）
+   - 核心行为：**尽可能早回收，让 faults 均匀分散到各 window**（而非最小化总数）
+   - 来源：MDK(OSDI'26) §3.2
+
+3. **Eviction decisions/times — 理论性质**：
+   - 更 aggressive 参数 → eviction 更多 + 时间相同 → 只需计算 critical parameter → O(n) MPC 生成
+   - 传统缓存理论（包含性质）的数据中心版本
+   - 来源：MDK(OSDI'26) §3.3
+
+4. **AGE vs PAW/PACE — 保守 vs 激进**：
+   - AGE: 等 page 冷却后才回收（保守，适合不可预测 workload）
+   - PAW/PACE: 基于 reuse distance 立即回收（激进，适合可预测 workload，+8-10% 内存节省）
+   - 来源：MDK(OSDI'26) §5.4
+
+### Google 内存管理三部曲
+
+| 论文 | 层面 | 角色 |
+|------|------|------|
+| **MDK(OSDI'26)** | **理论** | OPP + MPC — 回答"离线最佳策略是什么" |
+| TMO(ASPLOS'22) | **工程** | PSI + Senpai — 回答"如何在线近似" |
+| OBASE(OSDI'26) | **Layout** | Address-space engineering — 回答"如何让输入数据更好" |
