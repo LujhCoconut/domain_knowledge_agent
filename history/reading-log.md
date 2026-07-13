@@ -7,4 +7,6 @@
 | 2026-07-13 | Beluga: A CXL-Based Memory Architecture for Scalable and Efficient LLM KV Cache Management | 论文-系统 | https://arxiv.org/abs/XXXX.XXXXX | knowledge-synthesis | performance/system-tuning/, architecture/distributed-systems/ | CXL 内存池化用于 LLM KV Cache |
 | 2026-07-13 | PACT(ASPLOS'26) | 论文-系统 | ASPLOS '26, PACT_ASPLOS.pdf | knowledge-synthesis | performance/system-tuning/, algorithms/ | 提出 PAC 指标量化每页 CPU stall 代价，替代 hotness 驱动 tiered memory 管理，最高 61% 性能提升 + 50× 迁移减少 |
 
+| 2026-07-13 | TMO(ASPLOS'22) | 论文-系统 | ASPLOS '22, tmo_asplos22.pdf | knowledge-synthesis | performance/system-tuning/ | Meta 透明内存 offloading，PSI + Senpai 实现 fleet-wide 20-32% 内存节省，已上游化 Linux 内核 |
+
 <!-- 追加新记录时，复制上面一行并修改即可。 -->

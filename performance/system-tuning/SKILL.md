@@ -7,7 +7,9 @@
 | 主题 | 关键词 | 来源 |
 |------|--------|------|
 | Tiered Memory 管理 | CXL, NUMA, page migration, hotness vs criticality | PACT(ASPLOS'26) |
+| 透明内存 Offloading | PSI, Senpai, swap, zswap, reclaim, memory tax | TMO(ASPLOS'22) |
 | 内存延迟归因 | CHA/TOR, MLP, PMU counters, PEBS, stall attribution | PACT(ASPLOS'26) |
+| 资源压力感知 | PSI some/full, cgroup 控制, feedback loop | TMO(ASPLOS'22) |
 
 ---
 
@@ -56,7 +58,68 @@
 
 ## 待补充
 
-- CXL 延迟特性与带宽模型
 - NUMA 自动平衡调优
 - Hugepage / THP 在 tiered memory 中的交互
 - 其他平台（ARM, RISC-V）的 PMU 等价设施
+
+---
+
+## 透明内存 Offloading (Swap/Zswap)
+
+### 核心问题
+在数据中心环境中，如何在不修改应用的前提下，自动将冷内存透明地 offload 到更便宜的存储介质（压缩内存、SSD、NVM），同时最小化对应用性能的影响。
+
+### 关键洞察
+
+1. **PSI 直接测量生产力损失**：
+   - PSI = 非 idle 进程中因等待资源而 stalled 的时间占比（%）
+   - 分为 `some`（至少 1 进程 stall）和 `full`（全部进程 stall）
+   - Memory PSI 涵盖 3 类 stall：direct reclaim、file refault、swap-in
+   - 来源：TMO(ASPLOS'22) §3.2
+
+2. **Promotion rate 是不够的**：
+   - Promotion rate（swap-in 次数）忽略 backend 延迟差异
+   - 快 SSD 上更高 promotion rate 反而带来更好性能（因为 offload 释放 DRAM 给热数据）
+   - PSI 天然包含延迟因素 → 自动适配异构 backend
+   - 来源：TMO(ASPLOS'22) §4.3 (Figure 12)
+
+3. **Senpai 闭环控制公式**：
+   - `reclaim_mem = current_mem × reclaim_ratio × max(0, 1 - PSI_some / PSI_threshold)`
+   - 维持"subliminal pressure"——PSI 略高于 0 但不造成可感知性能损失
+   - 单一全局配置 `PSI_threshold=0.1%` 适用于所有应用
+   - 来源：TMO(ASPLOS'22) §3.3
+
+4. **Non-resident cache tracking**：
+   - 文件页被回收时存储 fault 计数器到 shadow entry
+   - 下次 fault 时用 reuse distance 区分 refault vs first-time access
+   - 只有 refault 才算入 memory PSI
+   - 内核 reclaim 据此平衡 file cache vs swap 回收
+   - 来源：TMO(ASPLOS'22) §3.4
+
+### 实践启发
+
+- **指标优先级**：Low-level count（次数）< High-level time（时间损失）。任何基于计数的阈值在异构系统中都不可靠
+- **PSI 是 Linux 通用资源健康指标**：可通过 `cat /proc/pressure/{cpu,memory,io}` 查看，已默认启用于所有主流发行版
+- **从低风险开始渐进推广**：先 offload 基础设施内存（SLA 宽松）→ file-only → 加入 swap
+- **生产 offload 的保守节奏**：每 6 秒回收最多 1% 当前内存，收缩分钟级，扩展即时
+- **Zswap backend**：延迟 ~40μs（比 SSD 快一个数量级），适合可压缩数据（压缩比 3-4×）
+- **SSD backend**：每字节成本 <1%（vs DRAM），适合不可压缩数据（如 quantized ML 模型，压缩比仅 1.3-1.4×）
+- **SSD 耐久性**：通过 Senpai 调节写入速率（1MB/s 阈值）避免提前损耗
+
+### 生产数据 (Meta Fleet)
+- Datacenter tax 占 13% 内存（基础设施）
+- Microservice tax 占 7% 内存（框架开销）
+- TMO 总节省：20-32% 总内存（数百万台服务器）
+- Senpai CPU 开销：0.05% 所有 CPU cycles
+- 压缩算法：zstd（最佳压缩比/开销平衡），内存池：Zsmalloc
+
+### 与 PACT 的对比
+
+| 维度 | TMO(ASPLOS'22) | PACT(ASPLOS'26) |
+|------|---------------|-----------------|
+| 粒度 | cgroup 级 | page 级 |
+| 反馈信号 | PSI (% stall time) | PAC (stall cycles/page) |
+| 信号来源 | 纯软件（进程状态） | 硬件 PMU + 分析模型 |
+| 策略 | proportional feedback (PSI→reclaim rate) | priority-based (PAC→bin→promote top) |
+| demotion | LRU 驱动 | eager demotion |
+| 部署 | Meta 生产（数百万服务器） | 实验环境（CloudLab） |
