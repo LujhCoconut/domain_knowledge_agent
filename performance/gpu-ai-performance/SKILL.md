@@ -11,6 +11,7 @@ GPU 与 AI/ML 推理和训练的性能优化知识。
 | GPU-CPU 数据传输 | PCIe bandwidth utilization, Little's Law, DMA vs kernel I/O | Strata(OSDI'26) |
 | 稀疏注意力 KV Cache 动态 Offloading | graph-friendly cache manager, EMA top-k prediction, lossless prefetching, warp specialization, DeepSeek DSA | ECHO(OSDI'26) |
 | Zero-Copy KV Cache Offloading | CPU-memory-aware tiling, SMEM reuse, warp-level pipelining, fused P+A kernel, NVLink-C2C | DirectKV(OSDI'26) |
+| LLM 请求调度与路由 | multiplicative scheduling, KV$-awareness, load balancing, P-token × BS, hotspot detection | LMetric(OSDI'26) |
 
 ---
 
@@ -216,3 +217,53 @@ Swap-based offloading (Pie, FlexGen) 需要 GPU staging buffer → 浪费 HBM + 
 | GPU 内存节省 | ~0 (布局优化) | ~60% (host pool) | 43% (no buffer) |
 | 性能提升 | 3.2-5× | 2.1-4.1× | 1.2× |
 | 代码量 | 集成 SGLang | 基于 SGLang + DeepGEMM | 5300 行 CUDA |
+
+---
+
+## LLM 请求调度与路由
+
+### 核心问题
+LLM 集群中 global scheduler 需同时平衡 KV$-awareness（路由到缓存 prefix 的实例）和 load balancing（避免过载）。现有三类策略各有痛点：线性组合需 per-workload 调参，filter-based 需阈值调优且偏向负载均衡，simulation-based 需 per-model/hardware 开发。
+
+### 关键洞察
+
+1. **乘法消参原理**：
+   - 线性组合 `Score = λ·KV_indicator + (1-λ)·load_indicator` 的排序列与乘法 `KV_indicator × load_indicator` 等价
+   - 比较 `Score_i < Score_j` 时 λ 在乘法中自然消去
+   - 因此 `Score = P-token × BS` 成为无需调参的统一调度分数
+   - 来源：LMetric(OSDI'26) §5
+
+2. **P-token 优于 1-KV$ hit ratio**：
+   - Hit ratio 只反映匹配比例，不反映实际节省的计算量
+   - P-token 额外编码了每个实例的排队 prefill 负载 → 自动绕过积压严重的实例
+   - P50 TTFT 比 hit-ratio 方案低 14.4%，P95 低 42.8%
+   - 来源：LMetric(OSDI'26) §5.1
+
+3. **BS 优于 #Tokens**：
+   - #Tokens 混合了 prefill 和 decode 负载，但 prefill 已被 P-token 覆盖
+   - BS 更精确反映 decode 时间（decode time 与 BS 的线性关系更稳定）
+   - 来源：LMetric(OSDI'26) §5.1
+
+4. **失效条件数学推导（KV$ hotspot）**：
+   - 当 `x/x̄ > |M|/|M̄|` 时（请求类流行度超过缓存该类的实例比例），乘法可能失效
+   - 在 4 条真实 trace 中从未发生
+   - 两阶段检测器：Phase 1 监控比率，Phase 2 确认后才过滤热点实例
+   - 来源：LMetric(OSDI'26) §5.2
+
+### 实践启发
+
+- **乘法消参技巧可推广**: 任何"比较加权分数"场景（DB optimizer、CDN routing、负载均衡）都可考虑乘法替代线性组合
+- **先理解 workload 结构再做简化**: 不是黑盒调参 → 分析 prefill/decode 二分结构 → 两个指标各管一阶段
+- **推导失效边界让简单方法可信**: "simple but with known failure mode" 优于 "complex black-box"
+- **Rust 框架让 policy 可公平对比**: indicator factory + DSL 将不同调度策略统一到同一基础设施
+
+### OSDI '26 LLM Serving 全景（5 篇）
+
+| | Strata | ECHO | DirectKV | LMetric |
+|---|---|---|---|---|
+| 方向 | KV 搬运效率 | KV 动态 offloading | Zero-copy 传输 | 请求调度 |
+| 层次 | App I/O+调度 | Framework metadata | Kernel tiling | Router 层 |
+| 核心 | GPU kernel I/O | Graph-friendly offload | CPU-aware tiling | P-token × BS |
+| 调参 | 全局配置 | 全局配置 | 无需 | **无需** |
+| 生产 | SGLang | N/A | N/A | **阿里百炼** |
+| 核心 insight | Layout decoupling | EMA 预测 top-k | SMEM stationary KV | Multiplication cancels λ |
