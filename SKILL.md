@@ -40,11 +40,12 @@ cd ~/.claude/skills/domain-knowledge && git pull --rebase
 | **架构设计问题** | 涉及分布式系统、微服务、数据系统、可靠性、云原生、容量设计 | `architecture/` |
 | **算法问题** | 涉及资源调度、负载均衡、共识、分布式算法、最优化、问题求解、图算法、流式算法、复杂度分析 | `algorithms/` |
 | **OS 安全与程序分析** | 涉及访问控制、内存沙箱、动态追踪/插桩、策略提取、二进制分析、移动端安全 | `security/` |
+| **网络系统问题** | 涉及用户态网络 runtime、内核网络栈、TCP/RPC 调度、去中心化网络架构 | `network/` |
 | **通用工具 / 检查清单 / 诊断手册** | 涉及脚本、常用命令、上线检查、排错流程 | `common/` |
 | **知识库组织问题** | 用户问“这个应该放哪”“如何归档”“skill 目录怎么设计” | 当前文件 + 各一级 `SKILL.md` |
 
 如果请求同时涉及多个类型，按以下优先级组合检索：
-1. 先定位主要类型（论文解析 / 运维 / 性能 / 架构 / 算法 / 安全 / 通用）。
+1. 先定位主要类型（论文解析 / 运维 / 性能 / 架构 / 算法 / 安全 / 网络 / 通用）。
 2. 再检索跨领域支持文件（如 `common/checklists/`、`common/diagnosis-playbooks/`）。
 
 ## 检索与回答流程
@@ -56,11 +57,13 @@ cd ~/.claude/skills/domain-knowledge && git pull --rebase
    - 架构：读取 `architecture/SKILL.md`
    - 算法：读取 `algorithms/SKILL.md`
    - 安全：读取 `security/SKILL.md`
+   - 网络：读取 `network/SKILL.md`
    - 通用：读取 `common/SKILL.md`
 
 2. **根据具体主题，深入二级子目录**
    - 例如用户问“Linux I/O 调度优化”，在读取 `performance/SKILL.md` 后，进一步读取 `performance/system-tuning/KNOWLEDGE.md`。
-   - 例如用户问“Kubernetes Pod 调度失败”，在读取 `operations/SKILL.md` 后，进一步读取 `operations/container-k8s/SKILL.md` 或 `operations/incident-response/SKILL.md`。
+   - 例如用户问”Kubernetes Pod 调度失败”，在读取 `operations/SKILL.md` 后，进一步读取 `operations/container-k8s/SKILL.md` 或 `operations/incident-response/SKILL.md`。
+   - 例如用户问”TCP RPC 消息调度优化”，在读取 `network/SKILL.md` 后，进一步读取 `network/os-networking/KNOWLEDGE.md`。
    - 例如用户问“一致性哈希怎么做负载均衡”，在读取 `algorithms/SKILL.md` 后，进一步读取 `algorithms/load-balancing/KNOWLEDGE.md`。
 
 3. **如果存在案例/检查清单/脚本，一并读取**
@@ -78,7 +81,7 @@ cd ~/.claude/skills/domain-knowledge && git pull --rebase
 
 1. 先读取 `common/knowledge-synthesis/SKILL.md`，按其中的快速阅读或深度阅读模板执行。
 2. **⚠️ 论文命名**: 必须从论文正文（标题+首页）提取方案名和会议信息，构造规范名称 `方案名(会议'年份)`，例如 `PACT(ASPLOS'26)`。**禁止使用 PDF 文件名或 URL 路径作为论文的引用名称**。详见 `common/knowledge-synthesis/SKILL.md` §0 论文命名规范。
-3. 提取可复用启发后，判断应归档到 `operations/`、`performance/`、`architecture/`、`algorithms/`、`security/` 还是 `common/` 下的具体 skill。
+3. 提取可复用启发后，判断应归档到 `operations/`、`performance/`、`architecture/`、`algorithms/`、`security/`、`network/` 还是 `common/` 下的具体 skill。
 4. 如果用户没有明确说”不要记录”，解析完成后在 `history/reading-log.md` 中追加一条记录（资料标题列填写规范名称）。
 5. 如果现有 skill 无法覆盖新知，建议用户新建 skill 子目录，并给出推荐路径。
 
@@ -105,6 +108,7 @@ cd ~/.claude/skills/domain-knowledge && git pull --rebase
 - `architecture/SKILL.md` — 架构设计
 - `algorithms/SKILL.md` — 算法
 - `security/SKILL.md` — OS 安全与程序分析
+- `network/SKILL.md` — 网络系统
 - `common/SKILL.md` — 通用工具、检查清单、诊断手册、知识整合方法论
 - `history/SKILL.md` — 阅读与解析记录说明
 

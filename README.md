@@ -26,7 +26,8 @@ domain-knowledge/
 ├── architecture/             # 架构设计 → 云原生
 ├── operations/               # 运维与 SRE（待填充）
 ├── algorithms/               # 算法（待填充）
-└── security/                 # OS 安全与程序分析 → 访问控制、沙箱、追踪
+├── security/                 # OS 安全与程序分析 → 访问控制、沙箱、追踪
+└── network/                  # 网络系统 → TCP/RPC、用户态 runtime
 ```
 
 ## 已覆盖的领域知识
@@ -41,8 +42,7 @@ domain-knowledge/
   - LLM 大规模训练+数据管线: 4 篇
   - OS 安全/隐私/程序分析: 7 篇 — 见 `security/os-security/KNOWLEDGE.md`
   - 软件测试/DBMS: 1 篇（ValScope）
-  - 网络运维/RCA: 1 篇（CoreSec）
-  - 网络 runtime/RPC 调度: 2 篇（SBB, Rakaia）
+  - 网络系统（RCA/去中心化/RPC调度）: 3 篇（CoreSec, SBB, Rakaia） — 见 `network/os-networking/KNOWLEDGE.md`
 - **最后更新**: 2026-07-13
 
 <!-- 自动更新区域结束 -->
