@@ -6,7 +6,7 @@
 
 | 配置项 | 值 |
 |--------|-----|
-| **远程仓库** | `https://github.com/LujhCoconut/domain_knowledge_agent` |
+| **远程仓库** | `git@github.com:LujhCoconut/domain_knowledge_agent.git` |
 | **默认分支** | `main` |
 | **本地路径** | `~/.claude/skills/domain-knowledge/` |
 
