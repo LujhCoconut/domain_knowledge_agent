@@ -20,6 +20,13 @@ cd ~/.claude/skills/domain-knowledge && git pull --rebase
 - 如果 pull 产生冲突 → 告知用户"⚠️ git pull 产生冲突，请手动解决"，继续处理用户请求不阻塞
 - 此步骤的目的是确保本地编辑基于最新版本，避免 push 时冲突
 
+## 文件命名约定
+
+- `SKILL.md` — **路由型**：Claude Code skill 入口或路由文件，包含检索指令和流程描述
+- `KNOWLEDGE.md` — **知识型**：纯领域知识 dump，不包含路由逻辑
+
+路由型文件分布在各级目录入口（如 `performance/SKILL.md`），知识型文件分布在叶子目录（如 `performance/system-tuning/KNOWLEDGE.md`）。
+
 ## 请求类型判断与路由规则
 
 收到用户请求后，先按以下分类判断意图：
@@ -52,9 +59,9 @@ cd ~/.claude/skills/domain-knowledge && git pull --rebase
    - 通用：读取 `common/SKILL.md`
 
 2. **根据具体主题，深入二级子目录**
-   - 例如用户问“Linux I/O 调度优化”，在读取 `performance/SKILL.md` 后，进一步读取 `performance/system-tuning/SKILL.md`。
+   - 例如用户问“Linux I/O 调度优化”，在读取 `performance/SKILL.md` 后，进一步读取 `performance/system-tuning/KNOWLEDGE.md`。
    - 例如用户问“Kubernetes Pod 调度失败”，在读取 `operations/SKILL.md` 后，进一步读取 `operations/container-k8s/SKILL.md` 或 `operations/incident-response/SKILL.md`。
-   - 例如用户问“一致性哈希怎么做负载均衡”，在读取 `algorithms/SKILL.md` 后，进一步读取 `algorithms/load-balancing/SKILL.md`。
+   - 例如用户问“一致性哈希怎么做负载均衡”，在读取 `algorithms/SKILL.md` 后，进一步读取 `algorithms/load-balancing/KNOWLEDGE.md`。
 
 3. **如果存在案例/检查清单/脚本，一并读取**
    - 故障排查类问题优先查看 `common/diagnosis-playbooks/`。

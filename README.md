@@ -38,12 +38,12 @@ domain-knowledge/
 - **领域分布**:
   - CXL/内存系统/可观测性/回收理论: 9 篇
   - LLM 推理服务: 5 篇
-  - OS 安全/沙箱/追踪/程序分析: 5 篇（USEC, Mohabi, Ichnaea, Ote, iLand） — 见 `security/os-security/SKILL.md`
+  - OS 安全/沙箱/追踪/程序分析: 5 篇（USEC, Mohabi, Ichnaea, Ote, iLand） — 见 `security/os-security/KNOWLEDGE.md`
 - **最后更新**: 2026-07-13
 
 <!-- 自动更新区域结束 -->
 
-更多细节见各子目录下的 `SKILL.md` 和 `performance/system-tuning/SKILL.md`。
+更多细节见各子目录下的 `SKILL.md`（路由文件）和 `KNOWLEDGE.md`（知识文件），如 `performance/system-tuning/KNOWLEDGE.md`。
 
 ## 如何使用
 
