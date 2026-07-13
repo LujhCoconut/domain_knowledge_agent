@@ -33,8 +33,8 @@ domain-knowledge/
 
 <!-- 以下区域由 /domain-knowledge 后置操作自动更新，请勿手动编辑本节 -->
 
-- **总计**: 28 篇
-- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 24 篇（'26）
+- **总计**: 29 篇
+- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 25 篇（'26）
 - **领域分布**:
   - CXL/内存系统/可观测性/回收理论: 9 篇
   - LLM 推理服务: 6 篇
@@ -42,6 +42,7 @@ domain-knowledge/
   - OS 安全/隐私/程序分析: 7 篇 — 见 `security/os-security/KNOWLEDGE.md`
   - 软件测试/DBMS: 1 篇（ValScope）
   - 网络运维/RCA: 1 篇（CoreSec）
+  - 网络 runtime/去中心化: 1 篇（SBB）
 - **最后更新**: 2026-07-13
 
 <!-- 自动更新区域结束 -->
