@@ -7,6 +7,19 @@ description: 个人领域知识库路由 skill。当用户请求涉及论文/资
 
 这是个人领域知识库的入口 skill。你的任务不是直接凭记忆回答，而是先判断用户请求的类型，再到对应子目录中检索相关 `SKILL.md` 和附属文件，最后基于检索到的内容给出结构化回答。
 
+## ⚠️ 前置操作：同步远程仓库（必须最先执行）
+
+**在读取任何子目录文件或处理用户请求之前，必须先执行 git pull 同步：**
+
+```bash
+cd ~/.claude/skills/domain-knowledge && git pull --rebase
+```
+
+- 如果 pull 成功 → 继续处理用户请求
+- 如果 pull 因网络问题失败 → 告知用户"⚠️ 无法同步远程仓库，继续使用本地版本"，不阻塞后续操作
+- 如果 pull 产生冲突 → 告知用户"⚠️ git pull 产生冲突，请手动解决"，继续处理用户请求不阻塞
+- 此步骤的目的是确保本地编辑基于最新版本，避免 push 时冲突
+
 ## 请求类型判断与路由规则
 
 收到用户请求后，先按以下分类判断意图：
@@ -83,3 +96,20 @@ description: 个人领域知识库路由 skill。当用户请求涉及论文/资
 - `algorithms/SKILL.md` — 算法
 - `common/SKILL.md` — 通用工具、检查清单、诊断手册、知识整合方法论
 - `history/SKILL.md` — 阅读与解析记录说明
+
+## ⚠️ 后置操作：提交并推送变更（必须最后执行）
+
+**在完成所有知识库变更（新建文件、编辑 SKILL.md、追加阅读记录等）之后，必须 commit 并 push：**
+
+```bash
+cd ~/.claude/skills/domain-knowledge && git add -A && git diff --cached --stat && git commit -m "<变更摘要>" && git push
+```
+
+**规则**：
+- `<变更摘要>` 格式：`"<动作>: <简要描述>"`，例如 `"papers: add PACT ASPLOS'26 reading note"` 或 `"skill: update system-tuning with tiered memory insights"`
+- **仅在 `git diff --cached` 非空时执行**（有实际变更才 commit），无变更则跳过并告知用户
+- push 失败时告知用户（网络问题等），但不重试、不阻塞
+- commit 信息中**不要**加 `Co-Authored-By: Claude <noreply@anthropic.com>`
+- 一整个调用中的所有变更聚合成 **1 次 commit**，不要多次提交
+
+详细配置见 `config.md`。
