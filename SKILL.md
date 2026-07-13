@@ -114,3 +114,16 @@ cd ~/.claude/skills/domain-knowledge && git add -A && git diff --cached --stat &
 - 一整个调用中的所有变更聚合成 **1 次 commit**，不要多次提交
 
 详细配置见 `config.md`。
+
+**⚠️ 每次 commit 前须更新 `README.md`**：从 `history/reading-log.md` 统计总篇数、会议分布和领域分布，写入 README.md 中 `<!-- 以下区域由 /domain-knowledge 后置操作自动更新` 和 `<!-- 自动更新区域结束 -->` 之间的区域。格式示例：
+
+```markdown
+- **总计**: 13 篇
+- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 9 篇（'26）
+- **领域分布**:
+  - CXL/内存系统/可观测性: 8 篇（PACT, TMO, M5, CAMP, RamRyder, MAC, NEMO, OBASE）
+  - LLM 推理服务: 5 篇（Strata, ECHO, DirectKV, LMetric, Prism）
+- **最后更新**: YYYY-MM-DD
+```
+
+领域分类依据 `history/reading-log.md` 的「归档位置」列和「备注」列综合判断。

@@ -30,12 +30,16 @@ domain-knowledge/
 
 ## 已覆盖的领域知识
 
-当前已解析 **13 篇**论文（ASPLOS '22–'26、OSDI '26），主要覆盖：
+<!-- 以下区域由 /domain-knowledge 后置操作自动更新，请勿手动编辑本节 -->
 
-| 领域 | 论文 | 核心主题 |
-|------|------|---------|
-| **CXL/内存系统** | PACT, TMO, CAMP, M5, RamRyder, MAC, NEMO, OBASE | 内存 tiering、带宽隔离、元数据管理、可观测性 |
-| **LLM 推理服务** | Strata, ECHO, DirectKV, LMetric, Prism | KV cache 层次化、调度、显存共享 |
+- **总计**: 13 篇
+- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 9 篇（'26）
+- **领域分布**:
+  - CXL/内存系统/可观测性: 8 篇（PACT, TMO, M5, CAMP, RamRyder, MAC, NEMO, OBASE）
+  - LLM 推理服务: 5 篇（Strata, ECHO, DirectKV, LMetric, Prism）
+- **最后更新**: 2026-07-13
+
+<!-- 自动更新区域结束 -->
 
 更多细节见各子目录下的 `SKILL.md` 和 `performance/system-tuning/SKILL.md`。
 
