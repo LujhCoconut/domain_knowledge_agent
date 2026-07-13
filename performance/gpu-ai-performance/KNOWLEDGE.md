@@ -14,6 +14,7 @@ GPU 与 AI/ML 推理和训练的性能优化知识。
 | LLM 请求调度与路由 | multiplicative scheduling, KV$-awareness, load balancing, P-token × BS, hotspot detection | LMetric(OSDI'26) |
 | 多模型 GPU 显存共享 | memory ballooning, CUDA VMM, elastic tensor, KVPR, time/space sharing, bursty groups | Prism(OSDI'26) |
 | 万亿参数 MoE 训练 | overlap-aware partition, synthesized overlap schedule, dynamic bubble filling, pipeline parallelism | Tessera(OSDI'26) |
+| 异质分布式训练 (SPMD) | asymmetric sharding, hierarchical communication, graph specialization, dynamic switching | Hetu v2(OSDI'26) |
 
 ---
 
@@ -356,3 +357,25 @@ LLM 集群中 global scheduler 需同时平衡 KV$-awareness（路由到缓存 p
 - 5 workloads at 4,096–12,288 GPUs: +20-33% throughput
 - Trillion-parameter model: 39% MFU
 - vs Megatron-Core: 1.24× MFU
+
+---
+
+## 异质分布式训练 (SPMD)
+
+### 核心问题
+SPMD 范式假设"所有设备同构且所有输入等量"——但在混合 GPU 代际、频繁设备故障（Llama 3: 54 天 419 次中断）、变长序列的现实中被打破。HSPMD 通过原语层扩展（非对称 sharding）+ 执行层双图机制（graph specialization + dynamic switching）统一处理三种异质性来源。
+
+### 关键洞察
+
+1. **扩展 SPMD 原语而非替代它**：保留"单设备视角编程"的简洁性，在 sharding 注解层添加不对称语义
+2. **空间 vs 时间异质性的分离处理**：设备差异是 quasi-static → progressive graph specialization；数据差异是 per-batch → dynamic graph switching
+3. **层级通信**：混合 GPU 代际场景中，先 intra-group all-reduce（同代 GPU）→ 再 inter-group reduce
+- 来源：Hetu v2(OSDI'26)
+
+### 与 Tessera 的关系
+
+| | Tessera(OSDI'26) | Hetu v2(OSDI'26) |
+|---|---|---|
+| 异质性来源 | 模型架构 (不同层类型) | 设备 (GPU 代际/故障) + 数据 (变长) |
+| 并行维度 | Pipeline Parallelism | SPMD (DP/TP/Sharding) |
+| 核心机制 | Overlap-aware partition + dynamic bubble | Asymmetric sharding + graph specialization/switching |
