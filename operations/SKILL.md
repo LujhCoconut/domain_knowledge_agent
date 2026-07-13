@@ -12,6 +12,7 @@
 | `ci-cd-devops/` | CI/CD 与 DevOps | GitHub Actions、GitLab CI、制品管理、发布策略、IaC |
 | `storage-infrastructure/` | 存储基础设施与数据管线 | HDFS、大规模数据供给、checkpoint 管理、跨 DC 数据复制、训练数据预处理 |
 | `incident-response/` | 故障响应 | On-call、故障定位流程、复盘模板、应急止血 |
+| `cloud-infrastructure/` | 云基础设施与虚拟化 | 超卖、CPU idle 管理、mwait/vCPU 调度、VM exit 优化、SLO 保障 |
 | `sre-practices/` | SRE 实践 | SLI/SLO/SLA、容量规划、混沌工程、变更管理 |
 
 ## 新增 skill 建议
