@@ -64,5 +64,6 @@
 | 2026-07-14 | Osprey(OSDI'26) | 论文-系统 | OSDI '26, osdi26-liu-yicheng.pdf | knowledge-synthesis | security/os-security/ | SC 透明虚拟内存，利用 obliviousness 实现 speculative paging，128× 数据扩展, <200 LOC/libs |
 | 2026-07-14 | Nested SEV(OSDI'26) | 论文-系统 | OSDI '26, osdi26-takiguchi.pdf | knowledge-synthesis | operations/cloud-infrastructure/ | 嵌套机密VM通用支持，emulation-less multiplexing + SEV context decoupling，两种信任模型 |
 | 2026-07-14 | µUSB(OSDI'26) | 论文-系统 | OSDI '26, osdi26-zhang-xuankai.pdf | knowledge-synthesis | security/os-security/ | record→lift→replay 从执行trace推导TrustZone精简USB驱动，首次in-TEE USB支持 |
+| 2026-07-14 | CPU-GPU Hybrid MoE(OSDI'26) | 论文-系统 | OSDI '26, osdi26-wang-wenxin.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | 本地CPU-GPU混合MoE推理，SLP 1,200 tok/s, 45K prompt in 30s, CPU FP8 4-5× |
 
 <!-- 追加新记录时，复制上面一行并修改即可。 -->

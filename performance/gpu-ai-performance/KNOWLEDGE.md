@@ -23,6 +23,7 @@ GPU 与 AI/ML 推理和训练的性能优化知识。
 | RL 动态资源调度 (DynaRL) | dynamic hypergraph, resource migration, context-aware data routing, multi-level scheduling | DynaRL(OSDI'26) |
 | Agentic RL 异构硬件解耦 | trajectory-level decoupling, hardware heterogeneity mapping, stale-bounded async, serverless reward | RollArt(OSDI'26) |
 | 同步 RL Rollout 优化 | divided rollout, context-aware scheduling, adaptive grouped speculative decoding, heavy-tailed latency | Seer(OSDI'26) |
+| 本地 CPU-GPU 混合 MoE 推理 | stream-loading prefill, CPU-GPU hybrid, SmallEP, local SLO, FP8 CPU inference | CPU-GPU Hybrid MoE(OSDI'26) |
 
 ---
 
@@ -539,3 +540,23 @@ Agentic RL 工作负载混合了计算密集型 prefill、带宽密集型 decode
 - "将每个阶段映射到最佳硬件"是异构多阶段管道的通用优化策略——不仅适用于 RL
 - Trajectory-level decoupling 是处理长尾效应的经典策略：不要让最慢的单元阻塞整个系统
 - Serverless 模型在"低利用率 + 突发性"的工作负载上有天然优势——reward 评估恰好满足这两个条件
+
+---
+
+## 本地 CPU-GPU 混合 MoE 推理 (CPU-GPU Hybrid MoE)
+
+### 核心问题
+本地部署 MoE 大模型即便在低并发下也无法达到云级 SLO：四个关键差距——依赖压缩/量化模型（质量让步）、12K+ prompt 超 30s TTFT、decode 吞吐 <20 tok/s、混合 prefill-decode 并发差。
+
+### 关键洞察
+
+1. **Stream-loading prefill (SLP)**：不是减小模型而是**流体化加载**——动态流式加载模型层到 GPU，在层加载期间执行而非等待完整模型
+2. **CPU-GPU 混合充分利用现有硬件**：双路 CPU + 消费级 GPU 的组合比纯 GPU 方案更实用
+3. **CPU native FP8 是一个未充分探索的维度**：4-5× 延迟降低，通常 FP8 讨论聚焦 GPU
+4. **Dual-batch attention-MoE overlap**：双批次重叠执行隐藏延迟
+- 来源：CPU-GPU Hybrid MoE(OSDI'26)
+
+### 实践启发
+- "Stream-loading" 可推广到任何"模型太大、layer 需动态加载"的场景
+- 本地/边缘场景下的 CPU-GPU 混合推理比纯 GPU 更实用
+- FP8 在 CPU 上的加速是 under-explored 的优化维度
