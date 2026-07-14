@@ -111,5 +111,6 @@
 | 2026-07-14 | MPK(OSDI'26) | 论文-编译器/系统 | OSDI '26, osdi26-cheng.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | mega-kernel编译器+运行时，SM级任务图+去中心化调度，推理延迟-1.7× |
 | 2026-07-14 | GraCE(OSDI'26) | 论文-编译器/系统 | OSDI '26, osdi26-ghosh.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | CUDA Graph编译器使能，auto code transform+indirect params，Graph收益2×于PyTorch2 |
 | 2026-07-14 | Quark(OSDI'26) | 论文-运维系统 | OSDI '26, osdi26-chai.pdf | knowledge-synthesis | operations/cloud-infrastructure/ | 混布batch serverless化，消除4种闲置，有效利用率33%→100%，节省>10万核 |
+| 2026-07-14 | Arca(OSDI'26) | 论文-OS设计 | OSDI '26, osdi26-srivatsan.pdf | knowledge-synthesis | architecture/cloud-native/ | continuation作为OS原语，2.55µs快照/恢复，serverless 50-60×加速 |
 
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
