@@ -34,8 +34,8 @@ domain-knowledge/
 
 <!-- 以下区域由 /domain-knowledge 后置操作自动更新，请勿手动编辑本节 -->
 
-- **总计**: 44 篇
-- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 40 篇（'26）
+- **总计**: 45 篇
+- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 41 篇（'26）
 - **领域分布**:
   - CXL/内存系统/可观测性/回收理论: 9 篇
   - 存储层次/体系结构: 1 篇（Soul/GCP） — 见 `architecture/memory-storage-hierarchy/KNOWLEDGE.md`
@@ -46,6 +46,7 @@ domain-knowledge/
   - 软件测试/DBMS: 1 篇（ValScope）
   - OS 内核/调优: 4 篇（kSTEP, mwait-sched, Xkernel, ECO）
   - 监控/可观测性: 3 篇（CoreSec, StriaTrace, gigiprofiler） — 见 `operations/monitoring-observability/KNOWLEDGE.md`
+  - 存储/文件系统: 2 篇（ByteDance DataPipeline, DeLFS） — 见 `operations/storage-infrastructure/KNOWLEDGE.md`
   - 程序分析与动态优化: 4 篇（hS, Incr, UCSan, Aletheia） — 见 `operations/program-analysis/KNOWLEDGE.md`
   - 并发数据结构: 1 篇（Arctic） — 见 `algorithms/concurrent-data-structures/KNOWLEDGE.md`
   - 网络系统: 2 篇（SBB, Rakaia） — 见 `network/os-networking/KNOWLEDGE.md`

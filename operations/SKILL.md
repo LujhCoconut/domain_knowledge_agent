@@ -13,7 +13,7 @@
 | `program-analysis/` | 程序分析与动态优化 | 推测性执行、动态 effect tracing、syscall interception、运行时优化 |
 | `container-k8s/` | 容器与 Kubernetes | Docker、K8s 资源对象、调度、网络、存储、排错 |
 | `ci-cd-devops/` | CI/CD 与 DevOps | GitHub Actions、GitLab CI、制品管理、发布策略、IaC |
-| `storage-infrastructure/` | 存储基础设施与数据管线 | HDFS、大规模数据供给、checkpoint 管理、跨 DC 数据复制、训练数据预处理 |
+| `storage-infrastructure/` | 存储基础设施与文件系统 | HDFS、大规模数据供给、多核文件系统(LFS)、去中心化锁、per-core 分区 |
 | `incident-response/` | 故障响应 | On-call、故障定位流程、复盘模板、应急止血 |
 | `cloud-infrastructure/` | 云基础设施与虚拟化 | 超卖、CPU idle 管理、mwait/vCPU 调度、VM exit 优化、SLO 保障、内核在线调优 |
 | `sre-practices/` | SRE 实践 | SLI/SLO/SLA、容量规划、混沌工程、变更管理 |
