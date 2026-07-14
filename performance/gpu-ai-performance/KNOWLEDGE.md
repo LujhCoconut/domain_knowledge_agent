@@ -18,6 +18,7 @@ GPU 与 AI/ML 推理和训练的性能优化知识。
 | 异质分布式训练 (SPMD) | asymmetric sharding, hierarchical communication, graph specialization, dynamic switching | Hetu-v2(OSDI'26) |
 | 内核级 Compute-Comm Overlap | chunk-centric overlap, in-kernel communication, tile schedule reshaping, Triton compiler | Syncopate(OSDI'26) |
 | Agentic Workflow 编排 | declarative specification, profile-guided optimization, cross-layer orchestration, SLO-aware runtime | Murakkab(OSDI'26) |
+| RL 后训练 Co-Scheduling | dependency bubble, co-execution group, rollout-training disaggregation, two-tier scheduling, residency constraint | Weave(OSDI'26) |
 
 ---
 
@@ -425,3 +426,23 @@ Agentic workflow 的部署涉及三层独立优化：workflow 结构、每个 ag
 - 声明式范式在 agentic workflow 中特别有效：workflow 结构复杂多变，手动指定每个 agent 的 model+hardware 组合不可扩展
 - 跨层优化需要 profile 数据支撑——cost/latency/accuracy 三者之间存在可量化的 trade-off 曲面
 - 能耗和成本的节省（3-4×）表明 agentic workflow 的资源浪费比 standard inference 更严重——因为有更多"过度配置"的自由度
+
+---
+
+## RL 后训练 Co-Scheduling
+
+### 核心问题
+RL 后训练的 rollout-training 解耦架构在两个专用集群之间交替执行——但 on-policy 同步要求产生**依赖气泡**：rollout 集群在 training 期间闲置，反之亦然。异步 off-policy 方案消除气泡但牺牲模型精度和收敛稳定性。
+
+### 关键洞察
+
+1. **Co-execution group 是消除 bubble 的正确中层抽象**：将多作业的 rollout 和 training 阶段跨 pool 交错编排——作业 A 的 rollout 填充作业 B 的 training bubble，反之亦然
+2. **双层调度分离关注点**：组间调度器用保守随机规划（处理不可预测的序列长度）做粗粒度作业放置→组内调度器用可证明最优的轮询编排
+3. **Residency constraint 是"热启动"的硬约束**：每个 worker 持有数百 GB 的模型状态——co-execution group 的大小受限于所有成员作业的状态能放进每个 worker 的主机内存
+4. **100% SLO 达成的同时 1.84× 成本效率**：conservative planning + 确定性的组内调度保证了 SLO 不会因 bubble-filling 而违反
+- 来源：Weave(OSDI'26)
+
+### 实践启发
+- "Dependency bubble"是任何有两个交替阶段跨不同资源池的系统的通用概念（不仅是 RL——generative AI 的 prefill-generate、ML 训练的 forward-backward、MapReduce 的 map-reduce）
+- "Co-scheduling across pools"是解耦系统的正确调度抽象——不分别优化两个池，而是优化交叉池的依赖链
+- Residency constraint 作为"warm-start"的硬约束：必须决定每个 worker 能"记住"多少个作业
