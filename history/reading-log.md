@@ -108,5 +108,6 @@
 | 2026-07-14 | ADAngel(OSDI'26) | 论文-系统 | OSDI '26, osdi26-liu-yao.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | DPR模型自适应混合精度GEMM，oracle policy map+lightweight dispatch，decode vs llama.cpp 5.10× |
 | 2026-07-14 | Twill(OSDI'26) | 论文-编译器/系统 | OSDI '26, osdi26-soi.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | SWP+WS约束优化求解，Twill自动推导最优调度，证明FlashAttention手工调度最优 |
 | 2026-07-14 | TileLoom(OSDI'26) | 论文-编译器/系统 | OSDI '26, osdi26-li-wei.pdf | knowledge-synthesis | architecture/accelerators/ | spatial dataflow加速器tile编译，MLIR自动dataflow planning，匹配vendor库性能 |
+| 2026-07-14 | MPK(OSDI'26) | 论文-编译器/系统 | OSDI '26, osdi26-cheng.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | mega-kernel编译器+运行时，SM级任务图+去中心化调度，推理延迟-1.7× |
 
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
