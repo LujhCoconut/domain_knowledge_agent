@@ -38,7 +38,7 @@ cd ~/.claude/skills/domain-knowledge && git pull --rebase
 | **故障排查 / 运维问题** | 涉及系统报错、服务异常、部署失败、监控告警、Linux/K8s 运维 | `operations/` |
 | **性能优化问题** | 涉及 latency、throughput、CPU、内存、I/O、并发、并行、数据库、网络、GPU 性能、内核调优 | `performance/` |
 | **架构设计 / 体系结构问题** | 涉及分布式系统、微服务、数据系统、可靠性、云原生、容量设计、CPU/GPU 微架构、存储层次、互连网络、近存/存内计算 | `architecture/` |
-| **算法问题** | 涉及资源调度、负载均衡、共识、分布式算法、最优化、问题求解、图算法、流式算法、复杂度分析 | `algorithms/` |
+| **算法问题** | 涉及资源调度、负载均衡、共识、分布式算法、最优化、问题求解、图算法、流式算法、并发数据结构、复杂度分析 | `algorithms/` |
 | **OS 安全与程序分析** | 涉及访问控制、内存沙箱、动态追踪/插桩、策略提取、二进制分析、移动端安全 | `security/` |
 | **网络系统问题** | 涉及用户态网络 runtime、内核网络栈、TCP/RPC 调度、去中心化网络架构 | `network/` |
 | **程序分析 / 运行时优化** | 涉及推测性执行、动态插桩、effect tracing、shell 脚本优化、syscall 拦截 | `operations/program-analysis/` |
