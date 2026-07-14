@@ -30,6 +30,7 @@ GPU 与 AI/ML 推理和训练的性能优化知识。
 | CPU-GPU 协同 I/O 引擎 | split SQ/CQ, CPU co-pilot, barrier-based sync, adaptive co-polling, GPU I/O stall reduction | CoPilotIO(OSDI'26) |
 | GPU 十亿级向量搜索 | node-level dependency, tiered graph, discovery-expansion window, async edge fetching, ANNS | FlowANN(OSDI'26) |
 | GPU 演化图分析 | proxy graph, approximate-then-refine, fused kernel, concurrent snapshots, bound-based pruning, multi-version compaction | POEGA(OSDI'26) |
+| 商品 GPU 集群 LLM Serving | PaDG, macro instance, commodity clusters, prefill-decode interference, cross-instance orchestration, Ethernet | EcoServe(OSDI'26) |
 
 ---
 
@@ -679,3 +680,22 @@ GPU ANNS 比 CPU 快 200×，但 GPU 显存有限（80-96GB），十亿级图索
 ### 实践启发
 - **"用计算换 I/O，再并行化摊销计算"是 GPU 的通用策略**：GPU compute 便宜但 I/O 昂贵→用 compute 减少 I/O→再用 parallelism 吸收 compute 开销
 - **"多 snapshot 并发"是演化图分析的独特优势**：静态图分析无法利用这一点——EGA 的 time dimension 提供了额外的并行度
+
+---
+
+## 商品 GPU 集群 LLM Serving (EcoServe)
+
+### 核心问题
+现有两种 LLM serving 策略都不适合普通 GPU 集群（L20 + Ethernet——无 NVLink/InfiniBand 的主流生产环境）：NoDG（prefill/decode colocate 在同一实例）有严重相位干扰——两种相位交替执行→decode 无法积累足够大 batch→吞吐差；FuDG（完全解耦 prefill 和 decode 到不同实例）依赖高性能互联传输 KV cache——在 ordinary Ethernet 上不可行。
+
+### 关键洞察
+
+1. **"PaDG：时间维度解耦而非空间解耦"**：单实例内在时间维度上交替 prefill 和 decode→避免两者同时争抢 GPU 资源。多个实例组成 macro instance 并循环激活→保证 prefill 持续可用→救援 decode 延迟。
+2. **"减少 KV cache 传输的数据量使其在 Ethernet 上可行"**：不像 FuDG 要求传输完整 KV cache→而是稀疏化传输→在普通网络带宽下也可承受。
+3. **"Macro instance = 跨实例协作的基本单元"**：多个实例协作而非独立工作→缓解单实例隔离带来的 prefill 不可用问题。Mitosis scaling 动态调整 macro instance 内实例数→在线细粒度容量调整。
+
+- 来源：EcoServe(OSDI'26)
+
+### 实践启发
+- **"二分之外有第三选择"**：colocate vs disaggregate 不是二选一——partial disaggregation 在两者之间找到平衡点。类似 CoPilotIO 的 "all-GPU vs all-CPU → split SQ/CQ"、FlowANN 的 "step-level vs per-node → node-level dependency"
+- **"系统设计应该面向实际部署环境而非前沿硬件"**：大多数研究假设 H100+NVLink+IB，但生产环境的硬件替换周期长得多——L20+Ethernet 依然是主流。好的系统设计应覆盖长尾硬件
