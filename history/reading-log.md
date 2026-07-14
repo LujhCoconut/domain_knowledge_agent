@@ -95,5 +95,6 @@
 | 2026-07-14 | Helmsman(OSDI'26) | 论文-运维系统 | OSDI '26, osdi26-huang-yuchen.pdf | knowledge-synthesis | performance/storage-filesystem/ | 聚类ANNS+SSD替代全DRAM HNSW，成本-90%，40台替代35K核+0.35PB DRAM |
 | 2026-07-14 | WiseCode(OSDI'26) | 论文-系统 | OSDI '26, osdi26-cai.pdf | knowledge-synthesis | performance/storage-filesystem/ | 首个实用宽条带矢量码，template-unfold+rep-min系数搜索，修复吞吐vs UCLRCs 1.41-2.18× |
 | 2026-07-14 | LogDrive(OSDI'26) | 论文-系统 | OSDI '26, osdi26-vickers.pdf | knowledge-synthesis | algorithms/distributed-consensus/ | 云存储共享日志耐久层，durability-sequencing分离，metadata成本vs DynamoDB -10× |
+| 2026-07-14 | Timelock Drive(OSDI'26) | 论文-系统/安全 | OSDI '26, osdi26-rosenblum.pdf | knowledge-synthesis | security/os-security/ | 物理块级timelock防御，~400LoC形式验证checker+delegate-but-verify，TCB极小化 |
 
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
