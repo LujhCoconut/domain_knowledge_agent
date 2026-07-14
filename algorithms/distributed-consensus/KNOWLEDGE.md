@@ -8,6 +8,7 @@
 |------|--------|------|
 | 本地线性化读共识协议 | roster leases, all-to-all leasing, linearizable reads, optimistic holding, responder set, generalized leadership | Bodega(OSDI'26) |
 | 排序共识公平性 | equal opportunity, ε-ordering equality, ∆-ordering separation, SRO, front-running mitigation, sandwich attack | Pompē-SRO(OSDI'26) |
+| 通用共识 Fast-Path 框架 | 1-RTT plugin, view change hazard, promise, dual-path, super-quorum, TLA+ verification | Jetpack(OSDI'26) |
 
 ---
 
@@ -56,3 +57,27 @@
 - **"区分 relevant vs irrelevant features"是通用公平性框架**：不仅是区块链——任何排序系统（推荐、拍卖、调度）都可以通过定义 relevant features 来形式化公平性要求
 - **"受控随机性 → 公平性"的设计模式**：当关键信息无法可靠获取时（如精确调用时间），受控随机性可以替代精确测量
 - **SRO 可以用于任何需要"先决策后揭示随机性"的场景**：如 leader election、committee selection、lottery-based scheduling
+
+---
+
+## 通用共识 Fast-Path 框架 (Jetpack)
+
+### 核心问题
+经典共识协议（Raft/MultiPaxos）需 2 RTT 提交，Fast Paxos 理论可降至 1 RTT，但所有现有 fast-path 协议（EPaxos/CURP/Tapir）都从零设计，与底层协议紧耦合——无法 retrofitted 到生产系统（etcd、MongoDB、ZooKeeper）。能否做一个通用插件为任何共识协议添加 1-RTT 能力？
+
+### 关键洞察
+
+1. **"双路径并行 + 先到先得"**：Client 同时向 fast path（1 RTT 到所有 replica）和原始路径（2 RTT 到 leader）发送请求。Fast path 成功 → 1 RTT 提交；冲突/失败 → 原始路径接管。两个路径通过 "promise" 机制收敛到同一结果。
+
+2. **"View change hazard"是要害问题**：稳定期 promise 简单，但 leader 重选后新 leader 可能不知道该 promise → 可能提交冲突命令。Jetpack 首次形式化此问题并提出两个结构要求：(1) Fast commit 的值必须对原始路径可见 (2) View change 后新 leader 必须发现先前的 promise。
+
+3. **"两个设计原则实现两个要求"**：(1) Promise 在原始路径 log 中有持久表示 (2) View change 时扫描 fast path 状态并继承。Jetpack 用三个反例（CURP sketch、Xline、Carousel）说明这些原则为何容易被遗漏。
+
+4. **"Fast path 插件而非协议重写"——零侵入**：所有 client 使用原始路径时性能 = 未修改系统。Fast path 使用与否不影响原始路径的特性和优化。
+
+- 来源：Jetpack(OSDI'26)
+
+### 实践启发
+- **"识别通用 hazard + 最少结构要求"是好的系统研究范式**：不只做一个 point solution，而是提炼适用于整类的条件
+- **"双路径并行 + 安全网"模式可推广**：保持快速路径的同时有可靠慢路径兜底——类似 Kareus 自动回退 sequential、SPADE 采样后 filter
+- **TLA+ model-checking 对协议设计的价值**：6 个系统全覆盖验证，确保跨 view change 的安全
