@@ -7,6 +7,7 @@
 | 泛化缓存一致性 (GCP) | disaggregated shared memory, lock synchronization, wait queues, variable-size cache lines, coherence protocol extension | Soul/GCP(OSDI'26) |
 | 共享解聚内存对象存储 (Duhu) | CXL, pass-by-reference, immutable objects, non-temporal writes, cache coherence avoidance | Duhu(OSDI'26) |
 | VM 弹性内存超卖 (Blowfish) | disaggregated memory, paravirtualization, THP-aware tracking, far memory swapping, hypervisor bypass | Blowfish(OSDI'26) |
+| CXL 跨 SSD 计算资源共享 (Espresso) | JBOF, inter-SSD resource sharing, decentralized compute pooling, CXL interconnection, storage disaggregation | Espresso(OSDI'26) |
 
 ---
 
@@ -75,3 +76,32 @@
 | Soul/GCP | 同步 | 泛化缓存一致性原生支持锁 |
 | Duhu | 数据共享 | 不可变对象 + non-temporal writes 绕开一致性 |
 | **Blowfish** | **弹性超卖** | **半虚拟化 THP 追踪 + hypervisor 直通回收** |
+
+---
+
+## CXL 跨 SSD 计算资源共享 (Espresso)
+
+### 核心问题
+企业级 SSD 为处理 I/O 突发集成了大量计算资源（ARM CPU + 板载 DRAM），但 JBOF 部署中这些资源因 I/O burst 偶发性而严重低利用——同时大幅增加了 SSD 的单位成本。现有方案（传统 JBOF black-box、hypervisor 虚拟化）要么无法跨 SSD 共享资源，要么需要昂贵的数据复制并丢失 computation-near-data 优势。
+
+### 关键洞察
+
+1. **CXL 不仅是"存互联"——也是"计算互联"**：Espresso 将 CXL 从 memory pooling（容量扩展）重新定位为 **compute resource pooling**（跨 SSD 共享 CPU/DRAM）
+2. **"Data stays, compute moves"**：忙碌 SSD 通过 CXL 将其元数据计算任务卸载到空闲 SSD——数据保留在原 flash 上，不复制
+3. **去中心化资源管理匹配 JBOF 的 scale-out 本质**：各 SSD 自主决策何时请求远端计算资源——类似 P2P 负载均衡
+4. **SSD 架构解耦**为功能独立组件是跨 SSD 资源共享的前提：compute/DRAM/flash 分离 → 精细化分配
+- 来源：Espresso(OSDI'26)
+
+### 实践启发
+- "Compute resource pooling over CXL"不仅适用于 SSD——任何嵌入式计算资源池（SmartNIC、DPU、storage controller）都可以共享
+- 去中心化资源管理在分布式存储中以特定方式适用——集中式管理器无法匹配分布式 I/O 模式
+- "不需要数据移动的计算卸载"是 CXL shared memory 语义的独特优势
+
+### 存储层次（4 篇）
+
+| 论文 | 角度 | 核心机制 |
+|------|------|---------|
+| Soul/GCP | 同步 | 泛化缓存一致性原生支持锁 |
+| Duhu | 数据共享 | 不可变对象 + non-temporal writes 绕开一致性 |
+| Blowfish | 弹性超卖 | 半虚拟化 THP 追踪 + hypervisor 直通回收 |
+| **Espresso** | **计算与成本** | **CXL 跨 SSD 计算资源共享** |
