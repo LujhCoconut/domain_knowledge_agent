@@ -66,4 +66,6 @@
 | 2026-07-14 | µUSB(OSDI'26) | 论文-系统 | OSDI '26, osdi26-zhang-xuankai.pdf | knowledge-synthesis | security/os-security/ | record→lift→replay 从执行trace推导TrustZone精简USB驱动，首次in-TEE USB支持 |
 | 2026-07-14 | CPU-GPU Hybrid MoE(OSDI'26) | 论文-系统 | OSDI '26, osdi26-wang-wenxin.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | 本地CPU-GPU混合MoE推理，SLP 1,200 tok/s, 45K prompt in 30s, CPU FP8 4-5× |
 
+| 2026-07-14 | UEP(OSDI'26) | 论文-系统 | OSDI '26, osdi26-mao-ziming-uep.pdf | knowledge-synthesis | network/os-networking/ | 可移植EP通信，CPU proxy解耦GPU-NIC，O(m)取代O(m×n)，EFA上2.1×吞吐提升，SGLang推理+40% |
+
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
