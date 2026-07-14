@@ -6,6 +6,7 @@
 |------|--------|------|
 | 网络根因分析 (RCA) | abstention algebra, PAM-style composition, deterministic decisions, Clos fabric, gray failures | CoreSec(OSDI'26) |
 | LLM 推理在线 Tracing/诊断 | key sync points, critical path, abnormality-only detailed tracing, dynamic roofline, correlation diagnosis | StriaTrace(OSDI'26) |
+| 应用定义资源的性能诊断 | LLM semantic inference + static analysis, resource bottleneck attribution, runtime tracking | gigiprofiler(OSDI'26) |
 
 ---
 
@@ -45,3 +46,22 @@ LLM 推理有严格的 SLO（TTFT < 10s, TPOT < 100ms），偶发性异常即可
 - "关键路径+tracing"优于"全量 tracing"——在 LLM 推理中，同步和 barrier 点已经足够
 - 将 roofline model 从性能分析扩展到异常检测是一次好的跨领域思路
 - 生产 tracing 系统最核心的设计选择是"默认采集什么"和"何时升级"——这决定了开销和信号质量的根本平衡
+
+---
+
+## 应用定义资源的性能诊断
+
+### 核心问题
+应用级资源（buffer pool、查询缓存、任务队列、WAL）的性能问题不被系统级指标（CPU util、内存）覆盖——开发者 57% 的工作时间花在性能问题诊断上，这类问题是**最难定位**的。现有工具要么只看系统级指标（看不到应用语义），要么需要手动 instrument（需要深入理解应用内部）。
+
+### 关键洞察
+
+1. **LLM 语义推断 + 静态分析验证的混合方法**：LLM 从代码中识别"这可能是资源管理代码"的语义线索 → 静态分析验证候选的真实性 → 结合两者优点
+2. **"请求→资源交互→瓶颈"的三层归因模型**：追踪每个请求如何与已识别的资源交互 → 从聚合事件中检测瓶颈 → 归因到触发请求 → 链接回源代码路径
+3. **应用定义资源的 visibility gap 是严重低估的问题**：很多"CPU busy but no throughput"的生产事故根因不在系统层面
+- 来源：gigiprofiler(OSDI'26)
+
+### 实践启发
+- LLM + 静态分析的组合模式（"语义推断→形式化验证"）可推广到其他程序分析场景
+- 性能诊断的核心是"归因"——不仅要找到 bottleneck，还要解释"谁的什么请求、通过什么代码路径、如何触发了这个 bottleneck"
+- 15/15 全命中 + 2 新 bug 证明应用定义资源的诊断是一个有真实需求但工具空白的问题域
