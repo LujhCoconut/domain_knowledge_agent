@@ -100,5 +100,6 @@
 | 2026-07-14 | M3U(OSDI'26) | 论文-系统 | OSDI '26, osdi26-xu-yizhe.pdf | knowledge-synthesis | operations/cloud-infrastructure/ | VM后拷贝迁移MMU可扩展性，lock relaxation+预分配+解耦pipeline，downtime -47%, post-copy -89.6% |
 | 2026-07-14 | InfiniDefrag(OSDI'26) | 论文-系统 | OSDI '26, osdi26-zeng.pdf | knowledge-synthesis | architecture/memory-storage-hierarchy/ | GPA无限空间+remap消除guest compaction，compaction-free碎片整理 |
 | 2026-07-14 | GOODKIT(OSDI'26) | 论文-系统 | OSDI '26, osdi26-teguia.pdf | knowledge-synthesis | security/os-security/ | VM自省新范式，observer共享VMM+lock-aware一致性，比LibVMI快110×，target slowdown仅1.06× |
+| 2026-07-14 | vBOIDs(OSDI'26) | 论文-系统 | OSDI '26, osdi26-manakkal.pdf | knowledge-synthesis | performance/system-tuning/ | 容器粗粒度BOID调度抽象，inter-core migration降一个数量级，吞吐up to 3× |
 
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
