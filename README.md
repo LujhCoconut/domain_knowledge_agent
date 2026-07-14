@@ -34,8 +34,8 @@ domain-knowledge/
 
 <!-- 以下区域由 /domain-knowledge 后置操作自动更新，请勿手动编辑本节 -->
 
-- **总计**: 39 篇
-- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 35 篇（'26）
+- **总计**: 40 篇
+- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 36 篇（'26）
 - **领域分布**:
   - CXL/内存系统/可观测性/回收理论: 9 篇
   - LLM 推理服务: 7 篇（含 agentic workflow 编排）
@@ -44,7 +44,7 @@ domain-knowledge/
   - 软件测试/DBMS: 1 篇（ValScope）
   - OS 内核/调优: 4 篇（kSTEP, mwait-sched, Xkernel, ECO）
   - 监控/可观测性: 3 篇（CoreSec, StriaTrace, gigiprofiler） — 见 `operations/monitoring-observability/KNOWLEDGE.md`
-  - 程序分析与动态优化: 2 篇（hS, Incr） — 见 `operations/program-analysis/KNOWLEDGE.md`
+  - 程序分析与动态优化: 3 篇（hS, Incr, UCSan） — 见 `operations/program-analysis/KNOWLEDGE.md`
   - 网络系统: 2 篇（SBB, Rakaia） — 见 `network/os-networking/KNOWLEDGE.md`
 - **最后更新**: 2026-07-14
 
