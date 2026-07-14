@@ -26,7 +26,7 @@
 | 2026-07-13 | Tessera(OSDI'26) | 论文-系统 | OSDI '26, osdi26-hu-weifang.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | 万亿参数 MoE 训练 PP 优化，overlap-aware partitioner + 合成 overlap scheduler + dynamic bubble optimizer，20-33% throughput 提升 |
 | 2026-07-13 | Hetu-v2(OSDI'26) | 论文-系统 | OSDI '26, osdi26-li-haoyang.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | HSPMD 扩展 SPMD 支持非对称分片+层级通信，统一处理混合 GPU/故障/变长序列三种异质性 |
 | 2026-07-13 | Syncopate(OSDI'26) | 论文-系统 | OSDI '26, osdi26-qiang.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | 编译器自动 chunk-centric compute-comm overlap，Triton 源码到源码，avg 1.3×, max 4.7× speedup |
-| 2026-07-13 | ByteDance DataPipeline(OSDI'26) | 论文-系统 | OSDI '26, osdi26-chen-luofan.pdf | knowledge-synthesis | operations/storage-infrastructure/ | LLM 预训练数据管线优化，30K job/90d trace 分析，GPU 浪费 -76%, checkpoint 加载 -40.8%, training stall -63.2% |
+| 2026-07-13 | ByteDance DataPipeline(OSDI'26) | 论文-系统 | OSDI '26, osdi26-chen-luofan.pdf | knowledge-synthesis | performance/storage-filesystem/ | LLM 预训练数据管线优化，30K job/90d trace 分析，GPU 浪费 -76%, checkpoint 加载 -40.8%, training stall -63.2% |
 | 2026-07-13 | Cocoon(OSDI'26) | 论文-系统 | OSDI '26, osdi26-kim-donghwan.pdf | knowledge-synthesis | security/os-security/ | DIF 训练相关噪声的首个系统表征，CPU-GPU-NMP 三级噪声历史管理+稀疏嵌入优化，1.23-10.82× 加速 |
 | 2026-07-13 | ValScope(OSDI'26) | 论文-系统 | OSDI '26, osdi26-lin-li.pdf | knowledge-synthesis | algorithms/ | 值语义感知的 metamorhpic testing，统一 set+value 语义推理，6 DBMS 发现 67 unique bugs |
 | 2026-07-13 | CoreSec(OSDI'26) | 论文-系统 | OSDI '26, osdi26-gaikwad.pdf | knowledge-synthesis | operations/monitoring-observability/ | PAM 弃权代数驱动的 Clos 网络 RCA，确定性决策+显式弃权，Azure 超大规模部署 |
@@ -48,7 +48,7 @@
 | 2026-07-14 | Arctic(OSDI'26) | 论文-系统 | OSDI '26, osdi26-ni.pdf | knowledge-synthesis | algorithms/concurrent-data-structures/ | 首个同时实现高性能+lock-free+range scan 的自适应基数树，hazard keys SMR, RocksDB +40% |
 | 2026-07-14 | Soul/GCP(OSDI'26) | 论文-系统 | OSDI '26, osdi26-yu-yanpeng.pdf | knowledge-synthesis | architecture/memory-storage-hierarchy/ | 泛化缓存一致性原生支持同步，disaggregated memory 上 1-2 orders magnitude 提升 |
 | 2026-07-14 | DGC(OSDI'26) | 论文-系统 | OSDI '26, osdi26-lyu.pdf | knowledge-synthesis | architecture/cloud-native/ | 解耦式 GC 服务，标记阶段 RDMA offload 至远程引擎，P99 latency -64.4%, goodput +24% |
-| 2026-07-14 | DeLFS(OSDI'26) | 论文-系统 | OSDI '26, osdi26-ahn.pdf | knowledge-synthesis | operations/storage-infrastructure/ | 去中心化 LFS，per-core domain + decentralized locking，128 核上 vs F2FS 4.34× |
+| 2026-07-14 | DeLFS(OSDI'26) | 论文-系统 | OSDI '26, osdi26-ahn.pdf | knowledge-synthesis | performance/storage-filesystem/ | 去中心化 LFS，per-core domain + decentralized locking，128 核上 vs F2FS 4.34× |
 | 2026-07-14 | Weave(OSDI'26) | 论文-系统 | OSDI '26, osdi26-wu-tianyuan.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | RL 后训练 co-scheduling，co-execution group 消除 dependency bubble，成本效率 +1.84× |
 | 2026-07-14 | RLinf(OSDI'26) | 论文-系统 | OSDI '26, osdi26-yu-chao.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | M2Flow 宏观→微观流变换，context switching+elastic pipelining，1.07-2.43× 加速 |
 | 2026-07-14 | DynaRL(OSDI'26) | 论文-系统 | OSDI '26, osdi26-wang-yuanqing.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | 动态超图+资源迁移，首个运行时动态重分配 RL 资源调度，最高 1.98× 吞吐提升 |
@@ -57,8 +57,8 @@
 | 2026-07-14 | LiteSwitch(OSDI'26) | 论文-系统 | OSDI '26, osdi26-li-nanqinqin.pdf | knowledge-synthesis | performance/system-tuning/ | CXL sub-µs stall harvesting，硬件识别+20ns 超快软件切换，回收 CXL 延迟损失 80% |
 | 2026-07-14 | Duhu(OSDI'26) | 论文-系统 | OSDI '26, osdi26-men.pdf | knowledge-synthesis | architecture/memory-storage-hierarchy/ | SDM pass-by-reference 对象存储，消除 DDF 数据复制开销，shuffle 3.39×, stage 3.59-13.81× |
 | 2026-07-14 | Blowfish(OSDI'26) | 论文-系统 | OSDI '26, osdi26-zhang-yulong.pdf | knowledge-synthesis | architecture/memory-storage-hierarchy/ | 解聚内存 VM 超卖，半虚拟化 THP-aware 追踪+hypervisor 直通路径，回收 2.48×, 恢复 2.14× |
-| 2026-07-14 | Espresso(OSDI'26) | 论文-系统 | OSDI '26, osdi26-yi.pdf | knowledge-synthesis | architecture/memory-storage-hierarchy/ | CXL JBOF 跨 SSD 计算资源共享，去中心化 compute pooling，成本降低 19%, 性能退化可忽略 |
-| 2026-07-14 | FORGE(OSDI'26) | 论文-系统 | OSDI '26, osdi26-yang-zhijun.pdf | knowledge-synthesis | architecture/memory-storage-hierarchy/ | DM 缓存同步放大缓解，组级同步+惰性热度+RDNA NIC 卸载，吞吐 4.5×, P99 延迟 7.5× |
+| 2026-07-14 | Espresso(OSDI'26) | 论文-系统 | OSDI '26, osdi26-yi.pdf | knowledge-synthesis | performance/storage-filesystem/ | CXL JBOF 跨 SSD 计算资源共享，去中心化 compute pooling，成本降低 19%, 性能退化可忽略 |
+| 2026-07-14 | FORGE(OSDI'26) | 论文-系统 | OSDI '26, osdi26-yang-zhijun.pdf | knowledge-synthesis | performance/storage-filesystem/ | DM 缓存同步放大缓解，组级同步+惰性热度+RDNA NIC 卸载，吞吐 4.5×, P99 延迟 7.5× |
 | 2026-07-14 | ZENO(OSDI'26) | 论文-系统 | OSDI '26, osdi26-huang-wenxuan.pdf | knowledge-synthesis | security/os-security/ | Crypto-free CDB 映射，解耦间接寻址与保护，TPC-H 53-95× vs HEDB, 集成 GaussDB |
 | 2026-07-14 | Janus(OSDI'26) | 论文-系统 | OSDI '26, osdi26-lai.pdf | knowledge-synthesis | operations/cloud-infrastructure/ | 协同嵌套虚拟化安全容器，CPU/内存翻译解耦，VMFUNC EPTP switching + shadow-root |
 | 2026-07-14 | Osprey(OSDI'26) | 论文-系统 | OSDI '26, osdi26-liu-yicheng.pdf | knowledge-synthesis | security/os-security/ | SC 透明虚拟内存，利用 obliviousness 实现 speculative paging，128× 数据扩展, <200 LOC/libs |
@@ -81,5 +81,6 @@
 | 2026-07-14 | AEGIS(OSDI'26) | 论文-运维系统 | OSDI '26, osdi26-lei.pdf | knowledge-synthesis | operations/monitoring-observability/ | 在线GPU SDC检测，cSensor-cVerifier解耦，35M GPU-h检测18次SDC/13块缺陷GPU，0.86%开销 |
 | 2026-07-14 | OpGuard(OSDI'26) | 论文-运维/调试 | OSDI '26, osdi26-zhou-ziming.pdf | knowledge-synthesis | operations/monitoring-observability/ | bitwise alignment调试原语，跨异构栈算子边界+调度容忍匹配，20+生产问题，天→分钟 |
 | 2026-07-14 | RobustRL(OSDI'26) | 论文-系统 | OSDI '26, osdi26-chen-zhenqian.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | RL后训练角色化容错，Detect-Restart-Reconnect，256GPU 10%故障ETTR>80% vs ByteRobust 60% |
+| 2026-07-14 | Oxbow(OSDI'26) | 论文-系统 | OSDI '26, osdi26-kim-jongyul.pdf | knowledge-synthesis | performance/storage-filesystem/ | 协调式多组件FS，semi-kernel-bypass+shared-ownership metadata+split journaling |
 
 <!-- 追加新记录时，复制上面一行并修改即可。 -->

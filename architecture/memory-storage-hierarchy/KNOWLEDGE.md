@@ -1,4 +1,6 @@
-# Memory & Storage Hierarchy
+# Memory Hierarchy
+
+CXL/解聚内存与缓存一致性体系结构。
 
 ## 子主题
 
@@ -7,8 +9,6 @@
 | 泛化缓存一致性 (GCP) | disaggregated shared memory, lock synchronization, wait queues, variable-size cache lines, coherence protocol extension | Soul/GCP(OSDI'26) |
 | 共享解聚内存对象存储 (Duhu) | CXL, pass-by-reference, immutable objects, non-temporal writes, cache coherence avoidance | Duhu(OSDI'26) |
 | VM 弹性内存超卖 (Blowfish) | disaggregated memory, paravirtualization, THP-aware tracking, far memory swapping, hypervisor bypass | Blowfish(OSDI'26) |
-| CXL 跨 SSD 计算资源共享 (Espresso) | JBOF, inter-SSD resource sharing, decentralized compute pooling, CXL interconnection, storage disaggregation | Espresso(OSDI'26) |
-| DM 缓存同步放大缓解 (FORGE) | synchronization amplification, group-level sync, lazy hotness tracking, FIFO eviction, RDMA NIC offload | FORGE(OSDI'26) |
 
 ---
 
@@ -70,52 +70,3 @@
 - 半虚拟化分工模式（语义在 guest，控制在 hypervisor）适用于任何 VM 资源管理场景
 - "硬件就绪→软件瓶颈暴露→软件栈重新设计"是 disaggregated memory 方向的普遍模式
 
----
-
-## DM 缓存同步放大缓解 (FORGE)
-
-### 核心问题
-解聚内存（DM）使缓存系统可以独立弹性扩展 CN（CPU）和 MN（内存），但关键的缓存管理任务（热度追踪、淘汰协调、内存碎片整理）被迫跨越 CXL/RDMA 高延迟链路进行同步——即**同步放大**。传统 monolithic 缓存方案对此完全无感。
-
-### 关键洞察
-
-1. **组级同步摊销跨节点通信**：将相似对象分组，按组进行同步而非 per-object——将 N 次同步减少为 1 次
-2. **FIFO 可预测性→懒同步**：FIFO 淘汰顺序可预测→仅在淘汰时 (just-in-time) 更新热度指标，而非每次访问都更新（传统方案）
-3. **RDMA NIC 片上内存用作加速载体**：将热度更新卸载到 RDMA NIC 的片上内存——消除 CPU 参与和额外网络往返
-4. **无竞争 FIFO 队列**：多 CN 环境下无锁淘汰——在跨节点延迟下锁竞争是灾难性的
-- 来源：FORGE(OSDI'26)
-
-### 实践启发
-- "同步放大"是任何将共享数据结构跨高延迟链路扩展的系统中共通问题——不仅仅是缓存
-- "懒同步利用可预测性"是一个通用策略：当操作的顺序或时间可预测时，可将工作推迟到最后一刻
-- RDMA NIC 片上内存是 under-explored 的计算卸载目标——不仅用于数据传输
-
-### 存储层次（5 篇）
-
-| 论文 | 角度 | 核心机制 |
-|------|------|---------|
-| Soul/GCP | 同步 | 泛化缓存一致性原生支持锁 |
-| Duhu | 数据共享 | 不可变对象 + non-temporal writes 绕开一致性 |
-| Blowfish | 弹性超卖 | 半虚拟化 THP 追踪 + hypervisor 直通回收 |
-| Espresso | 计算与成本 | CXL 跨 SSD 计算资源共享 |
-| **FORGE** | **同步效率** | **组级同步 + 懒热度追踪 + RDMA NIC 卸载** |
-
----
-
-## CXL 跨 SSD 计算资源共享 (Espresso)
-
-### 核心问题
-企业级 SSD 为处理 I/O 突发集成了大量计算资源（ARM CPU + 板载 DRAM），但 JBOF 部署中这些资源因 I/O burst 偶发性而严重低利用——同时大幅增加了 SSD 的单位成本。现有方案（传统 JBOF black-box、hypervisor 虚拟化）要么无法跨 SSD 共享资源，要么需要昂贵的数据复制并丢失 computation-near-data 优势。
-
-### 关键洞察
-
-1. **CXL 不仅是"存互联"——也是"计算互联"**：Espresso 将 CXL 从 memory pooling（容量扩展）重新定位为 **compute resource pooling**（跨 SSD 共享 CPU/DRAM）
-2. **"Data stays, compute moves"**：忙碌 SSD 通过 CXL 将其元数据计算任务卸载到空闲 SSD——数据保留在原 flash 上，不复制
-3. **去中心化资源管理匹配 JBOF 的 scale-out 本质**：各 SSD 自主决策何时请求远端计算资源——类似 P2P 负载均衡
-4. **SSD 架构解耦**为功能独立组件是跨 SSD 资源共享的前提：compute/DRAM/flash 分离 → 精细化分配
-- 来源：Espresso(OSDI'26)
-
-### 实践启发
-- "Compute resource pooling over CXL"不仅适用于 SSD——任何嵌入式计算资源池（SmartNIC、DPU、storage controller）都可以共享
-- 去中心化资源管理在分布式存储中以特定方式适用——集中式管理器无法匹配分布式 I/O 模式
-- "不需要数据移动的计算卸载"是 CXL shared memory 语义的独特优势
