@@ -21,6 +21,7 @@ GPU 与 AI/ML 推理和训练的性能优化知识。
 | RL 后训练 Co-Scheduling | dependency bubble, co-execution group, rollout-training disaggregation, two-tier scheduling, residency constraint | Weave(OSDI'26) |
 | RL 训练流变换 (M2Flow) | macro-to-micro flow, context switching, elastic pipelining, heterogeneous component orchestration | RLinf(OSDI'26) |
 | RL 动态资源调度 (DynaRL) | dynamic hypergraph, resource migration, context-aware data routing, multi-level scheduling | DynaRL(OSDI'26) |
+| Agentic RL 异构硬件解耦 | trajectory-level decoupling, hardware heterogeneity mapping, stale-bounded async, serverless reward | RollArt(OSDI'26) |
 
 ---
 
@@ -487,12 +488,33 @@ RL 训练工作流包含高度异构的组件（LLM 推理、training、reward m
 ### 实践启发
 - 动态超图是"高度动态的多组件管线"的强大建模工具——不仅适用于 RL
 - "运行时适应"+ "设计时优化"是互补策略：RLinf 在编译时变换工作流，DynaRL 在运行时动态重分配资源
-- OSDI '26 三篇 RL 论文（Weave/DynaRL/RLinf）共同表明 RL 训练系统的瓶颈已从"计算加速"转向"调度效率"
+- OSDI '26 四篇 RL 论文（Weave/RollArt/DynaRL/RLinf）共同表明 RL 训练系统的瓶颈已从"计算加速"转向"调度效率"
 
-### OSDI '26 RL 训练三篇
+### OSDI '26 RL 训练四篇
 
 | 论文 | 核心机制 | 优化维度 | 加速 |
 |------|---------|---------|------|
 | Weave | Co-execution group 消除 dependency bubble | 跨池调度 | 1.84× |
+| **RollArt** | **异构硬件映射 + trajectory 级解耦** | **硬件解耦 + pipeline 分解** | **1.31-2.05×** |
 | RLinf | M2Flow 宏→微流变换 | 工作流变换 | 1.07-2.43× |
-| **DynaRL** | 动态超图 + 资源迁移 | **运行时资源重分配** | **1.98×** |
+| DynaRL | 动态超图 + 资源迁移 | 运行时资源重分配 | 1.98× |
+
+---
+
+## Agentic RL 异构硬件解耦 (RollArt)
+
+### 核心问题
+Agentic RL 工作负载混合了计算密集型 prefill、带宽密集型 decode、CPU 密集型环境执行和突发性 reward 评估——单一 GPU 集群无法匹配所有硬件特性。即使是部分解耦的系统也将资源密集的 rollout 和 training 阶段 colocate。Reward 阶段在专用 GPU 上的利用率仅 7.4%。
+
+### 关键洞察
+
+1. **将每个 pipeline 阶段映射到最佳硬件**：prefill→H800 (compute-opt, 时间仅 H20 的 0.53×)、decode→H20 (BW-opt, 时间仅 H800 的 0.49-0.79×)、env→CPU cluster、reward→serverless
+2. **Trajectory 级解耦**：慢或失败的环境不阻塞其他 trajectory——生成、环境交互和 reward 评分独立进行
+3. **Staleness-bounded async**：rollout 与 training 重叠，带有 staleness bound —— 既获得异步效率，又保护收敛稳定性
+4. **Serverless reward**：reward 工作负载利用率仅 7.4% → serverless 按需伸缩比专用 GPU 更经济
+- 来源：RollArt(OSDI'26)
+
+### 实践启发
+- "将每个阶段映射到最佳硬件"是异构多阶段管道的通用优化策略——不仅适用于 RL
+- Trajectory-level decoupling 是处理长尾效应的经典策略：不要让最慢的单元阻塞整个系统
+- Serverless 模型在"低利用率 + 突发性"的工作负载上有天然优势——reward 评估恰好满足这两个条件
