@@ -24,7 +24,7 @@ domain-knowledge/
 │   └── knowledge-synthesis/  #   论文解析模板 + 深度笔记
 ├── performance/              # 性能优化 → 内存系统、GPU/AI
 ├── architecture/             # 架构设计 → 云原生
-├── operations/               # 运维与 SRE（待填充）
+├── operations/               # 运维与 SRE → 存储、监控、测试、云基础设施、内核调优
 ├── algorithms/               # 算法（待填充）
 ├── security/                 # OS 安全与程序分析 → 访问控制、沙箱、追踪
 └── network/                  # 网络系统 → TCP/RPC、用户态 runtime
