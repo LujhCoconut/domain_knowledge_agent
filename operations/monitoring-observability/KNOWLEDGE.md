@@ -7,6 +7,7 @@
 | 网络根因分析 (RCA) | abstention algebra, PAM-style composition, deterministic decisions, Clos fabric, gray failures | CoreSec(OSDI'26) |
 | LLM 推理在线 Tracing/诊断 | key sync points, critical path, abnormality-only detailed tracing, dynamic roofline, correlation diagnosis | StriaTrace(OSDI'26) |
 | 应用定义资源的性能诊断 | LLM semantic inference + static analysis, resource bottleneck attribution, runtime tracking | gigiprofiler(OSDI'26) |
+| GPU SDC 生产诊断 | silent data corruption, deterministic replay, homogeneous replay, full-state comparison, SDC-defective GPU | SDCHUNTER(OSDI'26) |
 
 ---
 
@@ -65,3 +66,28 @@ LLM 推理有严格的 SLO（TTFT < 10s, TPOT < 100ms），偶发性异常即可
 - LLM + 静态分析的组合模式（"语义推断→形式化验证"）可推广到其他程序分析场景
 - 性能诊断的核心是"归因"——不仅要找到 bottleneck，还要解释"谁的什么请求、通过什么代码路径、如何触发了这个 bottleneck"
 - 15/15 全命中 + 2 新 bug 证明应用定义资源的诊断是一个有真实需求但工具空白的问题域
+
+---
+
+## GPU SDC 生产诊断 (SDCHUNTER)
+
+### 核心问题
+在数万 GPU 的 LLM 训练集群中，Silent Data Corruption (SDC) 表现为与软件 bug 无法区分的异常（unexpected CUDA error、NaN loss、shape mismatch）——工程师常花数天到数周调试代码，最终才发现是硬件缺陷。行业标准诊断方案（DCGMI stress test）漏检 >60%，因为 SDC 高度数据依赖且计算单元特定。
+
+### 关键洞察
+
+1. **"SDC 不是新硬件的专利——老化更常见"**：23 块缺陷 GPU 分析显示 SDC 常出现在中期生命周期，而非早期。需要持续全生命周期监控而非仅在验收时测试。
+
+2. **"合成 benchmark 漏检 >60%"**：SDC 高度依赖具体的计算单元（complex math unit > Tensor Core）和输入数据。通用 GEMM stress test 无法覆盖。
+
+3. **"确定性训练以 <0.01% 代价换取 bit-wise reproducibility"**：固定 RNG + 强制确定性 kernel + 标准化 reduce 顺序。无吞吐损失但 debug 时间减少 70%。
+
+4. **"解耦恢复和诊断是关键"**：Phase 1 快速隔离到 parallel group → 训练恢复（1 小时内）；Phase 2 离线精确到 device → 硬件修复决策（1 小时内）。不需要等定位到具体 GPU 才开始恢复。
+
+- 来源：SDCHUNTER(OSDI'26)
+
+### 实践启发
+- **"生产数据特征化比模拟有说服力得多"**：23 块真实缺陷 GPU 的分析是可信度的根本——benchmark miss rate >60% 这个发现直接影响实践
+- **"确定性训练的代价-收益比极佳"**：<0.01% throughput loss → 70% debug time reduction。任何大规模训练集群都应默认开启
+- **"先在粗粒度隔离、再精确定位"的分层诊断模式**：类似 SPADE 先缩小搜索空间再精确调度——适用于任何大规模集群故障定位
+- **"与硬件团队的工具互补而非替代"**：SDCHUNTER 的诊断结果是给硬件团队提供 actionable 的输入（具体哪个 GPU、哪个 kernel 出错），而非替代硬件工具
