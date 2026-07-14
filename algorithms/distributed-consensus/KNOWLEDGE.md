@@ -108,3 +108,23 @@
 - **"将检测机制嵌入已有协议步骤"**：不增加额外的检测逻辑层——检测就是协议本身
 - **"Cooperative + Productive"是好的异常检测的充要条件**：可以用于评估任何 proposed 机制
 - **竞速不空等的设计哲学与本周其他论文共享**：Kareus（optimistic holding）、Bodega（optimistic holding）、Ambulance（productive racing）——都拒绝阻塞等待
+
+---
+
+## 云存储共享日志耐久层 (LogDrive)
+
+### 核心问题
+云对象存储（S3）便宜可靠但只适合大块写入。Confluent 的 K2 pub-sub 服务需要**小写入的元数据存储**：自建分布式 DB（FoundationDB/KRaft/ZooKeeper）运维太复杂，用 DynamoDB 太贵（占 K2 总成本 ~75%）。需要一种在廉价云存储上构建元数据存储的方法。
+
+### 关键洞察
+
+1. **"分离 durability 和 sequencing"**：LogDrive 只保证顺序写入的 weak 语义（不强求每个地址的 linearizability）→实现极其简单，可以 layer 在任何云存储上（仅需数百行代码适配 S3/DynamoDB/S3Express）。
+2. **"WeakTail API 是关键抽象"**：不强求 linearizability，只要求 "几乎顺序写入" 下返回最后一个写入位置——这大大降低了在被动云存储上实现共享日志的难度。
+3. **"LogDrive 可以通过 quorum 组合（类似 RAID）"**：多个 LogDrive 实例组成 quorum→增强耐久性——类似 RAID 的条带化和镜像。
+
+- 来源：LogDrive(OSDI'26)
+
+### 实践启发
+- **"弱语义抽象使实现变得简单"**：不强求每个地址的 linearizability 使得 LogDrive 可以实现在任意云存储上——语义越弱，可部署性越强
+- **"分离 concerns 以简化每层"**：durability（LogDrive）+ sequencing（AtomicLog）分离→各自简单→组合起来功能完整
+- **"Metadata 成本常被低估"**：75% 的总成本来自元数据层——这不仅仅是性能问题，是经济可行性问题

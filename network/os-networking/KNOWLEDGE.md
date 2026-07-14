@@ -99,3 +99,60 @@ ML 工作负载的网络需求以月为单位快速演进（从 allreduce 到 al
 - **UCCL-Tran + UEP 来自同一团队，共享设计哲学**：两者都把硬件加速器的控制平面移到 CPU 软件层——UEP 解耦 GPU-NIC 通信发起，UCCL-Tran 解耦 NIC 传输控制。这代表一个宏观趋势。
 - **ML 工作负载的特征（大消息、bulk transfer、bursty）应被用来重新审视旧假设**：多 QP 不可扩展、RTT-based CC 不够精确、CPU 无法处理线速——这些假设在 ML 场景下都需要重新验证
 - **对 SmartNIC 架构设计有启示**：通用服务器 CPU 在处理 connection-intensive control plane 时可能优于专用 SmartNIC ARM 核。SmartNIC 应聚焦于 data plane offload（分段/重组/DMA），控制平面留给 CPU
+
+---
+
+## FPGA 可编程 RDMA 卸载引擎 (BALBOA)
+
+### 核心问题
+商用 RDMA NIC (ConnectX 等) 是黑盒——传输层不可修改（安全策略/拥塞控制/应用逻辑卸载全被锁死）。FPGA 平台可编程但性能低（<100G）、协议不完整（缺 CRC/重传）、不兼容真实数据中心。学术界缺乏一个**既高性能又完全可编程**的 RDMA 平台。
+
+### 关键洞察
+
+1. **"Decoupled state architecture + streaming control-data separation"**：克服 FPGA 内存/时序瓶颈——控制路径和数据路径在硬件层流式分离。
+2. **"完整 RoCEv2 协议栈在 FPGA 上可行"**：CRC + 重传 + 数百 QPs + switched network——此前被认为 FPGA 无法实现。
+3. **"可编程传输层解锁两个用例"**：infra 层的加密+深度包检测 + application 层的推荐系统预处理卸载。
+
+- 来源：BALBOA(OSDI'26)
+
+### 实践启发
+- **"BALBOA 和 UCCL-Tran 覆盖了 RDMA 可编程化的完整光谱"**：BALBOA 在**硬件层**重写 NIC 本身（FPGA），UCCL-Tran 在**软件层**解耦 data/control path（现有 NIC）——两者互补而非竞争
+- **"开源硬件是打破黑盒供应商锁定的关键"**：如果 RDMA 研究只能依赖 ConnectX 黑盒，整个领域无法进步
+
+---
+
+## SmartNIC 数据路径 KV Store (DPA-Store)
+
+### 核心问题
+远程 KV store 三难：高吞吐 + 范围查询 + 低复杂度。Hash-based SmartNIC offload (MICA/KV-DIRECT) 快但不支持范围查询；RDMA 分布式需要客户端缓存→有状态→故障处理复杂；host 端 tree traversal 产生大量 DMA round-trip。
+
+### 关键洞察
+
+1. **"On-path 处理消除 OS 开销"**：请求不经过 host OS 网络栈——DPA 直接从 NIC buffer 取请求。16 核 × 16 线程 = 256 并行线程。
+2. **"Learned index tree 存储在 DPA 内存"**：256 线程并发遍历→叶子层 fetch host 侧值。Writes 缓冲在 DPA、批量到 host。
+3. **"计算密集型 rebalance 在 host 执行，事务性缝合回 SmartNIC"**：利用 host CPU 的大规模计算能力处理树结构调整，DPA 专注于快速路径。
+
+- 来源：DPA-Store(OSDI'26)
+
+### 实践启发
+- **"Fast path 在 SmartNIC，slow path 在 host——职责按延迟/复杂度拆分"**：DPA（16 核 ARM）处理热路径，host CPU 处理复杂 rebalance。与 CoPilotIO、UEP、UCCL-Tran 共享设计哲学
+- **"Learned index 在 SmartNIC 上天然适配"**：小模型（learned index）+ 高并发（256 线程）是 SmartNIC 的理想匹配
+
+---
+
+## DDIO 页着色 LLC 优化 (Sepia)
+
+### 核心问题
+Intel DDIO 使 NIC 接收数据可从 LLC 直接访问（避免 DRAM 往返），但 "leaky DMA"——数据在处理前被逐出 LLC。传统诊断认为是 DDIO 保留容量太小。**本文推翻此假设**。
+
+### 关键洞察
+
+1. **"冲突缺失是主要共因，而非容量缺失"**：Linux 默认内存分配器导致 page working set 在 sliced LLC 中分布不均→即使 LLC 有空间也发生 eviction。Page coloring 可提升有效容量 **77.8-94.4%**。
+2. **"Sliced LLC 架构下 page placement 比单 LLC 时代更重要"**：现代 CPU 的分布式 LLC 使 page 在哪个 set 中落位影响巨大——这是硬件趋势使旧方案（page coloring）重新相关的典型案例。
+3. **"仅 3.5 核饱和 200Gbps"**（vs Linux 6 核）：LLC miss 从 bottleneck 变为 minimally present（0.4% miss rate）。
+
+- 来源：Sepia(OSDI'26)
+
+### 实践启发
+- **"冲突缺失常被误诊为容量缺失"**：不仅是 DDIO——page cache、KV store 索引等场景中 page coloring 可大幅提升有效缓存容量
+- **"硬件趋势使老技术重新相关"**：sliced LLC 架构让 page coloring 从 "nice to have" 变为 "critical"——类似 Helmsman 的 clustering 回归

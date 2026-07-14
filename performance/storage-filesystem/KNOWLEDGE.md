@@ -113,3 +113,79 @@
 - **"不等同 bypass，也不等同 kernel"——寻找不对称价值**：不是 kernel vs user-level 的二选一，而是识别每个路径上 kernel 的相对价值
 - **"按写者分区"消除共享状态同步**：适用于任何多组件共享状态的设计——每个属性只有一个 writer
 - **"将 crash-consistency 卸载到 CSD"**：journal/checkpoint 不是延迟关键路径——天然适合设备端后台执行
+
+---
+
+## 声明式 IO 与维护任务复用 (DINGO)
+
+### 核心问题
+HDD 容量快速增长（40TB→100TB）但带宽不按比例增长→**IO wall**：IO/TB 持续下降，到临界点后无法部署更大 HDD。6 个 hyperscaler trace 分析惊人发现：**45-70% 的 HDD IO 来自维护任务**（scrubbing、GC、capacity balancing）。这些任务访问大量数据、无单任务内复用→缓存无效，但**跨任务有显著数据重叠**——只是执行时间不对齐导致浪费。
+
+### 关键洞察
+
+1. **"维护任务本质上灵活但 imperative 接口不暴露灵活性"**：维护任务可以调整顺序、时间、甚至数据选择——但 read/write 接口把一切都锁死了。
+2. **"声明式接口暴露窗口"**：Declare "scrub device D, deadline 7 days"→存储系统自行调度→跨任务制造数据复用窗口。
+3. **"维护 IO 是隐藏的主要成本"**：45-70% 的 IO 用于维护——这在存储系统设计中被系统性忽视了。
+
+- 来源：DINGO(OSDI'26)
+
+### 实践启发
+- **"声明式接口暴露灵活性"是通用模式**：后台 compaction、数据迁移、备份——任何"不需要精确控制每次 I/O 何时发生"的任务都可以受益
+- **"跨任务协调代替单任务优化"**：系统级优化 > 单任务优化——与 SPADE（跨 job DAG 调度）和 Quota Marketplace（跨 BU 芯片分配）共享哲学
+
+---
+
+## mmap-IO DFS 矩阵访问优化 (Umap)
+
+### 核心问题
+File-Backed Matrix (FBM) 通过 mmap-IO 提供开箱即用的 out-of-core 访问——是 ML 推理加载模型权重、金融回测的矩阵访问的核心机制。但迁移到 disaggregated DFS 后（尽管 DFS 提供 25GB/s 远程带宽 >> 本地 SSD），反而出现 **3-10× 性能下降**、livelock（写密集阶段）、OOM kill（容器化环境）。
+
+### 关键洞察
+
+1. **"抽象层 mismatch 是迁移到 disaggregated 系统时的常见陷阱"**：mmap 为本地低延迟存储设计（page-granularity VM），DFS 是 block 语义+分布式元数据。每个 page fault → 碎片化远程 I/O + 大量元数据流量 + 跨节点同步。
+2. **"Page fault 不是好的远程 I/O 原语"**：per-page 网络往返在高带宽网络下严重低效——需要 batch。
+3. **"不修改 DFS 或内核的修复更可部署"**：DFS-agnostic runtime 在用户态修复三个问题——batch 网络请求、并发感知缓存、lazy-expansion 缓存管理。
+
+- 来源：Umap(OSDI'26)
+
+### 实践启发
+- **"抽象 mismatch 诊断"是问题定位的通用方法**：当迁移到新技术栈时，先检查底层假设是否仍然成立——类似 Blowfish 发现的"硬件就绪→软件栈没跟上"
+- **"Batch 化网络请求"是解决 page-granularity 低效的通用策略**：不仅是 mmap——任何细粒度远程访问模式都应考虑 batching
+
+---
+
+## 聚类型 SSD ANNS 生产系统 (Helmsman)
+
+### 核心问题
+小红书的 graph-based ANNS (HNSW) 在线服务必须全 DRAM 部署——随着用户和内容增长，内存和 CapEx/OpEx 爆炸。Hybrid SSD+DRAM (DiskANN) 的贪婪图遍历产生大量串行 I/O→延迟无法满足在线 SLA。但 SSD 硬件进步已改变旧 trade-off。
+
+### 关键洞察
+
+1. **"SSD 高带宽 > IOPS——batch 友好型算法重新获得优势"**：Clustering-based ANNS 天然无依赖→batched I/O→充分利用 NVMe 高带宽。Graph-based ANNS 的串行读取无法利用这一特性。
+2. **"硬件进步改变了旧 trade-off——被遗忘的方案值得重新审视"**：clustering 曾因 CPU/IOPS 瓶颈被 graph-based 超越，现在 SSD 带宽提升改变了瓶颈位置。
+3. **"ANNS 专用用户态存储栈"**：绕过 kernel I/O stack→SSD 带宽利用率从 20-60% 大幅提升。
+
+- 来源：Helmsman(OSDI'26)
+
+### 实践启发
+- **"重新审视被遗忘的方案"是系统研究的重要策略**：当硬件进步改变瓶颈时，曾被抛弃的方案可能重新变得最优
+- **"成本不是性能优化后的副产品——成本本身就是优化目标"**：40 台替代 35K core+0.35PB DRAM 不仅仅是效率提升，是范式改变
+
+---
+
+## 宽条带矢量纠删码 (WiseCode)
+
+### 核心问题
+宽条带纠删码（n≈100）以极低存储冗余（1.04-1.06×）提供高可靠性。Scalar codes (LRC/RS) 无法同时优化 repair traffic 和 storage overhead——LRC 减少修复流量但增加存储冗余，RS 存储最优但修复需读 k 个 chunks。Vector codes 理论上两者最优，但面对三个可扩展性障碍：sub-packetization 爆炸（Clay code α=426 at n=104）、系数搜索不可行、编解码复杂度过高。
+
+### 关键洞察
+
+1. **"Template-unfold 结构避免 sub-packetization 爆炸"**：不随 n 指数增长——使宽条带（n≈100）的矢量码首次变得实用。
+2. **"Repetition-minimized 系数搜索"**：大幅降低系数搜索的计算成本——之前这一步在宽条带下不可行。
+3. **"两阶段编解码算法"**：高效处理 ~100 宽条带——将理论上的最优性转化为实际可运行的系统。
+
+- 来源：WiseCode(OSDI'26)
+
+### 实践启发
+- **"理论最优 ≠ 工程可行——可扩展性障碍需要结构创新而非参数调优"**：Vector codes 的理论优势数十年已知，但工程化需要打破 sub-packetization 等结构障碍
+- **"存储 redundancy 每 1% 都价值数百万"**：在 EB 级集群中，1.04× vs 1.375× 的存储 overhead 差异可以建少一个数据中心

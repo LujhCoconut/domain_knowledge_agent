@@ -622,3 +622,60 @@ Agentic RL 工作负载混合了计算密集型 prefill、带宽密集型 decode
 - **BO 做多目标优化需要多方向的 acquisition**：total/dynamic/static/uncertainty 四轮 pass 的设计可推广到任何需要找 time-energy Pareto 前沿的系统问题。
 - **"温度敏感的性能/功耗测量"不可忽视**：GPU 功耗随温度漂移小但足以影响 Pareto 前沿准确性——需要 cooldown + 重复测量。这也意味着 profile 一次不能一劳永逸——季节/机房温度变化会影响最优 schedule。
 - **自动回退到简单方案**：Kareus 在 GPU 欠利用时（small microbatch）自动选择 sequential 而非 nanobatching。一个系统不仅要知道何时用高级特性，还要知道何时不用。
+
+---
+
+## CPU-GPU 协同 I/O 引擎 (CoPilotIO)
+
+### 核心问题
+GPU-centric I/O (BaM) 提供高吞吐和 on-demand 访问，但 GPU 需持续轮询 NVMe completion queue→三种 stall（intra-warp/inter-warp/inter-SM）→GPU compute 可用性下降高达 87%。CPU-centric I/O (GDS) 不消耗 GPU 但性能低且无法 on-demand。现有选择是 all-GPU or all-CPU 的二分。
+
+### 关键洞察
+
+1. **"Split SQ/CQ 打破 all-GPU or all-CPU 的二分"**：Submission Queue 在 GPU 侧（直接发起 I/O，低延迟），Completion Queue 映射到 CPU 侧（CPU 轮询完成，不浪费 GPU compute）。GPU 和 CPU 各自做最擅长的事。
+2. **"Hardware barrier-based synchronization"**：GPU→CPU 的完成通知不走 kernel，用 PCIe barrier 直接同步——消除 kernel I/O stack overhead。
+3. **"CQ-based adaptive co-polling"**：高 I/O 负载时 CPU 主导轮询，低负载时 GPU 自行轮询——减少不必要跨 PCIe 通信。
+
+- 来源：CoPilotIO(OSDI'26)
+
+### 实践启发
+- **"不是 CPU vs GPU，而是 CPU + GPU——职责分离而非替代"**：与 UEP（GPU 发起 CPU 执行 RDMA）、UCCL-Tran（NIC data path + CPU control path）共享同一个设计哲学
+- **"Adaptive offloading"比"固定卸载"更优**：负载变化时动态迁移轮询角色
+
+---
+
+## GPU 十亿级向量搜索 (FlowANN)
+
+### 核心问题
+GPU ANNS 比 CPU 快 200×，但 GPU 显存有限（80-96GB），十亿级图索引需 239-334 GB。现有方案将图 offload 到 CPU 内存，但 step-level dependency（每步必须等所有邻居计算完）→GPU stall 等边获取。
+
+### 关键洞察
+
+1. **"Step-level dependency 可以解耦为 node-level dependency"**：每个节点有两个阶段——Discovery（作为邻居被访问，产生边获取需求）和 Expansion（被选为 parent 遍历邻居，使用已获取的边）。两者间通常隔了很多步→边获取可以延迟并与后续计算异步流水线化。
+2. **"把 step barrier 拆掉"**：Tiered graph——hot 边在 GPU，有时间窗口的边 offload 到 CPU→异步获取与计算重叠。
+3. **"discovery-expansion 窗口是关键"**：前期研究大多关注如何更快获取边，FlowANN 关注的是**何时获取**——重新组织获取时序，而不是重新设计获取机制。
+
+- 来源：FlowANN(OSDI'26)
+
+### 实践启发
+- **"将粗粒度全局依赖解耦为细粒度局部依赖"是并行化的经典模式**：类似 BatchGen 的 attention-MoE yield、Ambulance 的 non-equivocation as race——本质都是识别出"可以晚点做的事"
+- **"不改变 IO 机制，改变 IO 时序"**：当 IO 瓶颈无法消除时，重新组织 IO 时序以 overlap 计算
+
+---
+
+## GPU 演化图分析 (POEGA)
+
+### 核心问题
+演化图分析 (EGA) 需对图快照序列评估查询——GPU 快但显存有限，增量计算虽可用但 OOM I/O 瓶颈使现有 GPU EGA 无法扩展到大规模图。
+
+### 关键洞察
+
+1. **"用 approximate computation 换 I/O，再并行化摊销 compute 开销"**：Proxy graph（紧凑近似图）先做近似计算→指导精确 OOM I/O→减少不必要的 I/O。额外计算由 GPU 的大规模并行性摊销。
+2. **"Fused kernel 并发处理多 snapshot"**：将多个 snapshot 的计算 fuse 到单个 kernel→最大化 GPU 并行度→摊销 proxy graph 的计算 overhead。
+3. **"Bound-based pruning"**：运行时按边界剪枝冗余的跨 snapshot 工作——进一步减少不必要的计算。
+
+- 来源：POEGA(OSDI'26)
+
+### 实践启发
+- **"用计算换 I/O，再并行化摊销计算"是 GPU 的通用策略**：GPU compute 便宜但 I/O 昂贵→用 compute 减少 I/O→再用 parallelism 吸收 compute 开销
+- **"多 snapshot 并发"是演化图分析的独特优势**：静态图分析无法利用这一点——EGA 的 time dimension 提供了额外的并行度
