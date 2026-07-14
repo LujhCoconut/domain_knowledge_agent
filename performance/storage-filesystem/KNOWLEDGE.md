@@ -13,6 +13,7 @@
 | 多组件协调式文件系统 | semi-kernel-bypass, shared-ownership metadata, split journaling, CSD offload, coordinated architecture | Oxbow(OSDI'26) |
 | 声明式 IO 与维护任务复用 | declarative IO, IO wall, maintenance task coordination, inter-task IO reuse, HDD capacity scaling | DINGO(OSDI'26) |
 | mmap-IO DFS 矩阵访问优化 | file-backed matrix, abstraction mismatch, page-granularity network I/O, DFS-agnostic runtime, lazy-expansion cache | Umap(OSDI'26) |
+| 聚类型 SSD ANNS 生产系统 | clustering-based ANNS, userspace storage stack, learned pruning, GPU-accelerated index, SSD bandwidth | Helmsman(OSDI'26) |
 
 ---
 
