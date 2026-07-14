@@ -34,10 +34,10 @@ domain-knowledge/
 
 <!-- 以下区域由 /domain-knowledge 后置操作自动更新，请勿手动编辑本节 -->
 
-- **总计**: 50 篇
-- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 46 篇（'26）
+- **总计**: 51 篇
+- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 47 篇（'26）
 - **领域分布**:
-  - CXL/内存系统/可观测性/回收理论: 9 篇
+  - CXL/内存系统/可观测性/回收理论/stall 回收: 10 篇
   - 存储层次/体系结构: 1 篇（Soul/GCP） — 见 `architecture/memory-storage-hierarchy/KNOWLEDGE.md`
   - 云原生/解耦式服务: 1 篇（DGC） — 见 `architecture/cloud-native/KNOWLEDGE.md`
   - LLM 推理服务: 7 篇（含 agentic workflow 编排）

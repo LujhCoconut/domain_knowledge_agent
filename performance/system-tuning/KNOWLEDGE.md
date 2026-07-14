@@ -12,6 +12,7 @@
 | CXL 性能预测与建模 | slowdown decomposition, weighted interleaving, closed-form model, PMU | CAMP(ASPLOS'26) |
 | 内存延迟归因 | CHA/TOR, MLP, PMU counters, PEBS, stall attribution | PACT(ASPLOS'26) |
 | 资源压力感知 | PSI some/full, cgroup 控制, feedback loop | TMO(ASPLOS'22) |
+| CXL sub-µs Stall 回收 | stall harvesting, hardware-software co-design, 20ns software switch, middle gap | LiteSwitch(OSDI'26) |
 
 ---
 
@@ -432,3 +433,38 @@ CXL tiered memory (PACT/TMO/CAMP/M5) 和 LLM KV cache 层次化管理 (Strata(OS
 | **MDK(OSDI'26)** | **理论** | OPP + MPC — 回答"离线最佳策略是什么" |
 | TMO(ASPLOS'22) | **工程** | PSI + Senpai — 回答"如何在线近似" |
 | OBASE(OSDI'26) | **Layout** | Address-space engineering — 回答"如何让输入数据更好" |
+
+---
+
+## CXL 内存 Stall 回收 (LiteSwitch)
+
+### 核心问题
+CXL 内存延迟（200-600ns）是本地 DRAM 的 3× 或更高——延长已有的 CPU 内存停顿→浪费更多 CPU 周期。现有方案在 DRAM 延迟尺度（SMT，~100ns）或 flash 尺度（Interrupt/IOP，>10µs）工作——两者之间的 **"中间空白"（200ns-1µs）** 无人覆盖。内存密集型工作负载将 20-80% CPU 周期浪费在 memory stalls 上，CXL 加剧了这一效率损失。
+
+### 关键洞察
+
+1. **"中间空白"概念**：相邻的现有机制（SMT→interrupt）之间存在未被覆盖的延迟区间 → CXL 延迟恰好落在其中
+2. **硬件精确识别 + 软件快速切换的分工**：硬件精准识别 "这是 CXL stall"（零数据路径延迟）→软件以 <20ns 保存最小上下文并切换到 ready thread
+3. **20ns 软件切换比传统 context switch 快一个数量级**：只抢救必要的寄存器——不执行完整 OS 上下文切换
+4. **在不修改应用的前提下回收 CXL 延迟损失的 80%**：前提是每个 core 有足够数量的可用线程
+- 来源：LiteSwitch(OSDI'26)
+
+### 实践启发
+- "中间空白"是系统设计中的一个通用分析概念：当两种机制覆盖相邻的延迟区间时，中间可能留下未被覆盖的空白
+- 硬件-软件协同设计的分工原则：硬件做精确识别（低成本）、软件做快速响应（精简上下文）
+- CXL 不仅是"容量/带宽问题"——如何在 CPU 层面回收被延长的 stall 周期是一个同等重要但被忽视的维度
+
+### CXL 论文全景（10 篇）
+
+| 论文 | 层面 | 角色 |
+|------|------|------|
+| TMO(ASPLOS'22) | 工程 | PSI + Senpai — 在线反馈控制 |
+| PACT(ASPLOS'26) | 执行 | Per-page criticality — 页面迁移 |
+| CAMP(ASPLOS'26) | 预测 | CXL slowdown 预测 |
+| M5(ASPLOS'25) | 观测 | Hot-page/word hardware tracking |
+| RamRyder(OSDI'26) | 管理 | Channel-level bandwidth allocation |
+| MAC(OSDI'26) | 元数据 | NMP 加速 metadata reclamation |
+| NEMO(OSDI'26) | 可观测 | 可编程 MC telemetry |
+| OBASE(OSDI'26) | 布局 | Address-space engineering |
+| MDK(OSDI'26) | 理论 | OPP+MPC 回收策略设计 |
+| **LiteSwitch(OSDI'26)** | **CPU 前端** | **CXL sub-µs stall 回收** |
