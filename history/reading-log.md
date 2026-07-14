@@ -69,5 +69,6 @@
 | 2026-07-14 | UEP(OSDI'26) | 论文-系统 | OSDI '26, osdi26-mao-ziming-uep.pdf | knowledge-synthesis | network/os-networking/ | 可移植EP通信，CPU proxy解耦GPU-NIC，O(m)取代O(m×n)，EFA上2.1×吞吐提升，SGLang推理+40% |
 | 2026-07-14 | BatchGen(OSDI'26) | 论文-系统 | OSDI '26, osdi26-xu-tairan.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | 序列协程批量推理，yield/combine/partition/migrate，BCT降2.3×，唯一在8×H20跑Kimi-K2 |
 | 2026-07-14 | UCCL-Tran(OSDI'26) | 论文-系统 | OSDI '26, osdi26-zhou-yang.pdf | knowledge-synthesis | network/os-networking/ | RDMA软件传输层可扩展，UC multipath+control coalescing，collectives最高4.5×，训练+7.5% |
+| 2026-07-14 | PowerSight(OSDI'26) | 论文-系统 | OSDI '26, osdi26-li-ruihao.pdf | knowledge-synthesis | operations/cloud-infrastructure/ | 硬件生命周期电源规划，RPB oversubscription ~20%，PowerSight ML预测跨架构MAPE 7.89% |
 
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
