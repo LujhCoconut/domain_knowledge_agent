@@ -87,5 +87,6 @@
 | 2026-07-14 | CoPilotIO(OSDI'26) | 论文-系统 | OSDI '26, osdi26-chen-guanyi.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | CPU co-pilot GPU I/O，split SQ/CQ+自适应co-polling，I/O stall -55.5%, 应用+85% |
 | 2026-07-14 | BALBOA(OSDI'26) | 论文-系统 | OSDI '26, osdi26-heer.pdf | knowledge-synthesis | network/os-networking/ | 开源100G RoCEv2 FPGA卸载引擎，decoupled state+streaming separation，匹配ASIC性能 |
 | 2026-07-14 | DPA-Store(OSDI'26) | 论文-系统 | OSDI '26, osdi26-schimmelpfennig.pdf | knowledge-synthesis | network/os-networking/ | BF3 DPA on-path KV store，learned index+lock-free，33M lookup/s, 13M range/s |
+| 2026-07-14 | FARLock(OSDI'26) | 论文-协议 | OSDI '26, osdi26-hu-yuehao.pdf | knowledge-synthesis | algorithms/concurrent-data-structures/ | 公平RDMA非对称锁，ticket+MCS handover，FCFS公平+高性能 |
 
 <!-- 追加新记录时，复制上面一行并修改即可。 -->

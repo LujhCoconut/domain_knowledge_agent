@@ -5,6 +5,7 @@
 | 主题 | 关键词 | 来源 |
 |------|--------|------|
 | 无锁自适应基数树 | lock-free ART, freezing-based coordination, hazard keys SMR, range scans, 128-bit CAS | Arctic(OSDI'26) |
+| 公平 RDMA 分布式锁 | asymmetric RDMA locking, ticket lock, MCS handover, FCFS fairness, optimistic reader | FARLock(OSDI'26) |
 
 ---
 
