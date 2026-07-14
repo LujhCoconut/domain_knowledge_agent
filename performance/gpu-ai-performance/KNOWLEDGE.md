@@ -37,6 +37,7 @@ GPU 与 AI/ML 推理和训练的性能优化知识。
 | Tensor Core SWP+WS 约束优化 | software pipelining, warp specialization, constraint optimization, Twill, FlashAttention, cross-generation portability | Twill(OSDI'26) |
 | Mega-Kernel 编译器与运行时 | SM-level task graph, persistent kernel, decentralized scheduling, cross-operator pipelining, CUDA Graph alternative | MPK(OSDI'26) |
 | CUDA Graph 编译器使能 | graph-aware code transformation, indirect parameter passing, cost-benefit guided deployment, kernel launch bottleneck | GraCE(OSDI'26) |
+| Virtual Tensor 数据移动消除 | virtual tensor, index mapping, data movement elimination, tensor compilation, memory-bound, operator fusion | VTC(OSDI'26) |
 
 ---
 
@@ -826,3 +827,22 @@ ML 工作负载每次迭代 launch 数百个短 GPU kernel，每个 CPU→GPU ke
 - **"编译器填补高层语义与低层硬件特性的 gap"**：语言级程序离硬件特性（CUDA Graph）有语义鸿沟→编译器自动桥接。类似 Twill "write once, solve per architecture"——编译器承担跨层适配的负担
 - **"不是所有优化都要全局启用"**：cost-benefit analysis + selective deployment > blind global optimization。类似 SPADE 的 γ 参数——控制优化强度的可调 knob 优于 on/off
 - **"Indirection 是最古老的性能技巧之一——但编译器可以自动插入"**：参数间接化 = 用 pointer 替代 tensor copy——编译器自动生成 indirection 和 de-reference 逻辑
+
+---
+
+## Virtual Tensor 数据移动消除 (VTC)
+
+### 核心问题
+计算能力飞速增长（H100 ~1 PFLOPS），但内存带宽增长远远落后→memory-bound 成为瓶颈（尤其 LLM decode 阶段）。现有编译器优化（layout transform、算子融合）只覆盖部分 data movement 操作→大量不必要的 global memory ↔ accelerator 数据传输被遗漏。
+
+### 关键洞察
+
+1. **"Virtual Tensor = index mapping 替代 data copy"**：不是将 producer tensor 物理复制到 consumer→而是用 index mapping 描述两者关系。只有当 compute 确实需要数据时才 lazily 按映射获取。类似 Duhu "pass-by-reference 替代 pass-by-value"——改变编程抽象而非硬件本身。
+2. **"与现有 kernel 和 fusion（如 FlashAttention）无缝协作"**：不需要重写 operator kernel——virtual tensor 作为中间层在编译时插入→对上层和应用透明。Virtual tensor 的 index mapping 可以与 FlashAttention 等 handmade fusion 共存，进一步提升效果。
+3. **"全谱 data movement 消除"**：layout transformation 和 operator fusion 都只覆盖部分 data movement→VTC 首次覆盖全谱→消除了之前无法触及的数据传输。
+
+- 来源：VTC(OSDI'26)
+
+### 实践启发
+- **"Virtual memory 的思想应用于 tensor compilation"**：Virtual tensor 类似虚拟内存的 lazy paging——不搬数据直到必须。与 InfiniDefrag "GPA 是虚拟的" 和 Blowfish "GPA 已是虚拟层" 共享思想——利用虚拟化避免物理搬移
+- **"Index mapping 是一个被低估的编译器中端优化"**：当前编译器聚焦于 compute kernel 生成（后端）和高层融合（前端），中间层的 data movement 消除是巨大空白

@@ -110,5 +110,6 @@
 | 2026-07-14 | TileLoom(OSDI'26) | 论文-编译器/系统 | OSDI '26, osdi26-li-wei.pdf | knowledge-synthesis | architecture/accelerators/ | spatial dataflow加速器tile编译，MLIR自动dataflow planning，匹配vendor库性能 |
 | 2026-07-14 | MPK(OSDI'26) | 论文-编译器/系统 | OSDI '26, osdi26-cheng.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | mega-kernel编译器+运行时，SM级任务图+去中心化调度，推理延迟-1.7× |
 | 2026-07-14 | GraCE(OSDI'26) | 论文-编译器/系统 | OSDI '26, osdi26-ghosh.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | CUDA Graph编译器使能，auto code transform+indirect params，Graph收益2×于PyTorch2 |
+| 2026-07-14 | VTC(OSDI'26) | 论文-编译器 | OSDI '26, osdi26-hu-muyan.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | virtual tensor+index mapping消除数据移动，vs现有编译器1.93×, 内存-60% |
 
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
