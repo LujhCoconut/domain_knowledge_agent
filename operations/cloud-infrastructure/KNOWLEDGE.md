@@ -7,6 +7,7 @@
 | vCPU 调度与超卖 | mwait-passthrough, oversubscription, steal time, VM exit, idle visibility | mwait-sched(OSDI'26) |
 | 内核性能常量在线调优 | perf-const, Scoped Indirect Execution (SIE), critical span, side-effect safety | Xkernel(OSDI'26) |
 | 嵌套虚拟化安全容器 | nested virtualization, Kata Containers, VMFUNC, EPTP switching, shadow-root, page-table decoupling | Janus(OSDI'26) |
+| 嵌套 SEV 机密VM | AMD SEV, nested virtualization, emulation-less multiplexing, SEV context decoupling, two trust models | Nested SEV(OSDI'26) |
 
 ---
 
@@ -67,3 +68,22 @@ Linux 内核中大量性能关键常量（perf-consts）是"magic numbers"——
 - "分离关注点"是嵌套系统最强大的设计原则——不仅是虚拟化，嵌套容器、嵌套沙箱都适用
 - 硬件特性可以被重新用于非原始设计意图——VMFUNC的页表切换能力超越其原始用途
 - "将Host从关键路径移除"是嵌套虚拟化性能优化的核心原则
+
+---
+
+## 嵌套 SEV 机密VM (Nested SEV)
+
+### 核心问题
+AMD SEV 被广泛采用（AWS/GCP/Azure 的机密VM），但嵌套虚拟化支持严重不足：Microsoft 补丁仅加密 L2 无法保护 L1、Hecate/OpenHCL 仅支持单个 L2 VM。当嵌套虚拟化用于虚拟云/测试环境/VM-in-VM 部署时，安全边界被打破。
+
+### 关键洞察
+
+1. **Emulation-less multiplexing**：不在不可信 hypervisor 中仿真AMD-SP，而是将多个 SEV context **超安全复用**到物理 AMD-SP——避免性能惩罚
+2. **SEV context decoupling**：每个 L2 VM 拥有独立的加密上下文——与 L1 VM 的密钥分离
+3. **两种信任模型覆盖实际部署**：L0+L1 untrusted（virtualization）和仅 L0 untrusted（passthrough）
+- 来源：Nested SEV(OSDI'26)
+
+### 实践启发
+- "复用物理硬件而非仿真"是嵌套安全虚拟化的核心性能优化
+- Context decoupling 是嵌套系统安全的关键原则：每层独立加密上下文
+- 嵌套 SEV 填补了机密计算 + 嵌套虚拟化的交叉空白

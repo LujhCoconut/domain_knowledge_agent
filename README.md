@@ -34,12 +34,12 @@ domain-knowledge/
 
 <!-- 以下区域由 /domain-knowledge 后置操作自动更新，请勿手动编辑本节 -->
 
-- **总计**: 58 篇
-- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 54 篇（'26）
+- **总计**: 59 篇
+- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 55 篇（'26）
 - **领域分布**:
   - CXL/内存系统/stall 回收: 10 篇
   - 存储层次/体系结构: 5 篇 — 见 `architecture/memory-storage-hierarchy/KNOWLEDGE.md`
-  - 云基础设施/虚拟化: 3 篇（mwait-sched, Xkernel, Janus） — 见 `operations/cloud-infrastructure/KNOWLEDGE.md`
+  - 云基础设施/虚拟化: 4 篇（mwait-sched, Xkernel, Janus, Nested SEV） — 见 `operations/cloud-infrastructure/KNOWLEDGE.md`
   - 云原生/解耦式服务: 1 篇（DGC） — 见 `architecture/cloud-native/KNOWLEDGE.md`
   - LLM 推理服务: 7 篇（含 agentic workflow 编排）
   - LLM 大规模训练+数据管线: 9 篇（含 RL 五篇）
