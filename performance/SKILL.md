@@ -14,6 +14,7 @@
 | `database-performance/` | 数据库性能 | 索引、执行计划、连接池、慢查询、缓存策略 |
 | `network-performance/` | 网络性能 | TCP 调优、RDMA、延迟带宽、拥塞控制、抓包分析 |
 | `gpu-ai-performance/` | GPU / AI 性能 | CUDA、显存、通信原语、推理优化、大模型训练调优 |
+| `storage-filesystem/` | 存储与文件系统 | 数据管线、多核 LFS、CXL 跨 SSD 共享、DM 缓存、多组件协调式 FS |
 
 ## 新增 skill 建议
 
