@@ -93,5 +93,6 @@
 | 2026-07-14 | POEGA(OSDI'26) | 论文-系统 | OSDI '26, osdi26-zhang-yunmo.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | GPU演化图分析，proxy graph+fused kernel+adaptive compaction，3.7-23.5× |
 | 2026-07-14 | Pluto(OSDI'26) | 论文-系统 | OSDI '26, osdi26-wu-ying-wei.pdf | knowledge-synthesis | algorithms/graph-processing/ | 分布式图partial mirroring，mirror heterogeneity消除非生产性复制，vs full mirroring up to 3.8× |
 | 2026-07-14 | Helmsman(OSDI'26) | 论文-运维系统 | OSDI '26, osdi26-huang-yuchen.pdf | knowledge-synthesis | performance/storage-filesystem/ | 聚类ANNS+SSD替代全DRAM HNSW，成本-90%，40台替代35K核+0.35PB DRAM |
+| 2026-07-14 | WiseCode(OSDI'26) | 论文-系统 | OSDI '26, osdi26-cai.pdf | knowledge-synthesis | performance/storage-filesystem/ | 首个实用宽条带矢量码，template-unfold+rep-min系数搜索，修复吞吐vs UCLRCs 1.41-2.18× |
 
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
