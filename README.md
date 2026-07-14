@@ -23,7 +23,7 @@ domain-knowledge/
 ├── common/                   # 通用工具、检查清单、知识合成模板
 │   └── knowledge-synthesis/  #   论文解析模板 + 深度笔记
 ├── performance/              # 性能优化 → 内存系统、GPU/AI
-├── architecture/             # 架构设计 → 云原生
+├── architecture/             # 架构与体系结构 → 分布式、微架构、存储层次、加速器
 ├── operations/               # 运维与 SRE → 存储、监控、测试、云基础设施、内核调优
 ├── algorithms/               # 算法（待填充）
 ├── security/                 # OS 安全与程序分析 → 访问控制、沙箱、追踪

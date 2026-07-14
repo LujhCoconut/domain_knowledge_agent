@@ -1,6 +1,6 @@
 ---
 name: domain-knowledge
-description: 个人领域知识库路由 skill。当用户请求涉及论文/资料解析、Linux/Kubernetes 运维、性能优化（串行/并行/并发/系统/数据库/网络/GPU）、分布式系统/微服务/云原生架构设计、算法（调度/负载均衡/共识/优化/问题求解/图算法/流式算法）、OS 安全与程序分析（MAC/SFI/动态追踪/策略提取/移动端分析）、故障排查或检查清单时，自动判断请求类型并调用对应子目录的 skill。
+description: 个人领域知识库路由 skill。当用户请求涉及论文/资料解析、Linux/Kubernetes 运维、性能优化（串行/并行/并发/系统/数据库/网络/GPU）、架构设计/计算机体系结构（分布式/微服务/云原生/微架构/存储层次/加速器）、算法（调度/负载均衡/共识/优化/问题求解/图算法/流式算法）、OS 安全与程序分析（MAC/SFI/动态追踪/策略提取/移动端分析）、故障排查或检查清单时，自动判断请求类型并调用对应子目录的 skill。
 ---
 
 # Domain Knowledge
@@ -37,7 +37,7 @@ cd ~/.claude/skills/domain-knowledge && git pull --rebase
 | **阅读记录查询** | 用户问“我读过什么”“这篇论文读过吗”“某篇资料归档在哪” | `history/` |
 | **故障排查 / 运维问题** | 涉及系统报错、服务异常、部署失败、监控告警、Linux/K8s 运维 | `operations/` |
 | **性能优化问题** | 涉及 latency、throughput、CPU、内存、I/O、并发、并行、数据库、网络、GPU 性能 | `performance/` |
-| **架构设计问题** | 涉及分布式系统、微服务、数据系统、可靠性、云原生、容量设计 | `architecture/` |
+| **架构设计 / 体系结构问题** | 涉及分布式系统、微服务、数据系统、可靠性、云原生、容量设计、CPU/GPU 微架构、存储层次、互连网络、近存/存内计算 | `architecture/` |
 | **算法问题** | 涉及资源调度、负载均衡、共识、分布式算法、最优化、问题求解、图算法、流式算法、复杂度分析 | `algorithms/` |
 | **OS 安全与程序分析** | 涉及访问控制、内存沙箱、动态追踪/插桩、策略提取、二进制分析、移动端安全 | `security/` |
 | **网络系统问题** | 涉及用户态网络 runtime、内核网络栈、TCP/RPC 调度、去中心化网络架构 | `network/` |
@@ -106,7 +106,7 @@ cd ~/.claude/skills/domain-knowledge && git pull --rebase
 
 - `operations/SKILL.md` — 运维与 SRE
 - `performance/SKILL.md` — 性能优化
-- `architecture/SKILL.md` — 架构设计
+- `architecture/SKILL.md` — 架构设计与计算机体系结构
 - `algorithms/SKILL.md` — 算法
 - `security/SKILL.md` — OS 安全与程序分析
 - `network/SKILL.md` — 网络系统
