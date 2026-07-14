@@ -72,5 +72,6 @@
 | 2026-07-14 | PowerSight(OSDI'26) | 论文-系统 | OSDI '26, osdi26-li-ruihao.pdf | knowledge-synthesis | operations/cloud-infrastructure/ | 硬件生命周期电源规划，RPB oversubscription ~20%，PowerSight ML预测跨架构MAPE 7.89% |
 | 2026-07-14 | Kareus(OSDI'26) | 论文-系统 | OSDI '26, osdi26-wu-ruofan.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | 训练能耗联合优化，partitioned overlap+MBO，比Perseus再省28.3%能耗或减27.5%时间 |
 | 2026-07-14 | SPADE(OSDI'26) | 论文-系统 | OSDI '26, osdi26-lechowicz.pdf | knowledge-synthesis | algorithms/resource-scheduling/ | 信号感知DAG调度+动态供给，相对重要性+指数阈值，碳排减少32.9% |
+| 2026-07-14 | Quota Marketplace(OSDI'26) | 论文-系统 | OSDI '26, osdi26-sivan.pdf | knowledge-synthesis | algorithms/resource-scheduling/ | Google部署的ML芯片市场机制，非零和credits+动态定价，保证Pareto效率+max-min公平 |
 
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
