@@ -27,6 +27,7 @@ GPU 与 AI/ML 推理和训练的性能优化知识。
 | 批量推理协程调度 | sequence coroutine, yield/combine/partition/migrate, MoE batching, long-tail straggler, batch completion time | BatchGen(OSDI'26) |
 | 训练能耗联合优化 | execution schedule, SM allocation, partitioned overlap, dynamic+static energy, multi-objective BO, GPU frequency | Kareus(OSDI'26) |
 | RL 后训练容错 | role-based fault isolation, Detect-Restart-Reconnect, warm standby, UCX dynamic reconnect, ETTR | RobustRL(OSDI'26) |
+| CPU-GPU 协同 I/O 引擎 | split SQ/CQ, CPU co-pilot, barrier-based sync, adaptive co-polling, GPU I/O stall reduction | CoPilotIO(OSDI'26) |
 
 ---
 

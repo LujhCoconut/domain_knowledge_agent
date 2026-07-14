@@ -84,5 +84,6 @@
 | 2026-07-14 | Oxbow(OSDI'26) | 论文-系统 | OSDI '26, osdi26-kim-jongyul.pdf | knowledge-synthesis | performance/storage-filesystem/ | 协调式多组件FS，semi-kernel-bypass+shared-ownership metadata+split journaling |
 | 2026-07-14 | DINGO(OSDI'26) | 论文-系统 | OSDI '26, osdi26-athlur.pdf | knowledge-synthesis | performance/storage-filesystem/ | 声明式IO，维护任务45-70% IO但可跨任务复用，IO-26-51%，支持1.7×更大HDD |
 | 2026-07-14 | Umap(OSDI'26) | 论文-运维系统 | OSDI '26, osdi26-he-yongchao.pdf | knowledge-synthesis | performance/storage-filesystem/ | mmap-IO DFS矩阵访问优化，消除livelock+OOM，吞吐up to 6.7×，生产部署18+月 |
+| 2026-07-14 | CoPilotIO(OSDI'26) | 论文-系统 | OSDI '26, osdi26-chen-guanyi.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | CPU co-pilot GPU I/O，split SQ/CQ+自适应co-polling，I/O stall -55.5%, 应用+85% |
 
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
