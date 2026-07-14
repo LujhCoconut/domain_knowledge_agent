@@ -9,6 +9,7 @@
 | 可移植专家并行通信 | CPU proxy, GPU-initiated token-level, RDMA immediate data, delivery semantics, heterogeneous GPU/NIC | UEP(OSDI'26) |
 | RDMA 软件传输层可扩展 | control/data path separation, UC multipath, control coalescing, receiver-driven CC, packet spraying | UCCL-Tran(OSDI'26) |
 | FPGA 可编程 RDMA 卸载引擎 | decoupled state, streaming control-data separation, 100G RoCEv2, fully customizable transport, SmartNIC | BALBOA(OSDI'26) |
+| SmartNIC 数据路径 KV Store | DPA, learned index tree, on-path processing, lock-free, stateless clients, range query, BlueField-3 | DPA-Store(OSDI'26) |
 
 ---
 
