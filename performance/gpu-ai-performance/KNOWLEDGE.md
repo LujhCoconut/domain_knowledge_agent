@@ -20,6 +20,7 @@ GPU 与 AI/ML 推理和训练的性能优化知识。
 | Agentic Workflow 编排 | declarative specification, profile-guided optimization, cross-layer orchestration, SLO-aware runtime | Murakkab(OSDI'26) |
 | RL 后训练 Co-Scheduling | dependency bubble, co-execution group, rollout-training disaggregation, two-tier scheduling, residency constraint | Weave(OSDI'26) |
 | RL 训练流变换 (M2Flow) | macro-to-micro flow, context switching, elastic pipelining, heterogeneous component orchestration | RLinf(OSDI'26) |
+| RL 动态资源调度 (DynaRL) | dynamic hypergraph, resource migration, context-aware data routing, multi-level scheduling | DynaRL(OSDI'26) |
 
 ---
 
@@ -467,3 +468,31 @@ RL 训练工作流包含高度异构的组件（LLM 推理、training、reward m
 - "高层描述→底层优化"的解耦设计是任何多组件异构工作流系统的通用范式
 - RL 训练系统的核心瓶颈不是训练本身的吞吐，而是异构组件的调度效率
 - Context switching 作为填充 accelerator idle gap 的策略，可以与 colocated/pipelined 互补使用
+
+---
+
+## RL 动态资源调度 (DynaRL)
+
+### 核心问题
+现代 RL 工作负载展现极端动态性（重尾 rollout、不规则工具交互、时变瓶颈），静态资源分配浪费高达 60% 计算。现有 RL 系统预先固定分配 GPU 且训练期间不变——与瓶颈的时间变化性质根本矛盾。
+
+### 关键洞察
+
+1. **动态超图作为统一控制面**：将整个 RL 管线建模为随时间演化的超图——计算/内存/通信资源都表示为可动态重分配的超边
+2. **"静态分配→动态重分配"**：统一资源迁移接口 + context-aware 数据路由——运行时动态迁移资源以消除瓶颈
+3. **多层次调度：粗粒度组件间 rebalancing + 细粒度资源迁移**——协同消除瓶颈
+4. **在线调度开销可忽略**：证明动态调度在 production RL 训练中是可行的（无额外性能代价）
+- 来源：DynaRL(OSDI'26)
+
+### 实践启发
+- 动态超图是"高度动态的多组件管线"的强大建模工具——不仅适用于 RL
+- "运行时适应"+ "设计时优化"是互补策略：RLinf 在编译时变换工作流，DynaRL 在运行时动态重分配资源
+- OSDI '26 三篇 RL 论文（Weave/DynaRL/RLinf）共同表明 RL 训练系统的瓶颈已从"计算加速"转向"调度效率"
+
+### OSDI '26 RL 训练三篇
+
+| 论文 | 核心机制 | 优化维度 | 加速 |
+|------|---------|---------|------|
+| Weave | Co-execution group 消除 dependency bubble | 跨池调度 | 1.84× |
+| RLinf | M2Flow 宏→微流变换 | 工作流变换 | 1.07-2.43× |
+| **DynaRL** | 动态超图 + 资源迁移 | **运行时资源重分配** | **1.98×** |
