@@ -103,5 +103,6 @@
 | 2026-07-14 | vBOIDs(OSDI'26) | 论文-系统 | OSDI '26, osdi26-manakkal.pdf | knowledge-synthesis | performance/system-tuning/ | 容器粗粒度BOID调度抽象，inter-core migration降一个数量级，吞吐up to 3× |
 | 2026-07-14 | EcoServe(OSDI'26) | 论文-系统 | OSDI '26, osdi26-du.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | 商品GPU集群LLM serving，PaDG+macro instance+稀疏化KV传输，goodput提升1.96-2.51× |
 | 2026-07-14 | PipeP(OSDI'26) | 论文-系统 | OSDI '26, osdi26-hwang.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | 重新评估PP for LLM serving，动态chunk+delay scheduling消除bubbles，PCIe GPU上超越TP |
+| 2026-07-14 | OpenTela(OSDI'26) | 论文-运维系统 | OSDI '26, osdi26-yao.pdf | knowledge-synthesis | architecture/cloud-native/ | 联邦LLM serving overlay，CRDT gossip+统一API跨HPC集群，22月13M请求142模型 |
 
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
