@@ -25,6 +25,7 @@ GPU 与 AI/ML 推理和训练的性能优化知识。
 | 同步 RL Rollout 优化 | divided rollout, context-aware scheduling, adaptive grouped speculative decoding, heavy-tailed latency | Seer(OSDI'26) |
 | 本地 CPU-GPU 混合 MoE 推理 | stream-loading prefill, CPU-GPU hybrid, SmallEP, local SLO, FP8 CPU inference | CPU-GPU Hybrid MoE(OSDI'26) |
 | 批量推理协程调度 | sequence coroutine, yield/combine/partition/migrate, MoE batching, long-tail straggler, batch completion time | BatchGen(OSDI'26) |
+| 训练能耗联合优化 | execution schedule, SM allocation, partitioned overlap, dynamic+static energy, multi-objective BO, GPU frequency | Kareus(OSDI'26) |
 
 ---
 
@@ -589,3 +590,31 @@ Agentic RL 工作负载混合了计算密集型 prefill、带宽密集型 decode
 - 动态 straggler 管理（检测→yield→partition）可复用于任何"固定 worker 数 + 长尾任务"的并行场景
 - KV-cache 的 host checkpoint + lazy GPU allocation（每 sequence 仅 2 pages）是最小化内存压力的有效策略
 - BatchGen 和 UEP 共享设计哲学：用软件层打破硬件刚性绑定（UEP 解耦 GPU-NIC，BatchGen 解耦 sequence-GPU）
+
+---
+
+## 训练能耗联合优化 (Kareus)
+
+### 核心问题
+大模型训练的能耗增长远超电力供给增长（预计 2035 年美国近 10% 电力用于数据中心），单次训练能耗可供电 24,000 户家庭一个月。现有方案各管一摊：Perseus 降低 off-critical-path 的 GPU 频率减少动态能耗但忽略 kernel 调度，Nanobatching 重叠通信和计算减少静态能耗（缩短时间）但忽略频率。**简单的 Perseus + Nanobatching 组合是次优的**——因为 SM 分配、频率、启动时机三者互为依赖，改变一个会改变其他要素的最优配置。
+
+### 关键洞察
+
+1. **"Execution schedule 的三要素应联合优化"**：SM 分配、kernel 启动时机、GPU 频率三者联合决定时间和能耗——即使总工作量相同，不同 schedule 可导致时间和能耗差 **3.29×**。现有方案各优化子集，naive 组合是次优的。
+
+2. **"恒定频率 > 频率波动"的能耗优势**：GPU 动态功耗 ∝ f³（V²f，V ∝ f）。频率波动导致高功耗期的能耗浪费 > 低功耗期的节省。Nanobatching 提高 GPU 利用率但触发 GPU 频率 throttling——平均频率降低、平均功耗反而保持高位。Kareus 选择固定稍低频反而更快更省电。
+
+3. **"重叠什么"比"重叠多少"更重要**：通信 kernel 与 memory-bound kernel（Norm）同时运行争内存带宽，与 compute-bound kernel（Linear）同时运行争 SM——资源竞争维度不同，最优 overlap 策略完全不同。
+
+4. **"低频改变最优 schedule"**：低频率使所有 kernel 变得相对更 compute-bound（频率只影响计算速度、不影响内存/通信带宽）→ 改变了哪些 kernel 应与通信重叠。意味着不能先选 schedule 再调频率——必须同时优化。
+
+5. **"大搜索空间可以通过结构约束分解"**（Partitioned overlap）：识别重复的通信+计算分区模式（Attention-AllReduce、MLP-AllReduce），强制同类型分区共享配置 → 将 85K candidates 的全局搜索分解为 manageable 的局部 subproblems。
+
+- 来源：Kareus(OSDI'26)
+
+### 实践启发
+- **任何有 DVFS 的计算场景都应考虑"恒定频率优于频率波动"**：响应式频率调整的时间不对称性意味着恒定低频通常比高频+降频更节能。
+- **Compute-communication overlap 优化时必须关心资源需求类型**：memory-bound vs compute-bound 的 co-run 效果完全不同。不仅是 overlap 与否的问题，更是"与什么重叠"的问题。
+- **BO 做多目标优化需要多方向的 acquisition**：total/dynamic/static/uncertainty 四轮 pass 的设计可推广到任何需要找 time-energy Pareto 前沿的系统问题。
+- **"温度敏感的性能/功耗测量"不可忽视**：GPU 功耗随温度漂移小但足以影响 Pareto 前沿准确性——需要 cooldown + 重复测量。这也意味着 profile 一次不能一劳永逸——季节/机房温度变化会影响最优 schedule。
+- **自动回退到简单方案**：Kareus 在 GPU 欠利用时（small microbatch）自动选择 sequential 而非 nanobatching。一个系统不仅要知道何时用高级特性，还要知道何时不用。

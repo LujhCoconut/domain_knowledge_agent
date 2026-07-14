@@ -70,5 +70,6 @@
 | 2026-07-14 | BatchGen(OSDI'26) | 论文-系统 | OSDI '26, osdi26-xu-tairan.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | 序列协程批量推理，yield/combine/partition/migrate，BCT降2.3×，唯一在8×H20跑Kimi-K2 |
 | 2026-07-14 | UCCL-Tran(OSDI'26) | 论文-系统 | OSDI '26, osdi26-zhou-yang.pdf | knowledge-synthesis | network/os-networking/ | RDMA软件传输层可扩展，UC multipath+control coalescing，collectives最高4.5×，训练+7.5% |
 | 2026-07-14 | PowerSight(OSDI'26) | 论文-系统 | OSDI '26, osdi26-li-ruihao.pdf | knowledge-synthesis | operations/cloud-infrastructure/ | 硬件生命周期电源规划，RPB oversubscription ~20%，PowerSight ML预测跨架构MAPE 7.89% |
+| 2026-07-14 | Kareus(OSDI'26) | 论文-系统 | OSDI '26, osdi26-wu-ruofan.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | 训练能耗联合优化，partitioned overlap+MBO，比Perseus再省28.3%能耗或减27.5%时间 |
 
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
