@@ -24,6 +24,7 @@ GPU 与 AI/ML 推理和训练的性能优化知识。
 | Agentic RL 异构硬件解耦 | trajectory-level decoupling, hardware heterogeneity mapping, stale-bounded async, serverless reward | RollArt(OSDI'26) |
 | 同步 RL Rollout 优化 | divided rollout, context-aware scheduling, adaptive grouped speculative decoding, heavy-tailed latency | Seer(OSDI'26) |
 | 本地 CPU-GPU 混合 MoE 推理 | stream-loading prefill, CPU-GPU hybrid, SmallEP, local SLO, FP8 CPU inference | CPU-GPU Hybrid MoE(OSDI'26) |
+| 批量推理协程调度 | sequence coroutine, yield/combine/partition/migrate, MoE batching, long-tail straggler, batch completion time | BatchGen(OSDI'26) |
 
 ---
 
@@ -560,3 +561,31 @@ Agentic RL 工作负载混合了计算密集型 prefill、带宽密集型 decode
 - "Stream-loading" 可推广到任何"模型太大、layer 需动态加载"的场景
 - 本地/边缘场景下的 CPU-GPU 混合推理比纯 GPU 更实用
 - FP8 在 CPU 上的加速是 under-explored 的优化维度
+
+---
+
+## 批量推理协程调度 (BatchGen)
+
+### 核心问题
+批量推理（离线推理、合成数据、评测、RL rollout、test-time scaling）已成为 AI 计算最大模式，但现有推理引擎（vLLM、SGLang、TensorRT-LLM）全部继承自交互式 serving 的延迟优先模型。两个结构性低效：(1) **Intra-sequence imbalance**：MoE 稀疏性导致 attention 和 expert 层需要不同 batch size 才能饱和 GPU，但传统系统 sequence 固定绑定 GPU 且 forward pass 原子执行，无法在 module 边界暂停、累积 sequence。(2) **Inter-sequence imbalance**：test-time scaling 和 reasoning 产生严重长尾——DeepSeek-R1 的 P99 输出长度是 P95 的 3.78×，最大值 9.2×。straggler 决定 BCT，导致 10-70% GPU 利用率损失。
+
+### 关键洞察
+
+1. **"序列协程"是推理系统的新抽象层次**：类比 Apache（thread-per-connection）→ Nginx（event-driven）的范式转变。每个 sequence 是独立 coroutine，可在 module 边界 yield、跨 GPU combine/partition/migrate。打破"sequence 固定绑定 GPU"的根本限制。
+
+2. **Module 边界 = 天然调度点**：NN 的模块化结构（attention→MoE→下一层）提供自然的 coroutine yield point。Attention 小 batch 饱和 GPU，MoE 需要大 batch——在 attention 后 yield，combine attention 输出后再批量运行 MoE → expert batch size 可膨胀 10-100×。
+
+3. **"超额订阅 + coroutine pool"模式**：scheduler 保持大量 inactive sequence 在 host memory 中，自由选择 combine 对象最大化 expert batch，而不是按到达顺序服务。类似 Nginx 的 keep-alive connection pool。
+
+4. **"静态 plan + 动态 callback"分工**：rooline model 决定 yield point 和最优 batch size（静态、一次），运行时 callback（O_N_LONG_TAIL / O_N_REFILL）处理不可预测的长尾和空闲。两者解耦 = 高效且灵活。
+
+5. **"弱 GPU 上优化收益更大"**：H20 上 speedup > H200——compute 越弱，batching 效率的边际收益越大。反直觉：不应只优化最强 GPU。
+
+- 来源：BatchGen(OSDI'26)
+
+### 实践启发
+- 任何 modular NN 都可以在 module 边界插入 yield point——不仅是 MoE，VLM（encoder↔language）、multi-modal pipeline 都是 natural candidate
+- "超额订阅"模式让 scheduler 有选择余地——在 batch inference 中应有意保持超过 GPU 容量的 sequence pool
+- 动态 straggler 管理（检测→yield→partition）可复用于任何"固定 worker 数 + 长尾任务"的并行场景
+- KV-cache 的 host checkpoint + lazy GPU allocation（每 sequence 仅 2 pages）是最小化内存压力的有效策略
+- BatchGen 和 UEP 共享设计哲学：用软件层打破硬件刚性绑定（UEP 解耦 GPU-NIC，BatchGen 解耦 sequence-GPU）
