@@ -10,6 +10,7 @@
 | 排序共识公平性 | equal opportunity, ε-ordering equality, ∆-ordering separation, SRO, front-running mitigation, sandwich attack | Pompē-SRO(OSDI'26) |
 | 通用共识 Fast-Path 框架 | 1-RTT plugin, view change hazard, promise, dual-path, super-quorum, TLA+ verification | Jetpack(OSDI'26) |
 | 协议操控竞速 BFT | protocol-rigged racing, cooperative+productive, proposal lane, slowdown detection, non-equivocation as race | Ambulance(OSDI'26) |
+| 云存储共享日志耐久层 | LogDrive, durability-sequencing separation, composable quorum, cloud storage SMR, weakTail | LogDrive(OSDI'26) |
 
 ---
 
