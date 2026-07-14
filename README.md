@@ -34,8 +34,8 @@ domain-knowledge/
 
 <!-- 以下区域由 /domain-knowledge 后置操作自动更新，请勿手动编辑本节 -->
 
-- **总计**: 94 篇
-- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 90 篇（'26）
+- **总计**: 95 篇
+- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 91 篇（'26）
 - **领域分布**:
   - CXL/内存系统/stall 回收: 10 篇
   - 存储层次/体系结构: 4 篇（Soul/GCP, Duhu, Blowfish, InfiniDefrag） — 见 `architecture/memory-storage-hierarchy/KNOWLEDGE.md`
@@ -43,7 +43,7 @@ domain-knowledge/
   - 云原生/解耦式服务: 1 篇（DGC） — 见 `architecture/cloud-native/KNOWLEDGE.md`
   - LLM 推理服务: 9 篇（含 agentic workflow + 本地 CPU-GPU 混合 MoE + 批量推理协程调度）
   - LLM 大规模训练+数据管线: 10 篇（含 RL 五篇 + Kareus 训练能耗）
-  - OS 安全/隐私/程序分析: 11 篇 — 见 `security/os-security/KNOWLEDGE.md`
+  - OS 安全/隐私/程序分析: 12 篇 — 见 `security/os-security/KNOWLEDGE.md`
   - 软件测试/DBMS/云服务: 2 篇（ValScope, S3 MBT） — 见 `algorithms/`, `operations/os-testing/KNOWLEDGE.md`
   - OS 内核/调优: 2 篇（kSTEP, ECO） — 见 `operations/os-performance-tuning/KNOWLEDGE.md`
   - 监控/可观测性: 6 篇 — 见 `operations/monitoring-observability/KNOWLEDGE.md`
