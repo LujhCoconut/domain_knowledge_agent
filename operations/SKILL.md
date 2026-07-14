@@ -10,6 +10,7 @@
 | `os-testing/` | OS 内核测试与调试 | 调度器测试、确定性重放、coverage-guided fuzzing、静默 bug 表征 |
 | `os-performance-tuning/` | OS 性能调优 | 内核常量在线调优 (perf-const)、LLM 驱动的生产代码优化、fleet profiling、anti-pattern mining |
 | `monitoring-observability/` | 监控与可观测性 | RCA、LLM 推理 tracing/诊断、Metrics/Logs/Traces、告警规则、日志聚合 |
+| `program-analysis/` | 程序分析与动态优化 | 推测性执行、动态 effect tracing、syscall interception、运行时优化 |
 | `container-k8s/` | 容器与 Kubernetes | Docker、K8s 资源对象、调度、网络、存储、排错 |
 | `ci-cd-devops/` | CI/CD 与 DevOps | GitHub Actions、GitLab CI、制品管理、发布策略、IaC |
 | `storage-infrastructure/` | 存储基础设施与数据管线 | HDFS、大规模数据供给、checkpoint 管理、跨 DC 数据复制、训练数据预处理 |
