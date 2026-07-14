@@ -114,5 +114,6 @@
 | 2026-07-14 | Arca(OSDI'26) | 论文-OS设计 | OSDI '26, osdi26-srivatsan.pdf | knowledge-synthesis | architecture/cloud-native/ | continuation作为OS原语，2.55µs快照/恢复，serverless 50-60×加速 |
 | 2026-07-14 | Spice(OSDI'26) | 论文-OS/系统 | OSDI '26, osdi26-holmes.pdf | knowledge-synthesis | architecture/cloud-native/ | SHELF+spliceVMA解耦物理-虚拟布局，冷启动0.6-18ms vs 3.6-1197ms，延迟7.5×改善 |
 | 2026-07-14 | libDSE(OSDI'26) | 论文-系统 | OSDI '26, osdi26-li-tianyu.pdf | knowledge-synthesis | architecture/cloud-native/ | 分布式推测执行，durable execution抽象-物理解耦，延迟up to 10×改善 |
+| 2026-07-14 | TrainMover(OSDI'26) | 论文-系统 | OSDI '26, osdi26-lao.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | 训练中断恢复~20s/1024GPU，delta通信重建+sandbox warmup+通用standby，GPU浪费-55% |
 
 <!-- 追加新记录时，复制上面一行并修改即可。 -->

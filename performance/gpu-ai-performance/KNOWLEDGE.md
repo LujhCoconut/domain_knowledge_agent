@@ -38,6 +38,7 @@ GPU 与 AI/ML 推理和训练的性能优化知识。
 | Mega-Kernel 编译器与运行时 | SM-level task graph, persistent kernel, decentralized scheduling, cross-operator pipelining, CUDA Graph alternative | MPK(OSDI'26) |
 | CUDA Graph 编译器使能 | graph-aware code transformation, indirect parameter passing, cost-benefit guided deployment, kernel launch bottleneck | GraCE(OSDI'26) |
 | Virtual Tensor 数据移动消除 | virtual tensor, index mapping, data movement elimination, tensor compilation, memory-bound, operator fusion | VTC(OSDI'26) |
+| 训练中断弹性运行时 | delta communication group, sandbox warmup, standby replacement, interruption-resilient, elastic GPUs, ETTR | TrainMover(OSDI'26) |
 
 ---
 
@@ -846,3 +847,23 @@ ML 工作负载每次迭代 launch 数百个短 GPU kernel，每个 CPU→GPU ke
 ### 实践启发
 - **"Virtual memory 的思想应用于 tensor compilation"**：Virtual tensor 类似虚拟内存的 lazy paging——不搬数据直到必须。与 InfiniDefrag "GPA 是虚拟的" 和 Blowfish "GPA 已是虚拟层" 共享思想——利用虚拟化避免物理搬移
 - **"Index mapping 是一个被低估的编译器中端优化"**：当前编译器聚焦于 compute kernel 生成（后端）和高层融合（前端），中间层的 data movement 消除是巨大空白
+
+---
+
+## 训练中断弹性运行时 (TrainMover)
+
+### 核心问题
+大规模 LLM 训练被频繁中断——硬件故障、软件异常、管理事件（repair/patch/rebalance→需重启机器）。16,000 GPU 作业每天累积 >1 小时 downtime，浪费 $86K。现有方案：(1) stop-reschedule-reinitialize（小时级）(2) reconfiguration（可弹性替换但 joiner 从 checkpoint 初始化慢）。关键：训练布局高度特化→乱改会触发 OOM 或性能退化。
+
+### 关键洞察
+
+1. **"Two-phase delta-based communication group setup"**：不全重建 NCCL communicator→仅增量更新受影响的 group（受影响机器退出+joiner 加入）→大幅减少通信重建时间。类似 RobustRL 的 "role-based 恢复"——故障隔离+局部修复。
+2. **"Communication-free sandboxed warmup"**：新 joiner 在通信隔离的 sandbox 中预热（加载模型、编译 kernel→最耗时步骤）→不阻塞已运行的训练→预热完成后无缝加入通信组。类似 SDCHUNTER "解耦恢复和诊断"——离线做昂贵的事，不影响在线。
+3. **"General standby design"**：任意角色（TP/PP/DP 任意维度）的机器都可被同构 standby 替换→不需要为每种角色维度维护专用备机池。弹性池 + 通用替换→备机利用率远高于专用备机。
+
+- 来源：TrainMover(OSDI'26)
+
+### 实践启发
+- **"Delta-based membership > full reconfiguration"**：只更新受影响部分而非重建全局→类似 vBOIDs "全局稳定性+局部灵活性"、RobustRL "角色隔离恢复"
+- **"Sandbox warmup = 隔离预热 + 无缝加入"**：将准备工作和正在进行的训练分离→消除加入延迟。类似 SDCHUNTER "Phase 1 隔离→Phase 2 精确" 的分层策略
+- **"ETTR 是训练的硬指标"**：每天 downtime >1h → 直接转化为 $86K 浪费。TrainMover 将其降至 ~20s→**不能容忍小时级中断的体系结构必须支持弹性**
