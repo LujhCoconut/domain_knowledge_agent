@@ -36,7 +36,7 @@ cd ~/.claude/skills/domain-knowledge && git pull --rebase
 | **论文/资料解析** | 用户提供了论文链接/PDF/标题，或要求“读这篇论文”“总结这篇文章”“写阅读笔记” | `common/knowledge-synthesis/` |
 | **阅读记录查询** | 用户问“我读过什么”“这篇论文读过吗”“某篇资料归档在哪” | `history/` |
 | **故障排查 / 运维问题** | 涉及系统报错、服务异常、部署失败、监控告警、Linux/K8s 运维 | `operations/` |
-| **性能优化问题** | 涉及 latency、throughput、CPU、内存、I/O、并发、并行、数据库、网络、GPU 性能 | `performance/` |
+| **性能优化问题** | 涉及 latency、throughput、CPU、内存、I/O、并发、并行、数据库、网络、GPU 性能、内核调优 | `performance/` |
 | **架构设计 / 体系结构问题** | 涉及分布式系统、微服务、数据系统、可靠性、云原生、容量设计、CPU/GPU 微架构、存储层次、互连网络、近存/存内计算 | `architecture/` |
 | **算法问题** | 涉及资源调度、负载均衡、共识、分布式算法、最优化、问题求解、图算法、流式算法、复杂度分析 | `algorithms/` |
 | **OS 安全与程序分析** | 涉及访问控制、内存沙箱、动态追踪/插桩、策略提取、二进制分析、移动端安全 | `security/` |

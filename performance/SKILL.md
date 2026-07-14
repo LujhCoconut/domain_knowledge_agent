@@ -10,7 +10,7 @@
 | `optimization-paradigms/` | 优化范式（偏 research） | 串行/并行/并发优化的方法论、模型与案例 |
 | `concurrency/` | 并发性能 | 锁竞争、协程/线程模型、Actor、CSP、无锁结构 |
 | `parallel/` | 并行性能 | 数据并行、任务并行、MPI/OpenMP、分布式训练并行策略 |
-| `system-tuning/` | 系统层调优 | CPU、内存、磁盘 I/O、内核参数、NUMA、调度 |
+| `system-tuning/` | 系统层调优 | CPU、内存、磁盘 I/O、内核参数、NUMA、调度、内核性能常量在线调优、内核代码优化 |
 | `database-performance/` | 数据库性能 | 索引、执行计划、连接池、慢查询、缓存策略 |
 | `network-performance/` | 网络性能 | TCP 调优、RDMA、延迟带宽、拥塞控制、抓包分析 |
 | `gpu-ai-performance/` | GPU / AI 性能 | CUDA、显存、通信原语、推理优化、大模型训练调优 |
