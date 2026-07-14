@@ -46,5 +46,6 @@
 | 2026-07-14 | UCSan(OSDI'26) | 论文-系统 | OSDI '26, osdi26-yin.pdf | knowledge-synthesis | operations/program-analysis/ | 编译-based under-constrained 执行引擎，任意 C/C++ 函数集独立可执行，vs KLEE 15.06× 快 |
 | 2026-07-14 | Aletheia(OSDI'26) | 论文-系统 | OSDI '26, osdi26-ferreira.pdf | knowledge-synthesis | operations/program-analysis/ | ER模型+关系代数静态检测微服务数据完整性违规，7 apps 发现 46 个未报告违规 |
 | 2026-07-14 | Arctic(OSDI'26) | 论文-系统 | OSDI '26, osdi26-ni.pdf | knowledge-synthesis | algorithms/concurrent-data-structures/ | 首个同时实现高性能+lock-free+range scan 的自适应基数树，hazard keys SMR, RocksDB +40% |
+| 2026-07-14 | Soul/GCP(OSDI'26) | 论文-系统 | OSDI '26, osdi26-yu-yanpeng.pdf | knowledge-synthesis | architecture/memory-storage-hierarchy/ | 泛化缓存一致性原生支持同步，disaggregated memory 上 1-2 orders magnitude 提升 |
 
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
