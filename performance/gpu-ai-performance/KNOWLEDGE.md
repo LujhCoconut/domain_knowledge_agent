@@ -31,6 +31,7 @@ GPU 与 AI/ML 推理和训练的性能优化知识。
 | GPU 十亿级向量搜索 | node-level dependency, tiered graph, discovery-expansion window, async edge fetching, ANNS | FlowANN(OSDI'26) |
 | GPU 演化图分析 | proxy graph, approximate-then-refine, fused kernel, concurrent snapshots, bound-based pruning, multi-version compaction | POEGA(OSDI'26) |
 | 商品 GPU 集群 LLM Serving | PaDG, macro instance, commodity clusters, prefill-decode interference, cross-instance orchestration, Ethernet | EcoServe(OSDI'26) |
+| 流水线并行 LLM Serving | pipeline parallelism, chunked-prefill, greedy/predictive chunk sizing, delay scheduling, pipeline bubbles, PCIe GPUs | Pipeline Parallelism Revisited(OSDI'26) |
 
 ---
 
@@ -699,3 +700,23 @@ GPU ANNS 比 CPU 快 200×，但 GPU 显存有限（80-96GB），十亿级图索
 ### 实践启发
 - **"二分之外有第三选择"**：colocate vs disaggregate 不是二选一——partial disaggregation 在两者之间找到平衡点。类似 CoPilotIO 的 "all-GPU vs all-CPU → split SQ/CQ"、FlowANN 的 "step-level vs per-node → node-level dependency"
 - **"系统设计应该面向实际部署环境而非前沿硬件"**：大多数研究假设 H100+NVLink+IB，但生产环境的硬件替换周期长得多——L20+Ethernet 依然是主流。好的系统设计应覆盖长尾硬件
+
+---
+
+## 流水线并行 LLM Serving (Pipeline Parallelism Revisited)
+
+### 核心问题
+Tensor Parallelism (TP) 已成为 LLM serving 标配——但在 **PCIe 互联的 commodity GPU** 上，每层 all-reduce 的通信量成为瓶颈。Pipeline Parallelism (PP) 通信量远小于 TP，理论上吞吐更高——但 **online serving 下 pipeline bubbles 严重**：请求到达时间不确定 + 输入长度可变→各 microbatch 计算量差异大→stage 间互相等待。
+
+### 关键洞察
+
+1. **"PP 的通信优势在 PCIe GPU 上被低估，但 bubbles 问题也被低估"**：PP 每步仅传小量 activation，远小于 TP 的 all-reduce。但 online workload 的动态性使固定 schedule 产生大量 bubbles。硬件条件变化（commodity GPU→PCIe 成为瓶颈）改变了 TP vs PP 的 trade-off。
+2. **"动态 chunk 大小用更少 bubbles 实现同吞吐"**：Greedy chunk 填充最大允许大小→减少碎片。Predictive chunk 利用未来请求信息→前瞻性更优。类似 SPADE 的 "cross-task coordination" 和 EcoServe 的 "macro instance 协作"——用跨请求调度替代固定 schedule。
+3. **"Delay scheduling 重平衡 decode 负载"**：延迟部分 decode 请求→将过载 stage 的工作移到后续 microbatch→进一步消除 bubbles。
+
+- 来源：Pipeline Parallelism Revisited(OSDI'26)
+
+### 实践启发
+- **"PP 在 PCIe GPU 上值得重新评估"**：类似 Helmsman "clustering strikes back"——硬件条件变化改变了旧权衡。TP 在 NVLink GPU 上最优，PP 在 PCIe GPU 上可能更优→不存在普适的 "最佳并行策略"
+- **"动态调度 > 静态 pipeline schedule"**：online serving 的负载变化使固定 schedule 产生大量 bubbles→需要 adaptive scheduling。类似 BatchGen 的 "sequence coroutines"——运行时重新组织执行顺序
+- **"不是选择 TP 还是 PP，而是何时用哪个"**：PP 在带宽受限场景（PCIe/NPU）下被系统性低估了——应作为 commodity GPU 的默认选择之一
