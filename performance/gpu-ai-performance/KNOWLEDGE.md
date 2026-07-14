@@ -33,6 +33,7 @@ GPU 与 AI/ML 推理和训练的性能优化知识。
 | 商品 GPU 集群 LLM Serving | PaDG, macro instance, commodity clusters, prefill-decode interference, cross-instance orchestration, Ethernet | EcoServe(OSDI'26) |
 | 流水线并行 LLM Serving | pipeline parallelism, chunked-prefill, greedy/predictive chunk sizing, delay scheduling, pipeline bubbles, PCIe GPUs | Pipeline Parallelism Revisited(OSDI'26) |
 | 在线 Neuron 均衡 GPU-CPU 推理 | online neuron balancing, activation sparsity, live pipeline, TAM cache, adaptive balancer, consumer GPUs | Kairox(OSDI'26) |
+| 任意精度量化推理加速 | DPR computation model, mpGEMM, bit-partition, adaptive kernel selection, APQ, edge LLM inference | ADAngel(OSDI'26) |
 
 ---
 
@@ -742,3 +743,23 @@ Consumer GPU（如 RTX 4090 24GB）无法装下 13B+ 模型全量参数→必须
 - **"Activation-based prefetching"**：instruction prefetching 是 CPU 的经典技术——Kairox 将其迁移到 neuron 级别，利用 activation locality 预测下一层权重需求
 - **"TAM = temporal persistence filter"**：短暂 spike 不值得做重量级操作（neuron 迁移）——类似 hot page tracking 中的"不要 swap 即将被 free 的 page"
 - **"Local/consumer deployment 是 LLM 推理的重要方向"**：数据隐私+去云成本→本地推理需求巨大。Kairox 专注 consumer GPU 而非 H100 集群→与 EcoServe 和 PP Revisited 共享"面向实际硬件"的设计哲学
+
+---
+
+## 任意精度量化推理加速 (ADAngel)
+
+### 核心问题
+APQ（任意精度量化，如 W4A8）是边缘 LLM 推理的关键压缩技术——用不同 bit-width 量化 weights 和 activations 以获得最优 accuracy-efficiency trade-off。但现有边缘硬件缺乏原生混合精度 GEMM 支持。三种现有方案各有局限：Padding（upcast→浪费内存带宽）、LUT（预计算表→内存开销大）、Bit-disaggregation（1-bit 分解→固定范式不适应 shape/bit-width 变化）。**没有一个方案适应 LLM 推理中 GEMM 任务的异构性**——prefill 是 compute-bound GEMM、decode 是 memory-bound GEMV，shape 和 bit-width 差异巨大。
+
+### 关键洞察
+
+1. **"DPR (Decomposition-Partial Product-Reconstruction) 计算模型"**：将任意 bit-width 的 GEMM 系统化地分解为多个部分积→以不同 bit-partition 方案重构→生成多种 mpGEMM 算法。不是硬选 padding 或 bit-disaggregation，而是根据任务特征生成最优组合。
+2. **"Computation Strategy Set + Oracle Policy Map"**：预生成多种高度优化的 kernel→离线穷举分析每个 (shape, bit-width) pair 的最佳 kernel→运行时轻量 dispatcher 查表选择→接近零 overhead。类似 Kareus 的 "roofline model + DAG critical path"。
+3. **"Prefill vs Decode 需要不同策略——同一 LLM 内也异构"**：prefill = compute-bound（长序列、大 batch），decode = memory-bound（单 token、KV cache 访问多）。静态 kernel 选择在两个阶段间必然次优→adaptive mapping 是必需的。
+
+- 来源：ADAngel(OSDI'26)
+
+### 实践启发
+- **"Bit-partition 多策略 + runtime dispatch"** 是异构硬件的通用优化模式：类似 Kareus "execution schedule 搜索 + 运行时选择"——离线枚举最优配置，在线零开销切换
+- **"同一工作流内存在 compute-bound 和 memory-bound 两个 phase"**：不仅是 prefill/decode——任何混合 workload 都应考虑 per-phase optimization 而非一刀切
+- **"通用硬件上的量化推理值得更多关注"**：不是所有部署都有 custom accelerator——oracle policy map 使通用 GPU 上的 APQ 也能达到接近专用硬件的效率
