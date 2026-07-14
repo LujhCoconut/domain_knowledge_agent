@@ -74,5 +74,6 @@
 | 2026-07-14 | SPADE(OSDI'26) | 论文-系统 | OSDI '26, osdi26-lechowicz.pdf | knowledge-synthesis | algorithms/resource-scheduling/ | 信号感知DAG调度+动态供给，相对重要性+指数阈值，碳排减少32.9% |
 | 2026-07-14 | Quota Marketplace(OSDI'26) | 论文-系统 | OSDI '26, osdi26-sivan.pdf | knowledge-synthesis | algorithms/resource-scheduling/ | Google部署的ML芯片市场机制，非零和credits+动态定价，保证Pareto效率+max-min公平 |
 | 2026-07-14 | Bodega(OSDI'26) | 论文-协议 | OSDI '26, osdi26-hu-guanzhou.pdf | knowledge-synthesis | algorithms/distributed-consensus/ | 首个任意节点任意时间本地线性化读，roster leases，读加速5.6-13.1× |
+| 2026-07-14 | Pompē-SRO(OSDI'26) | 论文-协议 | OSDI '26, osdi26-zhang-yunhao.pdf | knowledge-synthesis | algorithms/distributed-consensus/ | 排序共识公平性，equal opportunity+SRO随机性，缓解front-running/sandwich攻击 |
 
 <!-- 追加新记录时，复制上面一行并修改即可。 -->

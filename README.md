@@ -34,8 +34,8 @@ domain-knowledge/
 
 <!-- 以下区域由 /domain-knowledge 后置操作自动更新，请勿手动编辑本节 -->
 
-- **总计**: 69 篇
-- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 65 篇（'26）
+- **总计**: 70 篇
+- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 66 篇（'26）
 - **领域分布**:
   - CXL/内存系统/stall 回收: 10 篇
   - 存储层次/体系结构: 5 篇 — 见 `architecture/memory-storage-hierarchy/KNOWLEDGE.md`
@@ -51,7 +51,7 @@ domain-knowledge/
   - 程序分析与动态优化: 4 篇（hS, Incr, UCSan, Aletheia） — 见 `operations/program-analysis/KNOWLEDGE.md`
   - 并发数据结构: 1 篇（Arctic） — 见 `algorithms/concurrent-data-structures/KNOWLEDGE.md`
   - 资源调度与供给: 2 篇（SPADE, Quota Marketplace） — 见 `algorithms/resource-scheduling/KNOWLEDGE.md`
-  - 分布式共识: 1 篇（Bodega） — 见 `algorithms/distributed-consensus/KNOWLEDGE.md`
+  - 分布式共识: 2 篇（Bodega, Pompē-SRO） — 见 `algorithms/distributed-consensus/KNOWLEDGE.md`
   - 网络系统: 4 篇（SBB, Rakaia, UEP, UCCL-Tran） — 见 `network/os-networking/KNOWLEDGE.md`
 - **最后更新**: 2026-07-14
 
