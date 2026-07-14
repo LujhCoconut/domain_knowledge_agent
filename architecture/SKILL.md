@@ -11,7 +11,6 @@
 | `data-intensive-systems/` | 数据密集型系统 | 批流处理、消息队列、数据湖、存储选型、ETL |
 | `reliability-engineering/` | 可靠性工程 | 容错、降级、限流、熔断、多活、灾备 |
 | `cloud-native/` | 云原生架构 | Serverless、Service Mesh、不可变基础设施、FinOps、弹性内存管理 |
-| `cloud-orchestration/` | 云编排与 Agentic Workflow | 声明式 workflow 规范、跨层优化、profile-guided serving、自适应运行时 |
 
 ## 新增 skill 建议
 
