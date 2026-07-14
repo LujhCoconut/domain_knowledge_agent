@@ -9,6 +9,7 @@
 | 本地线性化读共识协议 | roster leases, all-to-all leasing, linearizable reads, optimistic holding, responder set, generalized leadership | Bodega(OSDI'26) |
 | 排序共识公平性 | equal opportunity, ε-ordering equality, ∆-ordering separation, SRO, front-running mitigation, sandwich attack | Pompē-SRO(OSDI'26) |
 | 通用共识 Fast-Path 框架 | 1-RTT plugin, view change hazard, promise, dual-path, super-quorum, TLA+ verification | Jetpack(OSDI'26) |
+| 协议操控竞速 BFT | protocol-rigged racing, cooperative+productive, proposal lane, slowdown detection, non-equivocation as race | Ambulance(OSDI'26) |
 
 ---
 
@@ -81,3 +82,28 @@
 - **"识别通用 hazard + 最少结构要求"是好的系统研究范式**：不只做一个 point solution，而是提炼适用于整类的条件
 - **"双路径并行 + 安全网"模式可推广**：保持快速路径的同时有可靠慢路径兜底——类似 Kareus 自动回退 sequential、SPADE 采样后 filter
 - **TLA+ model-checking 对协议设计的价值**：6 个系统全覆盖验证，确保跨 view change 的安全
+
+---
+
+## 协议操控竞速 BFT (Ambulance)
+
+### 核心问题
+生产 BFT 部署面临的核心威胁不是 crash 而是 slowdown（慢节点）——网络配置错误、部分硬件故障、GC 暂停、磁盘 I/O 竞争。Timeout 让 leader 与时钟竞速（太激进误判、太保守空等），Hedging 用时钟偏置竞速但仍需等待，异步方案通用 case 延迟高。需要一种**非阻塞、生产性的** slowdown 检测机制。
+
+### 关键洞察
+
+1. **"Protocol-rigged racing 替代与时钟竞速"**：Replica 之间用协议步骤竞速——leader 做更少步骤（2 步 quadratic）、非 leader 做更多步骤（3 步 linear）→ 正常 leader 自然更快，不需要时钟来区分快慢。满足 cooperative + productive 两个必要条件。
+
+2. **"竞速 = Non-equivocation phase"**：所有 replica 本来就需执行 non-equivocation 来 commit。竞速期间的工作**直接可用于 commit**——如果 leader 输了，replica 的竞速工作不需要推倒重来。
+
+3. **"Cutoff 机制进一步偏置 leader"**：Leader 不需要第一个完成，只需在 cutoff 前完成。Cutoff 最大化 leader 赢面同时保证快速恢复。
+
+4. **"Recovery path 三步"**：Recover（恢复可能已 commit 的 leader proposal）→ Persist（race exclusion + 持久化）→ Random lane select（随机选 lane commit，防止网络对手偏置）。
+
+- 来源：Ambulance(OSDI'26)
+
+### 实践启发
+- **"用协议步骤偏置竞速"是通用设计模式**：leader 做更少步骤、非 leader 做更多步骤 → leader 自然更快 → 不需要时钟
+- **"将检测机制嵌入已有协议步骤"**：不增加额外的检测逻辑层——检测就是协议本身
+- **"Cooperative + Productive"是好的异常检测的充要条件**：可以用于评估任何 proposed 机制
+- **竞速不空等的设计哲学与本周其他论文共享**：Kareus（optimistic holding）、Bodega（optimistic holding）、Ambulance（productive racing）——都拒绝阻塞等待

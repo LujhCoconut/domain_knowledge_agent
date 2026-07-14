@@ -76,5 +76,6 @@
 | 2026-07-14 | Bodega(OSDI'26) | 论文-协议 | OSDI '26, osdi26-hu-guanzhou.pdf | knowledge-synthesis | algorithms/distributed-consensus/ | 首个任意节点任意时间本地线性化读，roster leases，读加速5.6-13.1× |
 | 2026-07-14 | Pompē-SRO(OSDI'26) | 论文-协议 | OSDI '26, osdi26-zhang-yunhao.pdf | knowledge-synthesis | algorithms/distributed-consensus/ | 排序共识公平性，equal opportunity+SRO随机性，缓解front-running/sandwich攻击 |
 | 2026-07-14 | Jetpack(OSDI'26) | 论文-协议/系统 | OSDI '26, osdi26-tang.pdf | knowledge-synthesis | algorithms/distributed-consensus/ | 通用共识1-RTT fast-path插件，view change hazard，6系统+TLA+验证，延迟降60% |
+| 2026-07-14 | Ambulance(OSDI'26) | 论文-协议 | OSDI '26, osdi26-giridharan.pdf | knowledge-synthesis | algorithms/distributed-consensus/ | protocol-rigged racing替代timeout，BFT slowdown恢复快1.6-10.8×，3 msg delay正常延迟 |
 
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
