@@ -91,5 +91,6 @@
 | 2026-07-14 | Sepia(OSDI'26) | 论文-系统 | OSDI '26, osdi26-song.pdf | knowledge-synthesis | network/os-networking/ | DDIO页着色优化，冲突缺失识别，有效LLC容量+77-94%，3.5核饱和200Gbps |
 | 2026-07-14 | FlowANN(OSDI'26) | 论文-系统 | OSDI '26, osdi26-zhao.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | node-level dep解耦图搜索，单GPU十亿ANNS，比SOTA快4-46× |
 | 2026-07-14 | POEGA(OSDI'26) | 论文-系统 | OSDI '26, osdi26-zhang-yunmo.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | GPU演化图分析，proxy graph+fused kernel+adaptive compaction，3.7-23.5× |
+| 2026-07-14 | Pluto(OSDI'26) | 论文-系统 | OSDI '26, osdi26-wu-ying-wei.pdf | knowledge-synthesis | algorithms/graph-processing/ | 分布式图partial mirroring，mirror heterogeneity消除非生产性复制，vs full mirroring up to 3.8× |
 
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
