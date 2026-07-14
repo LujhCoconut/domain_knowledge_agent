@@ -7,7 +7,7 @@
 | 目录 | 主题 | 适合归档的内容 |
 |------|------|----------------|
 | `linux-system-admin/` | Linux 系统管理 | 文件系统、进程、systemd、权限、内核参数、常用命令行技巧 |
-| `os-testing/` | OS 内核测试与调试 | 调度器测试、确定性重放、coverage-guided fuzzing、静默 bug 表征 |
+| `os-testing/` | 系统测试与调试 | 内核测试、确定性重放、coverage-guided fuzzing、MBT、API 一致性验证 |
 | `os-performance-tuning/` | OS 性能调优 | 内核常量在线调优 (perf-const)、LLM 驱动的生产代码优化、fleet profiling、anti-pattern mining |
 | `monitoring-observability/` | 监控与可观测性 | RCA、LLM 推理 tracing/诊断、Metrics/Logs/Traces、告警规则、日志聚合 |
 | `program-analysis/` | 程序分析与动态优化 | 推测性执行、动态 effect tracing、syscall interception、运行时优化 |
