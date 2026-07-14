@@ -53,5 +53,6 @@
 | 2026-07-14 | RLinf(OSDI'26) | 论文-系统 | OSDI '26, osdi26-yu-chao.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | M2Flow 宏观→微观流变换，context switching+elastic pipelining，1.07-2.43× 加速 |
 | 2026-07-14 | DynaRL(OSDI'26) | 论文-系统 | OSDI '26, osdi26-wang-yuanqing.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | 动态超图+资源迁移，首个运行时动态重分配 RL 资源调度，最高 1.98× 吞吐提升 |
 | 2026-07-14 | RollArt(OSDI'26) | 论文-系统 | OSDI '26, osdi26-gao.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | 异构硬件映射+trajectory 级解耦，serverless reward，1.31-2.05× 训练时间减少, 3,000 GPU 验证 |
+| 2026-07-14 | Seer(OSDI'26) | 论文-系统 | OSDI '26, osdi26-qin.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | 同步 RL rollout 优化，divided rollout+context-aware sched+adaptive grouped speculation，2.04× 吞吐，长尾延迟 -72-94% |
 
 <!-- 追加新记录时，复制上面一行并修改即可。 -->

@@ -22,6 +22,7 @@ GPU 与 AI/ML 推理和训练的性能优化知识。
 | RL 训练流变换 (M2Flow) | macro-to-micro flow, context switching, elastic pipelining, heterogeneous component orchestration | RLinf(OSDI'26) |
 | RL 动态资源调度 (DynaRL) | dynamic hypergraph, resource migration, context-aware data routing, multi-level scheduling | DynaRL(OSDI'26) |
 | Agentic RL 异构硬件解耦 | trajectory-level decoupling, hardware heterogeneity mapping, stale-bounded async, serverless reward | RollArt(OSDI'26) |
+| 同步 RL Rollout 优化 | divided rollout, context-aware scheduling, adaptive grouped speculative decoding, heavy-tailed latency | Seer(OSDI'26) |
 
 ---
 
@@ -490,7 +491,7 @@ RL 训练工作流包含高度异构的组件（LLM 推理、training、reward m
 - "运行时适应"+ "设计时优化"是互补策略：RLinf 在编译时变换工作流，DynaRL 在运行时动态重分配资源
 - OSDI '26 四篇 RL 论文（Weave/RollArt/DynaRL/RLinf）共同表明 RL 训练系统的瓶颈已从"计算加速"转向"调度效率"
 
-### OSDI '26 RL 训练四篇
+### OSDI '26 RL 训练五篇
 
 | 论文 | 核心机制 | 优化维度 | 加速 |
 |------|---------|---------|------|
@@ -498,6 +499,26 @@ RL 训练工作流包含高度异构的组件（LLM 推理、training、reward m
 | **RollArt** | **异构硬件映射 + trajectory 级解耦** | **硬件解耦 + pipeline 分解** | **1.31-2.05×** |
 | RLinf | M2Flow 宏→微流变换 | 工作流变换 | 1.07-2.43× |
 | DynaRL | 动态超图 + 资源迁移 | 运行时资源重分配 | 1.98× |
+| **Seer** | **divided rollout + context-aware speculative decode** | **同步 rollout 长尾优化** | **2.04×, 长尾 -72-94%** |
+
+---
+
+## 同步 RL Rollout 优化 (Seer)
+
+### 核心问题
+同步 RL 训练中 rollout 阶段占总时间的 63-87%（Moonlight 84%、Qwen2-VL 63%、Kimi-K2 87%），核心瓶颈是**重尾长轨迹分布**导致的负载不均衡和 KVCache 内存波动。长 CoT 生成的 KVCache 可能从几百 MB 爆发到数十 GB。
+
+### 关键洞察
+
+1. **"共享 prompt → 相似的输出行为"**：共享相同 prompt 的请求在输出长度和响应模式上高度相似——这是调度优化的关键信号
+2. **Divided rollout**：将 rollout 批次按预测输出长度动态拆分，防止长请求拖累整个批次
+3. **Context-aware scheduling**：利用 prompt 相似性预先感知长输出请求，在调度时特殊处理
+4. **Adaptive grouped speculative decoding**：相似 prompt 请求分组共享草稿模型，减少重复计算
+- 来源：Seer(OSDI'26)
+
+### 实践启发
+- "共享 prompt → 相似输出"不仅是语义观察，也是系统优化信号——适用于任何 LLM 批处理/推理场景
+- 重尾延迟的本质是"最慢的请求主导了整个批次的 GPU 空闲时间"——divided rollout 是解决这一问题的直接方案
 
 ---
 
