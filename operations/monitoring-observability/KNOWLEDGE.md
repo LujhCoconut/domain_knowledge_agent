@@ -8,6 +8,7 @@
 | LLM 推理在线 Tracing/诊断 | key sync points, critical path, abnormality-only detailed tracing, dynamic roofline, correlation diagnosis | StriaTrace(OSDI'26) |
 | 应用定义资源的性能诊断 | LLM semantic inference + static analysis, resource bottleneck attribution, runtime tracking | gigiprofiler(OSDI'26) |
 | GPU SDC 生产诊断 | silent data corruption, deterministic replay, homogeneous replay, full-state comparison, SDC-defective GPU | SDCHUNTER(OSDI'26) |
+| GPU SDC 在线检测 | cSensor-cVerifier, mixed-precision checksum, self-equivalence, algorithmic detection, permanent SDC | AEGIS(OSDI'26) |
 
 ---
 
