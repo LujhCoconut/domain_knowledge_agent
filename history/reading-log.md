@@ -65,7 +65,6 @@
 | 2026-07-14 | Nested SEV(OSDI'26) | 论文-系统 | OSDI '26, osdi26-takiguchi.pdf | knowledge-synthesis | operations/cloud-infrastructure/ | 嵌套机密VM通用支持，emulation-less multiplexing + SEV context decoupling，两种信任模型 |
 | 2026-07-14 | µUSB(OSDI'26) | 论文-系统 | OSDI '26, osdi26-zhang-xuankai.pdf | knowledge-synthesis | security/os-security/ | record→lift→replay 从执行trace推导TrustZone精简USB驱动，首次in-TEE USB支持 |
 | 2026-07-14 | CPU-GPU Hybrid MoE(OSDI'26) | 论文-系统 | OSDI '26, osdi26-wang-wenxin.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | 本地CPU-GPU混合MoE推理，SLP 1,200 tok/s, 45K prompt in 30s, CPU FP8 4-5× |
-
 | 2026-07-14 | UEP(OSDI'26) | 论文-系统 | OSDI '26, osdi26-mao-ziming-uep.pdf | knowledge-synthesis | network/os-networking/ | 可移植EP通信，CPU proxy解耦GPU-NIC，O(m)取代O(m×n)，EFA上2.1×吞吐提升，SGLang推理+40% |
 | 2026-07-14 | BatchGen(OSDI'26) | 论文-系统 | OSDI '26, osdi26-xu-tairan.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | 序列协程批量推理，yield/combine/partition/migrate，BCT降2.3×，唯一在8×H20跑Kimi-K2 |
 | 2026-07-14 | UCCL-Tran(OSDI'26) | 论文-系统 | OSDI '26, osdi26-zhou-yang.pdf | knowledge-synthesis | network/os-networking/ | RDMA软件传输层可扩展，UC multipath+control coalescing，collectives最高4.5×，训练+7.5% |
@@ -110,10 +109,10 @@
 | 2026-07-14 | TileLoom(OSDI'26) | 论文-编译器/系统 | OSDI '26, osdi26-li-wei.pdf | knowledge-synthesis | architecture/accelerators/ | spatial dataflow加速器tile编译，MLIR自动dataflow planning，匹配vendor库性能 |
 | 2026-07-14 | MPK(OSDI'26) | 论文-编译器/系统 | OSDI '26, osdi26-cheng.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | mega-kernel编译器+运行时，SM级任务图+去中心化调度，推理延迟-1.7× |
 | 2026-07-14 | GraCE(OSDI'26) | 论文-编译器/系统 | OSDI '26, osdi26-ghosh.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | CUDA Graph编译器使能，auto code transform+indirect params，Graph收益2×于PyTorch2 |
+| 2026-07-14 | VTC(OSDI'26) | 论文-编译器 | OSDI '26, osdi26-hu-muyan.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | virtual tensor+index mapping消除数据移动，vs现有编译器1.93×, 内存-60% |
 | 2026-07-14 | Quark(OSDI'26) | 论文-运维系统 | OSDI '26, osdi26-chai.pdf | knowledge-synthesis | operations/cloud-infrastructure/ | 混布batch serverless化，消除4种闲置，有效利用率33%→100%，节省>10万核 |
 | 2026-07-14 | Arca(OSDI'26) | 论文-OS设计 | OSDI '26, osdi26-srivatsan.pdf | knowledge-synthesis | architecture/cloud-native/ | continuation作为OS原语，2.55µs快照/恢复，serverless 50-60×加速 |
 | 2026-07-14 | Spice(OSDI'26) | 论文-OS/系统 | OSDI '26, osdi26-holmes.pdf | knowledge-synthesis | architecture/cloud-native/ | SHELF+spliceVMA解耦物理-虚拟布局，冷启动0.6-18ms vs 3.6-1197ms，延迟7.5×改善 |
 | 2026-07-14 | libDSE(OSDI'26) | 论文-系统 | OSDI '26, osdi26-li-tianyu.pdf | knowledge-synthesis | architecture/cloud-native/ | 分布式推测执行，durable execution抽象-物理解耦，延迟up to 10×改善 |
 | 2026-07-14 | TrainMover(OSDI'26) | 论文-系统 | OSDI '26, osdi26-lao.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | 训练中断恢复~20s/1024GPU，delta通信重建+sandbox warmup+通用standby，GPU浪费-55% |
-
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
