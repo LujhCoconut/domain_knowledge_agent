@@ -10,6 +10,7 @@
 | RDMA 软件传输层可扩展 | control/data path separation, UC multipath, control coalescing, receiver-driven CC, packet spraying | UCCL-Tran(OSDI'26) |
 | FPGA 可编程 RDMA 卸载引擎 | decoupled state, streaming control-data separation, 100G RoCEv2, fully customizable transport, SmartNIC | BALBOA(OSDI'26) |
 | SmartNIC 数据路径 KV Store | DPA, learned index tree, on-path processing, lock-free, stateless clients, range query, BlueField-3 | DPA-Store(OSDI'26) |
+| DDIO 页着色 LLC 优化 | DDIO, page coloring, LLC conflict miss, sliced cache, leaky DMA, color-aware allocator | Sepia(OSDI'26) |
 
 ---
 

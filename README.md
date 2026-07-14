@@ -34,8 +34,8 @@ domain-knowledge/
 
 <!-- 以下区域由 /domain-knowledge 后置操作自动更新，请勿手动编辑本节 -->
 
-- **总计**: 83 篇
-- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 79 篇（'26）
+- **总计**: 84 篇
+- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 80 篇（'26）
 - **领域分布**:
   - CXL/内存系统/stall 回收: 10 篇
   - 存储层次/体系结构: 3 篇（Soul/GCP, Duhu, Blowfish） — 见 `architecture/memory-storage-hierarchy/KNOWLEDGE.md`
@@ -52,7 +52,7 @@ domain-knowledge/
   - 并发数据结构: 1 篇（Arctic） — 见 `algorithms/concurrent-data-structures/KNOWLEDGE.md`
   - 资源调度与供给: 2 篇（SPADE, Quota Marketplace） — 见 `algorithms/resource-scheduling/KNOWLEDGE.md`
   - 分布式共识: 4 篇（Bodega, Pompē-SRO, Jetpack, Ambulance） — 见 `algorithms/distributed-consensus/KNOWLEDGE.md`
-  - 网络系统: 6 篇（SBB, Rakaia, UEP, UCCL-Tran, BALBOA, DPA-Store） — 见 `network/os-networking/KNOWLEDGE.md`
+  - 网络系统: 7 篇（SBB, Rakaia, UEP, UCCL-Tran, BALBOA, DPA-Store, Sepia） — 见 `network/os-networking/KNOWLEDGE.md`
 - **最后更新**: 2026-07-14
 
 <!-- 自动更新区域结束 -->
