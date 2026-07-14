@@ -89,5 +89,6 @@
 | 2026-07-14 | DPA-Store(OSDI'26) | 论文-系统 | OSDI '26, osdi26-schimmelpfennig.pdf | knowledge-synthesis | network/os-networking/ | BF3 DPA on-path KV store，learned index+lock-free，33M lookup/s, 13M range/s |
 | 2026-07-14 | FARLock(OSDI'26) | 论文-协议 | OSDI '26, osdi26-hu-yuehao.pdf | knowledge-synthesis | algorithms/concurrent-data-structures/ | 公平RDMA非对称锁，ticket+MCS handover，FCFS公平+高性能 |
 | 2026-07-14 | Sepia(OSDI'26) | 论文-系统 | OSDI '26, osdi26-song.pdf | knowledge-synthesis | network/os-networking/ | DDIO页着色优化，冲突缺失识别，有效LLC容量+77-94%，3.5核饱和200Gbps |
+| 2026-07-14 | FlowANN(OSDI'26) | 论文-系统 | OSDI '26, osdi26-zhao.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | node-level dep解耦图搜索，单GPU十亿ANNS，比SOTA快4-46× |
 
 <!-- 追加新记录时，复制上面一行并修改即可。 -->

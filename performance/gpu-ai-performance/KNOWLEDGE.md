@@ -28,6 +28,7 @@ GPU 与 AI/ML 推理和训练的性能优化知识。
 | 训练能耗联合优化 | execution schedule, SM allocation, partitioned overlap, dynamic+static energy, multi-objective BO, GPU frequency | Kareus(OSDI'26) |
 | RL 后训练容错 | role-based fault isolation, Detect-Restart-Reconnect, warm standby, UCX dynamic reconnect, ETTR | RobustRL(OSDI'26) |
 | CPU-GPU 协同 I/O 引擎 | split SQ/CQ, CPU co-pilot, barrier-based sync, adaptive co-polling, GPU I/O stall reduction | CoPilotIO(OSDI'26) |
+| GPU 十亿级向量搜索 | node-level dependency, tiered graph, discovery-expansion window, async edge fetching, ANNS | FlowANN(OSDI'26) |
 
 ---
 
