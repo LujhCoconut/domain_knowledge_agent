@@ -34,18 +34,19 @@ domain-knowledge/
 
 <!-- 以下区域由 /domain-knowledge 后置操作自动更新，请勿手动编辑本节 -->
 
-- **总计**: 56 篇
-- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 52 篇（'26）
+- **总计**: 57 篇
+- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 53 篇（'26）
 - **领域分布**:
   - CXL/内存系统/stall 回收: 10 篇
   - 存储层次/体系结构: 5 篇 — 见 `architecture/memory-storage-hierarchy/KNOWLEDGE.md`
+  - 云基础设施/虚拟化: 3 篇（mwait-sched, Xkernel, Janus） — 见 `operations/cloud-infrastructure/KNOWLEDGE.md`
   - 云原生/解耦式服务: 1 篇（DGC） — 见 `architecture/cloud-native/KNOWLEDGE.md`
   - LLM 推理服务: 7 篇（含 agentic workflow 编排）
   - LLM 大规模训练+数据管线: 9 篇（含 RL 五篇）
   - OS 安全/隐私/程序分析: 8 篇 — 见 `security/os-security/KNOWLEDGE.md`
   - 软件测试/DBMS: 1 篇（ValScope）
-  - OS 内核/调优: 4 篇（kSTEP, mwait-sched, Xkernel, ECO）
-  - 监控/可观测性: 3 篇（CoreSec, StriaTrace, gigiprofiler） — 见 `operations/monitoring-observability/KNOWLEDGE.md`
+  - OS 内核/调优: 2 篇（kSTEP, ECO） — 见 `operations/os-performance-tuning/KNOWLEDGE.md`
+  - 监控/可观测性: 3 篇 — 见 `operations/monitoring-observability/KNOWLEDGE.md`
   - 存储/文件系统: 2 篇（ByteDance DataPipeline, DeLFS） — 见 `operations/storage-infrastructure/KNOWLEDGE.md`
   - 程序分析与动态优化: 4 篇（hS, Incr, UCSan, Aletheia） — 见 `operations/program-analysis/KNOWLEDGE.md`
   - 并发数据结构: 1 篇（Arctic） — 见 `algorithms/concurrent-data-structures/KNOWLEDGE.md`
