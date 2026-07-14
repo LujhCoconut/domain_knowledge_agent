@@ -47,5 +47,6 @@
 | 2026-07-14 | Aletheia(OSDI'26) | 论文-系统 | OSDI '26, osdi26-ferreira.pdf | knowledge-synthesis | operations/program-analysis/ | ER模型+关系代数静态检测微服务数据完整性违规，7 apps 发现 46 个未报告违规 |
 | 2026-07-14 | Arctic(OSDI'26) | 论文-系统 | OSDI '26, osdi26-ni.pdf | knowledge-synthesis | algorithms/concurrent-data-structures/ | 首个同时实现高性能+lock-free+range scan 的自适应基数树，hazard keys SMR, RocksDB +40% |
 | 2026-07-14 | Soul/GCP(OSDI'26) | 论文-系统 | OSDI '26, osdi26-yu-yanpeng.pdf | knowledge-synthesis | architecture/memory-storage-hierarchy/ | 泛化缓存一致性原生支持同步，disaggregated memory 上 1-2 orders magnitude 提升 |
+| 2026-07-14 | DGC(OSDI'26) | 论文-系统 | OSDI '26, osdi26-lyu.pdf | knowledge-synthesis | architecture/cloud-native/ | 解耦式 GC 服务，标记阶段 RDMA offload 至远程引擎，P99 latency -64.4%, goodput +24% |
 
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
