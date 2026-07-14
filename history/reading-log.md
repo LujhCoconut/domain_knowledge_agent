@@ -82,5 +82,6 @@
 | 2026-07-14 | OpGuard(OSDI'26) | 论文-运维/调试 | OSDI '26, osdi26-zhou-ziming.pdf | knowledge-synthesis | operations/monitoring-observability/ | bitwise alignment调试原语，跨异构栈算子边界+调度容忍匹配，20+生产问题，天→分钟 |
 | 2026-07-14 | RobustRL(OSDI'26) | 论文-系统 | OSDI '26, osdi26-chen-zhenqian.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | RL后训练角色化容错，Detect-Restart-Reconnect，256GPU 10%故障ETTR>80% vs ByteRobust 60% |
 | 2026-07-14 | Oxbow(OSDI'26) | 论文-系统 | OSDI '26, osdi26-kim-jongyul.pdf | knowledge-synthesis | performance/storage-filesystem/ | 协调式多组件FS，semi-kernel-bypass+shared-ownership metadata+split journaling |
+| 2026-07-14 | DINGO(OSDI'26) | 论文-系统 | OSDI '26, osdi26-athlur.pdf | knowledge-synthesis | performance/storage-filesystem/ | 声明式IO，维护任务45-70% IO但可跨任务复用，IO-26-51%，支持1.7×更大HDD |
 
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
