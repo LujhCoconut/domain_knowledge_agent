@@ -12,7 +12,7 @@
 | `reliability-engineering/` | 可靠性工程 | 容错、降级、限流、熔断、多活、灾备 |
 | `cloud-native/` | 云原生架构 | Serverless、Service Mesh、不可变基础设施、FinOps、弹性内存管理 |
 | `microarchitecture/` | CPU/GPU 微架构 | 流水线、分支预测、乱序执行、缓存、TLB、虚拟化、安全硬件 | 
-| `memory-storage-hierarchy/` | 内存层次 | CXL、解聚内存、缓存一致性、内存池化 |
+| `memory-storage-hierarchy/` | 内存层次 | CXL、分离式内存、缓存一致性、内存池化 |
 | `accelerators/` | 加速器架构 | GPU、TPU、NPU、FPGA、领域专用加速器（DSA） |
 
 ## 新增 skill 建议

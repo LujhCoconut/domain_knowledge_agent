@@ -4,13 +4,13 @@
 - **全称**: Blowfish: Elastic Virtual Machine Memory for Disaggregated Memory
 - **作者**: Yulong Zhang (ICT CAS & UCAS), Yilong Luo, Diyu Zhou (PKU), Quan Chen (SJTU), Mosong Zhou, Lei Zhu, Senbo Fu, Qian Peng (Huawei Cloud), Huimin Cui, Xiaobing Feng, Chenxi Wang* (ICT CAS), Tao Xie (PKU)
 - **类型**: 论文-系统 (virtualization + disaggregated memory + cloud infrastructure)
-- **一句话 TL;DR**: 现有 VM 内存超卖机制（balloon + swap）在冷内存回收上存在根本问题：THP 下页追踪开销大、页表频繁 remapping 导致吞吐下降。而且 swap to disk 延迟是毫秒级→VM 访问已回收冷内存时 SLO 被破坏。Blowfish 利用解聚内存（far memory over RDMA/CXL）实现 **µs 级**冷内存回收和恢复：基于半虚拟化的轻量 guest-level THP-aware 热度追踪 + hypervisor 直通跨 VM 回收路径。比 SOTA HyperAlloc 回收快 **2.48×**、恢复快 **2.14×**，在 5% 性能退化内回收比提升 **1.6-6.1×**。超过 50% 数据中心内存闲置→解聚内存再分配潜力巨大。
+- **一句话 TL;DR**: 现有 VM 内存超卖机制（balloon + swap）在冷内存回收上存在根本问题：THP 下页追踪开销大、页表频繁 remapping 导致吞吐下降。而且 swap to disk 延迟是毫秒级→VM 访问已回收冷内存时 SLO 被破坏。Blowfish 利用分离式内存（far memory over RDMA/CXL）实现 **µs 级**冷内存回收和恢复：基于半虚拟化的轻量 guest-level THP-aware 热度追踪 + hypervisor 直通跨 VM 回收路径。比 SOTA HyperAlloc 回收快 **2.48×**、恢复快 **2.14×**，在 5% 性能退化内回收比提升 **1.6-6.1×**。超过 50% 数据中心内存闲置→分离式内存再分配潜力巨大。
 
 ## 重要术语解释
 
 | 术语 | 解释 |
 |------|------|
-| **Blowfish** | 基于解聚内存的弹性 VM 内存超卖框架 |
+| **Blowfish** | 基于分离式内存的弹性 VM 内存超卖框架 |
 | **Far memory** | 远端服务器的空闲内存——通过 RDMA/CXL 在 µs 级访问——Blowfish 用作二级"swap"介质 |
 | **THP** (Transparent Huge Page) | Linux 的透明大页——2MB 粒度 | 使 per-4KB 访问追踪失效——是现有方案的首要瓶颈 |
 | **Paravirtualization-based hotness tracker** | guest 内的轻量热度追踪器——THP 感知，通过半虚拟化将冷页信息暴露给 hypervisor |
@@ -26,7 +26,7 @@
   1. **THP 下的页追踪**：透明大页（2MB）掩盖了 4KB 级别的访问信号→追踪"哪个页是冷的"需要打破 THP→开销大
   2. **频繁页表 remapping**：回收和恢复冷内存需要不断修改 guest 页表和 IO 页表→CPU 开销主导
   3. **Swap to disk 是毫秒级**：访问已回收冷内存时→page fault→分配→swap back→毫秒延迟→SLO 违反
-- 解聚内存的 **µs 级访问延迟**使冷内存可以作为"far memory"被透明地换出，但**现有软件栈的 overhead（3.4-6.8×）**成了新瓶颈
+- 分离式内存的 **µs 级访问延迟**使冷内存可以作为"far memory"被透明地换出，但**现有软件栈的 overhead（3.4-6.8×）**成了新瓶颈
 
 ### Blowfish 的答案
 软件栈优化以匹配硬件速度：µs 级的冷内存回收+恢复需要 µs 级的软件路径。

@@ -4,7 +4,7 @@
 - **全称**: Duhu: Shared Disaggregated Memory for Distributed Data Processing Frameworks
 - **作者**: Qiutong Men, Tao Wang (NYU), Jongryool Kim, Hane Yie (SK hynix), Emmanuel Amaro (Microsoft), Marcos K. Aguilera (NVIDIA), Aurojit Panda (NYU)
 - **类型**: 论文-系统 (distributed systems + CXL shared memory)
-- **一句话 TL;DR**: 现有分布式数据处理框架（Ray/Spark）要求每个节点在本地内存中**复制**中间对象（pass-by-value）→浪费内存、网络和 CPU。CXL 共享解聚内存（SDM）使 pass-by-reference 成为可能：多节点直接通过 load-store 访问同一份数据。但 SDM 不提供全局缓存一致性。Duhu 通过不可变对象 + non-temporal writes + 元数据分区所有权 + Duhu-Channel 低延迟 RPC，消除了 pass-by-value 的复制开销而不需要全局一致性。Shuffle 作业完成时间提升最高 **3.39×**，单个 shuffle stage 最高 **3.59-13.81×**。
+- **一句话 TL;DR**: 现有分布式数据处理框架（Ray/Spark）要求每个节点在本地内存中**复制**中间对象（pass-by-value）→浪费内存、网络和 CPU。CXL 共享分离式内存（SDM）使 pass-by-reference 成为可能：多节点直接通过 load-store 访问同一份数据。但 SDM 不提供全局缓存一致性。Duhu 通过不可变对象 + non-temporal writes + 元数据分区所有权 + Duhu-Channel 低延迟 RPC，消除了 pass-by-value 的复制开销而不需要全局一致性。Shuffle 作业完成时间提升最高 **3.39×**，单个 shuffle stage 最高 **3.59-13.81×**。
 
 ## 重要术语解释
 

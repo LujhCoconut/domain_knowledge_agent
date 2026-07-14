@@ -1,13 +1,13 @@
 # Memory Hierarchy
 
-CXL/解聚内存与缓存一致性体系结构。
+CXL/分离式内存与缓存一致性体系结构。
 
 ## 子主题
 
 | 主题 | 关键词 | 来源 |
 |------|--------|------|
 | 泛化缓存一致性 (GCP) | disaggregated shared memory, lock synchronization, wait queues, variable-size cache lines, coherence protocol extension | Soul/GCP(OSDI'26) |
-| 共享解聚内存对象存储 (Duhu) | CXL, pass-by-reference, immutable objects, non-temporal writes, cache coherence avoidance | Duhu(OSDI'26) |
+| 共享分离式内存对象存储 (Duhu) | CXL, pass-by-reference, immutable objects, non-temporal writes, cache coherence avoidance | Duhu(OSDI'26) |
 | VM 弹性内存超卖 (Blowfish) | disaggregated memory, paravirtualization, THP-aware tracking, far memory swapping, hypervisor bypass | Blowfish(OSDI'26) |
 
 ---
@@ -32,7 +32,7 @@ CXL/解聚内存与缓存一致性体系结构。
 
 ---
 
-## 共享解聚内存对象存储 (Duhu)
+## 共享分离式内存对象存储 (Duhu)
 
 ### 核心问题
 分布式数据处理框架（Ray/Spark）使用 pass-by-value：每个节点在访问前将中间对象**复制**到本地内存——造成内存、网络和 CPU 的多重浪费。CXL SDM 使 pass-by-reference（多节点直接访问共享内存中的同一份对象）成为可能——但 SDM 不提供全局缓存一致性，而 CXL 3.0 的一致性支持带有 coherence tax（按比例增加，限制可扩展性）。

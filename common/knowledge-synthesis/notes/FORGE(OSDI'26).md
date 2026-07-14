@@ -4,7 +4,7 @@
 - **全称**: FORGE: Mitigating Synchronization Amplification for Memory-Disaggregated Caching Systems
 - **作者**: Zhijun Yang, Yu Hua*, Ming Zhang, Menglei Chen, Yixiao Wang (Huazhong Univ. of Sci. & Tech.)
 - **类型**: 论文-系统 (caching + disaggregated memory + distributed systems)
-- **一句话 TL;DR**: 解聚内存（DM）将计算和内存分离为独立资源池——使缓存系统可以独立弹性扩展。但 DM 架构迫使关键的缓存管理操作（热度追踪、淘汰协调、内存碎片整理）跨越 CXL/RDMA 高延迟链路执行同步——即**同步放大**问题。FORGE 通过三个设计解决：基于相似性的**组级同步**（摊销开销）、无竞争 FIFO 队列编辑冷组、利用 FIFO 可预测性的**懒同步**（仅淘汰时才更新热度指标，并卸载到 RDMA NIC 片上内存加速）。vs SOTA 提升吞吐 **4.5×**，降低 P50/P99 延迟 **4.0×/7.5×**，1.14× 命中率。
+- **一句话 TL;DR**: 分离式内存（DM）将计算和内存分离为独立资源池——使缓存系统可以独立弹性扩展。但 DM 架构迫使关键的缓存管理操作（热度追踪、淘汰协调、内存碎片整理）跨越 CXL/RDMA 高延迟链路执行同步——即**同步放大**问题。FORGE 通过三个设计解决：基于相似性的**组级同步**（摊销开销）、无竞争 FIFO 队列编辑冷组、利用 FIFO 可预测性的**懒同步**（仅淘汰时才更新热度指标，并卸载到 RDMA NIC 片上内存加速）。vs SOTA 提升吞吐 **4.5×**，降低 P50/P99 延迟 **4.0×/7.5×**，1.14× 命中率。
 
 ## 重要术语解释
 
