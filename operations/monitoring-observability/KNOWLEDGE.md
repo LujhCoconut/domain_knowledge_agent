@@ -9,6 +9,7 @@
 | 应用定义资源的性能诊断 | LLM semantic inference + static analysis, resource bottleneck attribution, runtime tracking | gigiprofiler(OSDI'26) |
 | GPU SDC 生产诊断 | silent data corruption, deterministic replay, homogeneous replay, full-state comparison, SDC-defective GPU | SDCHUNTER(OSDI'26) |
 | GPU SDC 在线检测 | cSensor-cVerifier, mixed-precision checksum, self-equivalence, algorithmic detection, permanent SDC | AEGIS(OSDI'26) |
+| LLM 训练Bitwise调试 | bitwise alignment, semantic-stable boundary, schedule-tolerant mapper, longest prefix match, benign nondeterminism | OpGuard(OSDI'26) |
 
 ---
 

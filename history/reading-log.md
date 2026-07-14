@@ -79,5 +79,6 @@
 | 2026-07-14 | Ambulance(OSDI'26) | 论文-协议 | OSDI '26, osdi26-giridharan.pdf | knowledge-synthesis | algorithms/distributed-consensus/ | protocol-rigged racing替代timeout，BFT slowdown恢复快1.6-10.8×，3 msg delay正常延迟 |
 | 2026-07-14 | SDCHUNTER(OSDI'26) | 论文-运维系统 | OSDI '26, osdi26-zheng.pdf | knowledge-synthesis | operations/monitoring-observability/ | GPU SDC诊断，分层确定重放，23块缺陷GPU特征化，40次事件，诊断从数天降至<1h |
 | 2026-07-14 | AEGIS(OSDI'26) | 论文-运维系统 | OSDI '26, osdi26-lei.pdf | knowledge-synthesis | operations/monitoring-observability/ | 在线GPU SDC检测，cSensor-cVerifier解耦，35M GPU-h检测18次SDC/13块缺陷GPU，0.86%开销 |
+| 2026-07-14 | OpGuard(OSDI'26) | 论文-运维/调试 | OSDI '26, osdi26-zhou-ziming.pdf | knowledge-synthesis | operations/monitoring-observability/ | bitwise alignment调试原语，跨异构栈算子边界+调度容忍匹配，20+生产问题，天→分钟 |
 
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
