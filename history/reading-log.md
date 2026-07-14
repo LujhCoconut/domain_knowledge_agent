@@ -98,5 +98,6 @@
 | 2026-07-14 | Timelock Drive(OSDI'26) | 论文-系统/安全 | OSDI '26, osdi26-rosenblum.pdf | knowledge-synthesis | security/os-security/ | 物理块级timelock防御，~400LoC形式验证checker+delegate-but-verify，TCB极小化 |
 | 2026-07-14 | S3 MBT(OSDI'26) | 论文-运维系统 | OSDI '26, osdi26-jaber.pdf | knowledge-synthesis | operations/os-testing/ | AWS S3 model-based testing+谓词抽象，300+回归阻止，指导S3 Express One Zone开发 |
 | 2026-07-14 | M3U(OSDI'26) | 论文-系统 | OSDI '26, osdi26-xu-yizhe.pdf | knowledge-synthesis | operations/cloud-infrastructure/ | VM后拷贝迁移MMU可扩展性，lock relaxation+预分配+解耦pipeline，downtime -47%, post-copy -89.6% |
+| 2026-07-14 | InfiniDefrag(OSDI'26) | 论文-系统 | OSDI '26, osdi26-zeng.pdf | knowledge-synthesis | architecture/memory-storage-hierarchy/ | GPA无限空间+remap消除guest compaction，compaction-free碎片整理 |
 
 <!-- 追加新记录时，复制上面一行并修改即可。 -->

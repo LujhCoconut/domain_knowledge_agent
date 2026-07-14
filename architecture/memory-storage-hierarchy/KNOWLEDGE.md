@@ -9,6 +9,7 @@ CXL/分离式内存与缓存一致性体系结构。
 | 泛化缓存一致性 (GCP) | disaggregated shared memory, lock synchronization, wait queues, variable-size cache lines, coherence protocol extension | Soul/GCP(OSDI'26) |
 | 共享分离式内存对象存储 (Duhu) | CXL, pass-by-reference, immutable objects, non-temporal writes, cache coherence avoidance | Duhu(OSDI'26) |
 | VM 弹性内存超卖 (Blowfish) | disaggregated memory, paravirtualization, THP-aware tracking, far memory swapping, hypervisor bypass | Blowfish(OSDI'26) |
+| 虚拟化无压缩内存碎片整理 | infinite GPA space, compaction-free, GPA-HPA remap, memory trade, huge page defragmentation | InfiniDefrag(OSDI'26) |
 
 ---
 
@@ -69,4 +70,23 @@ CXL/分离式内存与缓存一致性体系结构。
 - THP 在内存管理优化中常被忽视——2MB 粒度掩盖了 fine-grained access pattern
 - 半虚拟化分工模式（语义在 guest，控制在 hypervisor）适用于任何 VM 资源管理场景
 - "硬件就绪→软件瓶颈暴露→软件栈重新设计"是 disaggregated memory 方向的普遍模式
+
+---
+
+## 虚拟化无压缩内存碎片整理 (InfiniDefrag)
+
+### 核心问题
+虚拟化环境中大页（huge page）对两态地址翻译性能至关重要，但内存碎片导致大页分配失败。现有方案：防碎片策略（静态、不适应多 workload）和 compaction（页迁移昂贵——YCSB-Redis 吞吐 -51%、延迟 +102%）。根本原因：guest OS 假设 GPA 空间固定有限→被迫用 compaction 在有限空间内拼出连续区域。
+
+### 关键洞察
+
+1. **"GPA 已经是虚拟地址——不需要 compaction，只需要 remap"**：Guest OS 以为自己管理物理内存，实际 GPA 已被 hypervisor 再次映射。获取连续 GPA 只需扩展 GPA 空间+更新 GPA-HPA 映射——guest 端完全不需要做页迁移。
+2. **"GPA 空间几乎无穷"**（57-bit address width = PB 级）→永不耗尽→可以无限制地分配新的连续 GPA 区域→"用空间换连续性"。
+3. **"Memory trade 替代 compaction"**：用碎片化页面换取连续内存——扩展新 GPA 区域→回收碎片→无需数据移动。Host Memory Guard 通过 self-hosted remap + batch unmapping 强制 HPA 使用在 VM quota 内。
+
+- 来源：InfiniDefrag(OSDI'26)
+
+### 实践启发
+- **"多一层虚拟化 = 多一个解决碎片的机会"**：GPA 已经是虚拟层→guest 端 compaction 完全多余。类似 Blowfish "硬件速度已来，软件栈没跟上"——当底层是虚拟化的，上层的某些优化可能根本不需要
+- **"穷举空间换简单性"**：PB 级 GPA 空间远超实际需求→可以用空间换取避免昂贵操作的简单性
 
