@@ -34,15 +34,15 @@ domain-knowledge/
 
 <!-- 以下区域由 /domain-knowledge 后置操作自动更新，请勿手动编辑本节 -->
 
-- **总计**: 34 篇
-- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 30 篇（'26）
+- **总计**: 35 篇
+- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 31 篇（'26）
 - **领域分布**:
   - CXL/内存系统/可观测性/回收理论: 9 篇
   - LLM 推理服务: 7 篇（含 agentic workflow 编排）
   - LLM 大规模训练+数据管线: 4 篇
   - OS 安全/隐私/程序分析: 7 篇 — 见 `security/os-security/KNOWLEDGE.md`
   - 软件测试/DBMS: 1 篇（ValScope）
-  - OS 内核/调优（测试/fuzzing/in-situ tuning）: 3 篇（kSTEP, mwait-sched, Xkernel）
+  - OS 内核/调优（测试/fuzzing/code optimization）: 4 篇（kSTEP, mwait-sched, Xkernel, ECO） — 部分见 `operations/os-performance-tuning/KNOWLEDGE.md`
   - 网络系统（RCA/去中心化/RPC调度）: 3 篇（CoreSec, SBB, Rakaia） — 见 `network/os-networking/KNOWLEDGE.md`
 - **最后更新**: 2026-07-14
 
