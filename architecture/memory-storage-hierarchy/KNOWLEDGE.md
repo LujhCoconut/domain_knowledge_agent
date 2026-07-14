@@ -5,7 +5,8 @@
 | 主题 | 关键词 | 来源 |
 |------|--------|------|
 | 泛化缓存一致性 (GCP) | disaggregated shared memory, lock synchronization, wait queues, variable-size cache lines, coherence protocol extension | Soul/GCP(OSDI'26) |
-| 共享解聚内存对象存储 (Duhu) |CXL, pass-by-reference, immutable objects, non-temporal writes, cache coherence avoidance | Duhu(OSDI'26) |
+| 共享解聚内存对象存储 (Duhu) | CXL, pass-by-reference, immutable objects, non-temporal writes, cache coherence avoidance | Duhu(OSDI'26) |
+| VM 弹性内存超卖 (Blowfish) | disaggregated memory, paravirtualization, THP-aware tracking, far memory swapping, hypervisor bypass | Blowfish(OSDI'26) |
 
 ---
 
@@ -46,3 +47,31 @@
 - "不可变性 + non-temporal writes + flush-before-read" 是绕开缓存一致性的通用模式——适用于任何共享不可变数据的场景
 - 元数据（需协调）+ 数据（无需协调）的分离是共享系统的核心架构模式
 - Pass-by-reference 的价值远超"减少复制"：它可能**改变操作的基础实现方式**（数据搬移→指针重定向）
+
+---
+
+## VM 弹性内存超卖 (Blowfish)
+
+### 核心问题
+超过 50% 的数据中心内存闲置（VM bin-packing 低效），但现有内存超卖机制（balloon+swap）在 THP 场景下失效：2MB 大页掩盖 4KB 访问信号→无法追踪冷页；swap to disk 的毫秒级延迟破坏 SLO。新兴高速互联（RDMA/CXL）使 µs 级远端内存成为可能→但现有软件栈 overhead 达 3.4-6.8×，成为新瓶颈。
+
+### 关键洞察
+
+1. **"语义在 guest，控制在 hypervisor"的半虚拟化分工**：guest 拥有程序语义（识别冷页）但缺乏全局视角，hypervisor 拥有跨 VM 视角但缺乏语义→半虚拟化结合两者
+2. **THP-aware 热度追踪**：在不打破 2MB 大页的前提下追踪 4KB 页面访问——这是 THP + 内存超卖的核心难题
+3. **Hypervisor 直通跨 VM 路径**：绕过 guest 页表修改和 IO 页表修改——消除传统方案的 3.4-6.8× 软件 overhead
+4. **"硬件速度已来，软件栈没跟上"**：disaggregated memory 的 µs 延迟使冷内存交换可行→但需要重新设计整个软件路径
+- 来源：Blowfish(OSDI'26)
+
+### 实践启发
+- THP 在内存管理优化中常被忽视——2MB 粒度掩盖了 fine-grained access pattern
+- 半虚拟化分工模式（语义在 guest，控制在 hypervisor）适用于任何 VM 资源管理场景
+- "硬件就绪→软件瓶颈暴露→软件栈重新设计"是 disaggregated memory 方向的普遍模式
+
+### 解聚内存与存储层次（3 篇）
+
+| 论文 | 角度 | 核心机制 |
+|------|------|---------|
+| Soul/GCP | 同步 | 泛化缓存一致性原生支持锁 |
+| Duhu | 数据共享 | 不可变对象 + non-temporal writes 绕开一致性 |
+| **Blowfish** | **弹性超卖** | **半虚拟化 THP 追踪 + hypervisor 直通回收** |
