@@ -34,8 +34,8 @@ domain-knowledge/
 
 <!-- 以下区域由 /domain-knowledge 后置操作自动更新，请勿手动编辑本节 -->
 
-- **总计**: 126 篇
-- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 122 篇（'26）
+- **总计**: 127 篇
+- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 123 篇（'26）
 - **领域分布**:
   - CXL/内存系统/stall 回收: 10 篇
   - 存储层次/体系结构: 5 篇（Soul/GCP, Duhu, Blowfish, InfiniDefrag, Megalon） — 见 `architecture/memory-storage-hierarchy/KNOWLEDGE.md`
@@ -54,7 +54,7 @@ domain-knowledge/
   - 分布式共识: 6 篇（Bodega, Pompē-SRO, Jetpack, Ambulance, LogDrive, WriteGuards） — 见 `algorithms/distributed-consensus/KNOWLEDGE.md`
   - 图处理: 1 篇（Pluto） — 见 `algorithms/graph-processing/KNOWLEDGE.md`
   - 缓存算法: 2 篇（Merlin, S4-FIFO） — 见 `algorithms/cache-algorithms/KNOWLEDGE.md`
-  - 加速器架构与编译: 2 篇（TileLoom, μShell） — 见 `architecture/accelerators/KNOWLEDGE.md`
+  - 加速器架构与编译: 3 篇（TileLoom, μShell, qTPU） — 见 `architecture/accelerators/KNOWLEDGE.md`
   - 网络系统: 7 篇（SBB, Rakaia, UEP, UCCL-Tran, BALBOA, DPA-Store, Sepia） — 见 `network/os-networking/KNOWLEDGE.md`
 - **最后更新**: 2026-07-15
 

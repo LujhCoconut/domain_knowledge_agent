@@ -8,6 +8,7 @@
 |------|--------|------|
 | Spatial 数据流加速器 Tile 编译 | tile-to-core mapping, dataflow planning, MLIR, Triton, spatial architecture, on-chip network, data reuse | TileLoom(OSDI'26) |
 | Microkernel FPGA Shell | μShell, hardware IPC, composable modules, vFPGA, capability isolation, component-aware scheduling | μShell(OSDI'26) |
+| 混合量子-经典加速 | hybrid tensor network, quantum-classical compilation, QPU-GPU co-execution, tensor contraction, declarative hybrid programming | qTPU(OSDI'26) |
 
 ---
 
@@ -44,3 +45,22 @@ Spatial dataflow accelerators (Tenstorrent/Cerebras/Groq 等) 通过 on-chip net
 ### 实践启发
 - **"Microkernel 思想可迁移到硬件设计"**：IPC 作为硬件模块间通信原语、capability 作为隔离机制、细粒度模块化 > 单体重构。类似 Arca "OS 为 serverless 重新设计"——μShell "FPGA shell 为模块化应用重新设计"
 - **"静态连接→动态 IPC 是 FPGA 可组合性的关键"**：类似 Spice "spliceVMA" 和 Nixie "temporal multiplexing"——从静态分配转向动态组合
+
+---
+
+## 混合量子-经典加速 (qTPU)
+
+### 核心问题
+经典加速器无法高效表示指数扩展问题（量子纠缠态→需要 2^n 经典内存）；QPU 适合此类问题但噪声大、错误率高、吞吐极低。实际应用需要**混合量子-经典执行**——但现有编程范式是手工 partition+orchestrate 的 ad hoc 方式，缺乏统一抽象→无法做跨量子-经典边界的全局优化。
+
+### 关键洞察
+
+1. **"hTN (hybrid tensor network)——统一量子-经典计算的单一抽象"**：张量网络不仅能表示量子态，还能捕获经典计算与量子计算之间的数据流和依赖关系。类似 VTC "virtual tensor" 但跨 quantum/classical 边界——一个张量可以部分在 GPU 上收缩、部分在 QPU 上执行。
+2. **"编译器平衡经典成本与量子误差——非平凡 trade-off"**：在经典端多做计算可以降低 QPU 需要的 qubit 数或电路深度→减少量子误差。qTPU 编译器全局优化这个 trade-off，类似 Kareus "joint optimize dynamic+static energy"——两个目标不是独立的。
+3. **"Declarative specification → holistic optimization——compiler-driven for quantum"**：声明式编程使编译器可以跨量子-经典边界做全局优化，类似于 classical domain 中 Twill/GraCE/MPK 的 compiler-driven 方法。
+
+- 来源：qTPU(OSDI'26)
+
+### 实践启发
+- **"hTN 是 quantum-classical 的 IR"**：张量网络作为中间表示统一量子+经典计算→编译器可见全貌→可全局优化。类似 TileLoom "MLIR-based"——统一 IR 是异构编译的基础
+- **"经典计算可以减少量子误差——不是独立目标"**：经典 overhead 和量子 error rate 之间存在 trade-off→多做经典端工作可以降低量子端错误率→编译器需要同时优化两者
