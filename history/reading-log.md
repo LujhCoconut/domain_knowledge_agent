@@ -133,5 +133,5 @@
 | 2026-07-15 | qTPU(OSDI'26) | 论文-系统/加速器 | OSDI '26, osdi26-tornow.pdf | knowledge-synthesis | architecture/accelerators/ | 混合量子-经典张量网络，hTN统一抽象+编译器平衡cost vs error，端到端20×加速 |
 | 2026-07-15 | Acumen(OSDI'26) | 论文-系统/安全 | OSDI '26, osdi26-cottone.pdf | knowledge-synthesis | security/os-security/ | 加密协作编辑，密码学累加器+secure GC，首个snapshot consistency+edit-history隐私 |
 | 2026-07-15 | Drs.NAS(OSDI'26) | 论文-系统/ML | OSDI '26, osdi26-wang-ruixuan.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | 推荐系统NAS，superproxy度量替代训练验证，搜索5-18GPU-h→2min CPU，模型108×更小 |
-| 2026-07-15 | SMARTTalk(OSDI'26) | 论文-系统/AI+运维 | OSDI '26, osdi26-akewar.pdf | knowledge-synthesis | operations/monitoring-observability/ | SMART日志LLM表示层，CNN趋势token+CoT推理，F0.5 vs Raw-LLM 50×，TTF MAE~10天 |
+| 2026-07-15 | Svalinn(OSDI'26) | 论文-系统 | OSDI '26, osdi26-pardeshi.pdf | knowledge-synthesis | operations/cloud-infrastructure/ | 多资源瓶颈过载控制，credit admission+per-resource AQM+m_semaphore，goodput up to 6.51× |
 <!-- 追加新记录时，复制上面一行并修改即可。 -->

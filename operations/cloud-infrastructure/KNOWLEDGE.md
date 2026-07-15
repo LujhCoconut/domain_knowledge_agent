@@ -14,6 +14,7 @@
 | VM 生命周期感知调度 | VM lifetime prediction, placement debt, dynamic affinity, live migration rectification, packing density, long-lived VM scattering | DVLA(OSDI'26) |
 | 数据中心 Fleet 维护调度 | capacity buffer, fault domain alignment, maintenance contract, predictable deployment SLO, hardware placement | PIMS(OSDI'26) |
 | 异构 GPU 集群调度 | GPU fragmentation, stranded resources, defragmentation, SpotGPU preemption, hyperscale AI cluster, multi-tenant GPU | ASI Heterogeneity(OSDI'26) |
+| 多资源瓶颈过载控制 | single-queue fallacy, credit-based admission, per-resource AQM, m_semaphore, memory bandwidth throttling, utility function | Svalinn(OSDI'26) |
 
 ---
 
@@ -219,3 +220,23 @@ Meta 数百万服务器、数万服务、数十亿用户的维护编排。三种
 ### 实践启发
 - **"生产 trace 公开的巨大价值"**：155K GPU 六个月 trace 是迄今为止最全面的异构 AI 集群数据——释放给研究社区将推动整个领域
 - **"学术假设与生产现实的 gap"**：fractional-GPU 共享被大量研究但几乎不使用——提醒我们始终需要验证生产数据中的假设
+
+---
+
+## 多资源瓶颈过载控制 (Svalinn)
+
+### 核心问题
+现代数据中心服务器有多个潜在瓶颈（CPU、内存带宽、锁、网络带宽、存储 IOPS）。单个应用产生异构资源需求的请求（数据依赖型：cache server 小值=CPU 密集、大值=内存带宽密集、热点数据=锁密集）。现有过载控制器犯 **single-queue fallacy**——将应用视为 monolithic，只根据 aggregate signals（latency、requests-in-flight）对最瓶颈资源作出反应→其他资源闲置→underutilization 可达 **83% 总吞吐损失**。资源隔离按应用粒度而非请求粒度；优先级技术假设先验知识（但 request resource requirement 通常在运行时才能确定）。
+
+### 关键洞察
+
+1. **"分离吞吐控制和延迟控制——不同资源独立管理"**：吞吐控制 = credit-based admission，只要 user-defined utility function 改善就增加准入负载。延迟控制 = 分布式 per-resource Active Queue Management (AQM)，每个资源在访问时根据其自身状态独立决定是否延迟。类似 ASI Heterogeneity "不是统一 GPU 碎片管理，而是按碎片类型分类处理"——独立管理多个资源维度 > 单一聚合信号。
+2. **"m_semaphore——管理隐式内存带宽消费的 API"**：内存带宽不像 CPU/锁那样有显式软件队列→无法直接应用 AQM。m_semaphore 自适应限制并发内存带宽密集型线程数→用最少 CPU 核实现高内存带宽利用。开发者用 try_wait() 条件式 guards 内存密集型代码段。类似 Nixie "temporal multiplexing"——不是消除瓶颈而是管理瓶颈的并发度。
+3. **"Credit-based admission = maximize utility without knowing per-request cost"**：utility function 可以简单（aggregate throughput）或复杂（加权组合 of throughput、loss rate、resource utilization）→区别于 priority-based schemes 需要先验知识。
+
+- 来源：Svalinn(OSDI'26)
+
+### 实践启发
+- **"Single-queue fallacy 广泛存在于 overload control 中——不止于缓存"**：仅看最瓶颈资源的表现（latency/queue length）→减少总负载→其他资源闲置。类似 ASI Heterogeneity "stranded GPU from packing mismatch"——维度错配导致系统性资源浪费
+- **"Memory bandwidth 是新的 CPU——需要专门的并发管理机制"**：CPU 有显式 runqueue，内存带宽没有→m_semaphore 为内存带宽创建等效的 "软件队列"。适用于任何隐式资源争抢场景（cache bandwidth、interconnect bandwidth）
+- **"Per-resource distributed control > centralized monolithic control"**：每个资源独立根据自身状态做决策→类似 Ambulance "decentralized SM scheduling" 和 Merlin "component decoupling"
