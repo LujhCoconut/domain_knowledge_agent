@@ -42,6 +42,7 @@ GPU 与 AI/ML 推理和训练的性能优化知识。
 | 消费者 GPU 时间复用 | temporal multiplexing, UVM thrashing, working set eviction, MLFQ scheduling, consumer GPU, transparent swap | Nixie(OSDI'26) |
 | 移动端 LLM 推理内存带宽 | asymmetric interference, NPU bandwidth priority, speculative decoding preemption, jank rate, mobile SoC UMA, foreground QoS | Sereno(OSDI'26) |
 | 移动 AMP CPU DNN 推理 | AMP asymmetry, performance-collapse paradox, adaptive granularity scheduling, core-kernel affinity, big.LITTLE | SANI(OSDI'26) |
+| 推荐系统超高效 NAS | superproxy metric, training-free architecture search, recommendation models, model efficiency, FLOP reduction, AUC | Drs.NAS(OSDI'26) |
 
 ---
 
@@ -929,3 +930,21 @@ ML 工作负载每次迭代 launch 数百个短 GPU kernel，每个 CPU→GPU ke
 - **"AMP asymmetry 不应被克服而应被利用"**：performance-collapse paradox 的根源是试图消除不对称（均分任务），而 SANI 的策略是拥抱不对称（给大核更多任务）。类似 Nixie "不要给调度器太多选择"——适当偏置 > 均匀分配
 - **"Core-kernel affinity 是被忽视的维度"**：同一种 kernel 在不同 core 类型上效率差异显著→不是所有工作都应在大核上运行。类似 ADAngel "bit-width aware kernel selection"——多维度的 affinity 匹配值得更多关注
 - **"三篇移动端论文形成主题簇"**：LifeLine（GC copy→移动卡顿）、Sereno（NPU 带宽→移动 jank）、SANI（AMP 核间不平衡→移动推理延迟）——三篇都来自 OSDI '26，共同主题是**移动端系统性能的系统化解决**
+
+---
+
+## 推荐系统超高效 NAS (Drs.NAS)
+
+### 核心问题
+推荐系统占 Meta **70%+ AI 推理 cycle**（超大规模数据中心主导工作负载），但人工设计 DRS 架构无法 scale——需要 costly iterative exploration by domain experts。NAS 自动化搜索但面临两个瓶颈：(1) **搜索成本极高**——反复训练-验证 candidate architecture→5-18 GPU-hours→无法快速迭代 (2) **搜索结果不够高效**——仍 computation/memory-heavy→实际部署困难。
+
+### 关键洞察
+
+1. **"Superproxy 度量替代训练验证——zero training cost NAS"**：NAS 的主要搜索成本在训练阶段。Superproxy 是一个无需训练的度量，从 architecture graph 的结构特征直接评估其预测质量和计算效率→消除训练开销。类似 Merlin "per-object characterization 替代 workload classification"——用一个智能 metric 替代昂贵过程。
+2. **"搜索结果极致高效——模型 108× 更小、89× 更少 FLOPs"**：不仅是搜索过程快（2 min on CPU vs 5-18 GPU-hours），搜索结果的模型本身也极度高效——AUC 持平或更优。类似 ADAngel "oracle policy map"——搜索+结果双优化。证明高效 architecture 可以和高质量预测共存。
+
+- 来源：Drs.NAS(OSDI'26)
+
+### 实践启发
+- **"Zero-cost proxy for search"**：不需要训练就能评估 architecture 的好坏→将搜索从 hours 降到 minutes→使 NAS 可以从一次性离线搜索变成迭代快速设计。类似 Kareus "roofline model + single-layer profiling"——用低成本近似替代高成本评估
+- **"Search efficiency + result efficiency 同时优化"**：Drs.NAS 不仅高效地找到 architecture，而且找到 highly efficient architecture。这在 NAS 领域是罕见的——搜索成本和搜索结果质量通常存在 trade-off
