@@ -20,6 +20,7 @@
 | VM 自省框架 (LVMI) | shared-VMM observer, lock-aware memory coherence, native-speed introspection, mutualization layer, VMI | GOODKIT(OSDI'26) |
 | eBPF 多租户虚拟化 | late-binding, vBPF, static-binding, Sniffer event attribution, O(1) Dispatcher, state isolation | vBPF(OSDI'26) |
 | 加密协作编辑 | CRDT, cryptographic accumulator, secure GC, snapshot consistency, edit-history privacy, fork-causal consistency, collaborative editing | Acumen(OSDI'26) |
+| 神经-符号证明生成 | neuro-symbolic verification, best-first proof search, LLM+ITP, Isabelle REPL, seL4, sledgehammer, automated theorem proving | NeuroSym-Prover(OSDI'26) |
 
 ---
 
@@ -319,3 +320,23 @@ eBPF 已成为云原生系统的内核可编程性标准——但设计时隐含
 - **"密码学累加器 = 可验证状态摘要而不暴露历史"**：适用于任何需要"证明当前状态一致性但不暴露如何达到此状态"的场景——类似 WriteGuards "key-range fencing" 和 LogDrive "weakTail"——弱语义使实现变得简单但强验证
 - **"Encrypted GC 是 privacy-preserving systems 的新维度"**：大多数加密系统只关注加密数据和查询，忽略了随着时间增长的数据存储问题——GC 是 long-running 系统的必要条件
 - **"Fork-causal consistency——去中心化环境下的完整性保证"**：即使恶意用户/网络对手无法创建可信历史的 fork→类似 Ambulance "non-equivocation phase"——防止攻击者创建冲突版本的共识
+
+---
+
+## 神经-符号证明生成 (NeuroSym-Prover)
+
+### 核心问题
+交互定理证明 (ITP) 是系统软件形式验证的黄金标准（CompCert/seL4），但 proof script 极其手工——seL4 需要 20 人年构建 >100K proof lines，而只有 10K C 代码和 3K 抽象规范。LLM 有数学推理潜力，但直接生成完整 proof 在两个挑战上失败：(1) **缺乏领域特定 lemma/tactic 知识**——不在训练数据中 (2) **大型搜索空间中的 hallucination 和错误累积**——LLM 单个错误步骤使 proof unrecoverable。
+
+### 关键洞察
+
+1. **"Neuro-Symbolic = LLM 提议下一步 + 符号工具验证修复——不接受未被符号确认的步骤"**：不是一次性生成完整 proof→LLM 提议下一个 proof step（tactic application）→符号工具链（Sledgehammer、ATP、simplifier）验证和修复→只接受被符号工具确认的步骤后才继续。类似 LogDrive "weak semantics + strong verification" 和 WriteGuards "key-range fencing check"——LLM 处理提议/探索，符号工具处理确认/修复。
+2. **"Best-first tree search over proof states——符号语义修剪搜索空间"**：对证明空间做 best-first search（优先最有希望的 proof state）而非 beam search 或 greedy→符号工具有效修剪无效路径（语义信息）→LLM 只需在语义有效的路径上继续提议。对比：纯 LLM 在无意义路径上浪费探索，纯符号工具搜索空间爆炸。
+3. **"Isabelle REPL 暴露 proof states 使 LLM 像人类证明者一样交互"**：LLM 不仅看到定理陈述，还看到当前子目标、可用 lemma、环境上下文→更接近人类证明者的交互式工作流。
+
+- 来源：NeuroSym-Prover(OSDI'26)
+
+### 实践启发
+- **"LLM 提议 + 符号验证确认"是 AI+验证的通用模式**：类似 Mimesys "execution as verification" 和 Twill "constraint solver as correctness oracle"——LLM 做创造性的搜索/提议，符号工具做严格的确认/修复。两个世界的最优组合
+- **"Best-first search > beam search for proof generation"**：beam search 可能过早排除正确的 proof path→best-first 与符号修剪结合更具鲁棒性
+- **"Data-efficient through proof state-step pairs"**：不需要海量数据——few-shot proof state→step 映射即可有效 fine-tune。类似 LAH "single model pretrained on traces"——数据效率使部署可行
