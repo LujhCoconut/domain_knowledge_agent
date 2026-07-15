@@ -39,6 +39,7 @@ GPU 与 AI/ML 推理和训练的性能优化知识。
 | CUDA Graph 编译器使能 | graph-aware code transformation, indirect parameter passing, cost-benefit guided deployment, kernel launch bottleneck | GraCE(OSDI'26) |
 | Virtual Tensor 数据移动消除 | virtual tensor, index mapping, data movement elimination, tensor compilation, memory-bound, operator fusion | VTC(OSDI'26) |
 | 训练中断弹性运行时 | delta communication group, sandbox warmup, standby replacement, interruption-resilient, elastic GPUs, ETTR | TrainMover(OSDI'26) |
+| 消费者 GPU 时间复用 | temporal multiplexing, UVM thrashing, working set eviction, MLFQ scheduling, consumer GPU, transparent swap | Nixie(OSDI'26) |
 
 ---
 
@@ -867,3 +868,22 @@ ML 工作负载每次迭代 launch 数百个短 GPU kernel，每个 CPU→GPU ke
 - **"Delta-based membership > full reconfiguration"**：只更新受影响部分而非重建全局→类似 vBOIDs "全局稳定性+局部灵活性"、RobustRL "角色隔离恢复"
 - **"Sandbox warmup = 隔离预热 + 无缝加入"**：将准备工作和正在进行的训练分离→消除加入延迟。类似 SDCHUNTER "Phase 1 隔离→Phase 2 精确" 的分层策略
 - **"ETTR 是训练的硬指标"**：每天 downtime >1h → 直接转化为 $86K 浪费。TrainMover 将其降至 ~20s→**不能容忍小时级中断的体系结构必须支持弹性**
+
+---
+
+## 消费者 GPU 时间复用 (Nixie)
+
+### 核心问题
+消费者 GPU (RTX 4090/5090) 同时运行多个 ML 应用（LLM + diffusion + 代码补全）。每个模型 working set 几乎饱和 GPU 内存→同时运行超出容量。NVIDIA UVM 的 demand paging 假设 working set 可共存→严重 thrashing→吞吐崩溃+延迟尖峰。应用级 swap（llama-swap/Ollama）限于单应用→无法跨应用协调。consumer GPU 场景是 single-user、heterogeneous、快速切换——与 datacenter multi-tenant 完全不同。
+
+### 关键洞察
+
+1. **"Temporal multiplexing 替代 spatial multiplexing"**：不试图让多个模型同时驻留 GPU→每次只给一个应用完整显存→用完 evict/reload 下一个。利用 PCIe 双向带宽做快速切换。类似 vBOIDs "不要给调度器太多选择"——限制并发而非管理并发。
+2. **"MLFQ-inspired 调度自动区分交互 vs 批处理"**：交互式应用（代码补全）自动高优先级→低延迟；后台批处理自动降级→不影响交互。不需要手动标注 workload 类型。
+3. **"透明截获——不需要修改应用或驱动"**：截获 CUDA memory allocation + kernel launch→对 llama.cpp/SGLang/ComfyUI 全透明。
+
+- 来源：Nixie(OSDI'26)
+
+### 实践启发
+- **"Consumer GPU = 反 datacenter GPU"**：consumer 是 single-user、heterogeneous、快速切换→大多数 GPU sharing 研究假设多租户 batch→不适用。类似 EcoServe 和 Kairox 的 "面向实际硬件" 哲学——consumer GPU 有自己独特的约束和优化机会
+- **"Explicit swap > demand paging"**：当 working set >> GPU memory 时，知道何时换入换出比按需 page fault 更高效。UVM 的 thrashing 是隐式策略在极端条件下的失效——显式控制总是更优
