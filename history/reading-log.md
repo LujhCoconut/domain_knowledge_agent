@@ -129,4 +129,5 @@
 | 2026-07-15 | Sereno(OSDI'26) | 论文-系统 | OSDI '26, osdi26-xin.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | 移动LLM推理NPU带宽不对称干扰，specDec yield+抢占式让出带宽，jank-92.6% |
 | 2026-07-15 | LifeLine(OSDI'26) | 论文-系统 | OSDI '26, osdi26-huang-jiacheng.pdf | knowledge-synthesis | performance/system-tuning/ | 对象-页生存期对齐GC，bimodal liveness+page remapping替代copy，GC copy-57.4%, GC time-22.7% |
 | 2026-07-15 | SANI(OSDI'26) | 论文-系统 | OSDI '26, osdi26-sang.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | AMP CPU不对称感知DNN推理，adaptive granularity+core-kernel affinity，延迟-17.6-23.7% |
+| 2026-07-15 | MUSCHED(OSDI'26) | 论文-运维系统 | OSDI '26, osdi26-xiao.pdf | knowledge-synthesis | performance/system-tuning/ | Honor语义感知CPU调度，VIP类+IPC依赖链跟踪+eBPF可插拔策略，20M+设备部署 |
 <!-- 追加新记录时，复制上面一行并修改即可。 -->

@@ -34,8 +34,8 @@ domain-knowledge/
 
 <!-- 以下区域由 /domain-knowledge 后置操作自动更新，请勿手动编辑本节 -->
 
-- **总计**: 125 篇
-- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 121 篇（'26）
+- **总计**: 126 篇
+- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 122 篇（'26）
 - **领域分布**:
   - CXL/内存系统/stall 回收: 10 篇
   - 存储层次/体系结构: 5 篇（Soul/GCP, Duhu, Blowfish, InfiniDefrag, Megalon） — 见 `architecture/memory-storage-hierarchy/KNOWLEDGE.md`
