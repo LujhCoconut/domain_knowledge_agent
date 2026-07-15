@@ -19,6 +19,7 @@
 | 物理块级 Timelock 防御 | transient immutability, isolated checker, delegate-but-verify, append-only metadata, formal verification, ransomware | Timelock Drive(OSDI'26) |
 | VM 自省框架 (LVMI) | shared-VMM observer, lock-aware memory coherence, native-speed introspection, mutualization layer, VMI | GOODKIT(OSDI'26) |
 | eBPF 多租户虚拟化 | late-binding, vBPF, static-binding, Sniffer event attribution, O(1) Dispatcher, state isolation | vBPF(OSDI'26) |
+| 加密协作编辑 | CRDT, cryptographic accumulator, secure GC, snapshot consistency, edit-history privacy, fork-causal consistency, collaborative editing | Acumen(OSDI'26) |
 
 ---
 
@@ -298,3 +299,23 @@ eBPF 已成为云原生系统的内核可编程性标准——但设计时隐含
 - **"Static-binding→late-binding 是多租户系统中的通用升级"**：不仅是 eBPF——任何共享资源的 binding 模式都应设计为运行时解析（类似 Arca "effect system"、libDSE "speculation sandbox"）
 - **"Namespace virtualization = per-tenant 内核视图"**：类似容器使每个容器看到自己的文件系统——vBPF 使每个租户看到自己的内核 hook 和程序集
 - **"Interrupt-context event attribution 是新的系统挑战"**：在中断上下文中无法简单确定"当前是谁的进程"——Sniffer 的硬件状态推断是值得学习的 Technique
+
+---
+
+## 加密协作编辑 (Acumen)
+
+### 核心问题
+协作编辑器（Google Docs/Notion）天然有隐私 vs 协作的张力——加密使服务端无法处理编辑。去中心化安全编辑器面临四个并发要求：(1) **机密性**（不仅加密内容，还要隐藏访问模式——谁在哪个位置做了插入/删除）(2) **完整性**（fork-causal consistency——即使恶意用户/网络对手攻击也不能分叉）(3) **安全动态成员**（新加入用户既有 edit-history privacy 又有 snapshot consistency——无法获取旧历史但能验证当前文档未被篡改）(4) **性能**（编辑操作实时，存储不随历史增长）。现有 SOTA Snapdoc 泄露访问模式，弱 snapshot consistency，存储规模随历史线性增长。
+
+### 关键洞察
+
+1. **"密码学累加器使可验证 snapshot 与编辑历史隐私共存"**：新用户被邀请时获取 document snapshot，需要通过密码学累加器验证这个 snapshot 的一致性——但不需要访问完整编辑历史。这解决了 "如何验证文档未被篡改" 与 "不泄露过去谁写了什么" 之间的矛盾。类似 Bodega "roster leases"——用密码学原语使参与者可以验证本地状态而不需要全局可见。
+2. **"Secure GC——加密数据下的垃圾回收"**：传统 GC 依赖读取数据内容决定是否可回收→在加密环境下不可行。Acumen 的 secure GC 打破这个限制→存储随当前文档大小线性扩展而非历史长度。
+3. **"25 users × 60 WPM 同时编辑→零延迟退化"**：密码学 overhead（加密+累加器+GC）设计得足够低→实时编辑性能与明文编辑器相比无明显差异。
+
+- 来源：Acumen(OSDI'26)
+
+### 实践启发
+- **"密码学累加器 = 可验证状态摘要而不暴露历史"**：适用于任何需要"证明当前状态一致性但不暴露如何达到此状态"的场景——类似 WriteGuards "key-range fencing" 和 LogDrive "weakTail"——弱语义使实现变得简单但强验证
+- **"Encrypted GC 是 privacy-preserving systems 的新维度"**：大多数加密系统只关注加密数据和查询，忽略了随着时间增长的数据存储问题——GC 是 long-running 系统的必要条件
+- **"Fork-causal consistency——去中心化环境下的完整性保证"**：即使恶意用户/网络对手无法创建可信历史的 fork→类似 Ambulance "non-equivocation phase"——防止攻击者创建冲突版本的共识
