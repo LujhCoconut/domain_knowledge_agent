@@ -140,4 +140,5 @@
 | 2026-07-15 | jwmalloc(OSDI'26) | 论文-系统 | OSDI '26, osdi26-wang-jiawei.pdf | knowledge-synthesis | performance/system-tuning/ | 形式验证移动内存分配器，weak memory bounded MC，替换jemalloc CPU-10%，300亿用户时 |
 | 2026-07-15 | NeuroSym-Prover(OSDI'26) | 论文-验证/AI | OSDI '26, osdi26-he-baoding.pdf | knowledge-synthesis | security/os-security/ | 神经-符号proof生成，best-first search+LLM+ITP修复，seL4证明77.6%定理 |
 | 2026-07-15 | Spain(OSDI'26) | 论文-安全/密码学 | OSDI '26, osdi26-destefano.pdf | knowledge-synthesis | security/os-security/ | 数值succinct proofs，近似约束+新协议，prover overhead <1000× first for numerical |
+| 2026-07-15 | RT(OSDI'26) | 论文-编程语言/系统 | OSDI '26, osdi26-li-zekai.pdf | knowledge-synthesis | operations/program-analysis/ | Shell管道静态类型检查，regular types+FST，多项式时间TC，91%精度，0.02s avg |
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
