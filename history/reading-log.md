@@ -117,4 +117,5 @@
 | 2026-07-14 | TrainMover(OSDI'26) | 论文-系统 | OSDI '26, osdi26-lao.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | 训练中断恢复~20s/1024GPU，delta通信重建+sandbox warmup+通用standby，GPU浪费-55% |
 | 2026-07-15 | Nixie(OSDI'26) | 论文-系统 | OSDI '26, osdi26-xu-yechen.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | 消费者GPU时间复用，explicit swap替代UVM thrashing，MLFQ调度优先交互，延迟降3.8× |
 | 2026-07-15 | μShell(OSDI'26) | 论文-系统/架构 | OSDI '26, osdi26-chen-jiyang.pdf | knowledge-synthesis | architecture/accelerators/ | microkernel FPGA shell，硬件IPC+capability隔离+组件感知调度，可组合加速器 |
+| 2026-07-15 | vBPF(OSDI'26) | 论文-系统/安全 | OSDI '26, osdi26-zhang-jing.pdf | knowledge-synthesis | security/os-security/ | eBPF late-binding虚拟化，Sniffer+Dispatcher O(1)+编译隔离，多租户延迟降3.9× |
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
