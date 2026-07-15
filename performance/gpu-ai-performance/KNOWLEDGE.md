@@ -40,6 +40,7 @@ GPU 与 AI/ML 推理和训练的性能优化知识。
 | Virtual Tensor 数据移动消除 | virtual tensor, index mapping, data movement elimination, tensor compilation, memory-bound, operator fusion | VTC(OSDI'26) |
 | 训练中断弹性运行时 | delta communication group, sandbox warmup, standby replacement, interruption-resilient, elastic GPUs, ETTR | TrainMover(OSDI'26) |
 | 消费者 GPU 时间复用 | temporal multiplexing, UVM thrashing, working set eviction, MLFQ scheduling, consumer GPU, transparent swap | Nixie(OSDI'26) |
+| 移动端 LLM 推理内存带宽 | asymmetric interference, NPU bandwidth priority, speculative decoding preemption, jank rate, mobile SoC UMA, foreground QoS | Sereno(OSDI'26) |
 
 ---
 
@@ -887,3 +888,23 @@ ML 工作负载每次迭代 launch 数百个短 GPU kernel，每个 CPU→GPU ke
 ### 实践启发
 - **"Consumer GPU = 反 datacenter GPU"**：consumer 是 single-user、heterogeneous、快速切换→大多数 GPU sharing 研究假设多租户 batch→不适用。类似 EcoServe 和 Kairox 的 "面向实际硬件" 哲学——consumer GPU 有自己独特的约束和优化机会
 - **"Explicit swap > demand paging"**：当 working set >> GPU memory 时，知道何时换入换出比按需 page fault 更高效。UVM 的 thrashing 是隐式策略在极端条件下的失效——显式控制总是更优
+
+---
+
+## 移动端 LLM 推理内存带宽 (Sereno)
+
+### 核心问题
+移动 SoC 的统一内存架构（UMA）中 NPU 继承 ISP 的高内存优先级——这是历史设计为保护实时媒体任务（视频录制）而设。LLM 推理在 NPU 上运行，无意中获得了这个硬件级优先权→前台 UI 渲染的帧率被严重破坏（jank rate **+153%**），但 LLM 吞吐几乎不受影响（仅 -1.01%/1.64%）。这是**严重的不对称干扰**——不是软件调度问题，是硬件优先级策略与新兴 workload 的不匹配。
+
+### 关键洞察
+
+1. **"Asymmetric interference from legacy hardware prioritization"**：NPU 的硬件级内存优先级是为视频录制等实时媒体任务设计的→LLM 推理意外继承此特权→前台帧渲染被内存带宽饥饿。这是一个**硬件设计假设与新兴 workload 冲突**的典型案例——类似 ASI Heterogeneity "fractional-GPU 共享几乎不被使用"——硬件假设与生产现实之间存在 gap。
+2. **"Speculative decoding = fine-grained preemption points for bandwidth yielding"**：推测解码的每个 token speculation 步骤提供天然的 yield 点→检测内存争抢→动态让出带宽给前台→重放最后几个 token 即可恢复推理→不丢失进度。类似 FlowANN "discovery-expansion window"——利用已有的推测步骤作为抢先点，不需要额外机制。
+3. **"不修改硬件解决硬件级问题——软件自适应"**：利用 SoC 现有的性能监控单元检测带宽争抢→软件层动态降级 LLM 的带宽使用→前台恢复流畅。类似 EcoServe "为普通 GPU 集群设计"——面向实际硬件约束的务实方法。
+
+- 来源：Sereno(OSDI'26)
+
+### 实践启发
+- **"继承的硬件特权可能是隐形杀手"**：NPU 的内存优先级为视频录制设计→LLM 继承了它→前台 UI 受损。当 repurpose 硬件给新 workload 时，必须检查继承的硬件策略是否仍适用
+- **"推测解码的多重价值——不仅降低延迟，还提供抢占点"**：speculative tokens 可作为自然的 preemption boundary→类似 Ambulance "非 non-equivocation phase 也是 race"——已有的机制可以被重新利用为其他目的
+- **"Jank rate 是移动端的真实 SLO"**：移动 LLM 推理不能只看 throughput/latency——用户的感知流畅度（jank frame 比例）才是真正的体验指标
