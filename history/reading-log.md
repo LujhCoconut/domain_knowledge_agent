@@ -121,4 +121,5 @@
 | 2026-07-15 | DVLA(OSDI'26) | 论文-运维系统 | OSDI '26, osdi26-zhang-zhengtong.pdf | knowledge-synthesis | operations/cloud-infrastructure/ | VM lifetime感知调度，placement debt+动态affinity+离线整流，Alibaba节省数千台 |
 | 2026-07-15 | PIMS(OSDI'26) | 论文-运维系统 | OSDI '26, osdi26-leonhardi.pdf | knowledge-synthesis | operations/cloud-infrastructure/ | Meta五年维护系统，fault domain alignment+maintenance contract，buffer降15%，可预测SLO |
 | 2026-07-15 | ASI-Heterogeneity(OSDI'26) | 论文-运维系统 | OSDI '26, osdi26-li-suyi.pdf | knowledge-synthesis | operations/cloud-infrastructure/ | Alibaba异构GPU集群trace分析，155K GPU，defrag+SpotGPU分配率68%→93% |
+| 2026-07-15 | Mimesys(OSDI'26) | 论文-系统/测试 | OSDI '26, osdi26-kim-donghyun.pdf | knowledge-synthesis | operations/os-testing/ | 扩散模型trace→可执行workload合成，state-aware conditioning+execution alignment，相似度5.5× |
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
