@@ -43,6 +43,7 @@ GPU 与 AI/ML 推理和训练的性能优化知识。
 | 移动端 LLM 推理内存带宽 | asymmetric interference, NPU bandwidth priority, speculative decoding preemption, jank rate, mobile SoC UMA, foreground QoS | Sereno(OSDI'26) |
 | 移动 AMP CPU DNN 推理 | AMP asymmetry, performance-collapse paradox, adaptive granularity scheduling, core-kernel affinity, big.LITTLE | SANI(OSDI'26) |
 | 推荐系统超高效 NAS | superproxy metric, training-free architecture search, recommendation models, model efficiency, FLOP reduction, AUC | Drs.NAS(OSDI'26) |
+| GPU OS 资源管理 | TPC scheduling, kernel atomization, hardware right-sizing, DVFS, head-of-line blocking, GPU utilization, transparent interposition | LithOS(SOSP'25) |
 
 ---
 
@@ -948,3 +949,25 @@ ML 工作负载每次迭代 launch 数百个短 GPU kernel，每个 CPU→GPU ke
 ### 实践启发
 - **"Zero-cost proxy for search"**：不需要训练就能评估 architecture 的好坏→将搜索从 hours 降到 minutes→使 NAS 可以从一次性离线搜索变成迭代快速设计。类似 Kareus "roofline model + single-layer profiling"——用低成本近似替代高成本评估
 - **"Search efficiency + result efficiency 同时优化"**：Drs.NAS 不仅高效地找到 architecture，而且找到 highly efficient architecture。这在 NAS 领域是罕见的——搜索成本和搜索结果质量通常存在 trade-off
+
+---
+
+## GPU OS 资源管理 (LithOS)
+
+### 核心问题
+数据中心 GPU 利用率极低——Microsoft 52% 平均、Alibaba 10% 中位数、Meta 生产 Ads 仅 27%。这不是硬件不够快，而是 GPU 缺乏 OS 级资源管理抽象。现有方案（NVIDIA MPS 粗粒度时间复用、MIG 静态分区）和学术方案（Orion/REEF/TGS 的 operator 级调度）都存在三个根本缺陷：(1) 调度粒度过粗→head-of-line blocking (2) 缺乏透明性→需修改 ML 框架或驱动 (3) 无资源隔离。CPU 上 OS 用了几十年的多任务调度在 GPU 上几乎不存在。
+
+### 关键洞察
+
+1. **"TPC 级空间调度 + TPC Stealing——GPU 的 work stealing"**：以单个 Texture Processing Cluster（GPU 计算单元，A100 有 108 个）为调度粒度→空闲 TPC 可被其他 workload "偷走"→动态重分配。类似 GO 调度器的 work stealing——TPC 是 GPU 的 "P"（logical processor）。配合 online kernel latency predictor（按 batch 内 ordinal position 唯一标识 kernel node）→调度决策有数据依据。
+2. **"透明 kernel 原子化——GPU 的 time-sharing primitive"**：CPU 有 timer interrupt→OS 可抢占；GPU 没有→一个 30ms 的 LLaMA 3 kernel 阻塞所有后续 work。LithOS 通过修改 QMD (Queue MetaData) 的 program address 注入 Prelude→将 kernel thread blocks 拆分 "atoms"（子集）→在 atom 边界重新调度→**55% 延迟波动下降**。不需要编译器、源码、PTX——完全透明。类似 GraCE "编译器桥接高层语义和底层硬件"——在底层做透明变换。
+3. **"Two-point Amdahl 插值——轻量 hardware right-sizing"**：仅需 1 TPC 和 all TPCs 两次测量→拟合 `l = m/t + b`（串行+并行部分）→预测 kernel 实际利用的 TPC 上限→分配过剩的 TPC 给其他 work。**26% GPU capacity 节省，<4% perf hit**。类似 Kareus "roofline + single-layer profiling"——用低成本近似替代高成本详尽探索。
+4. **"Compute vs memory-bound kernel → DVFS 决策"**：计算密集 kernel 保持高频（对频率敏感）→内存密集 kernel 降频（对频率不敏感）→25% 总 GPU 能耗节省（7% perf hit）。采用保守策略（高 learning period + 从 max freq 渐进降），因为 GPU 频率切换延迟高（~50ms）。
+
+- 来源：LithOS(SOSP'25)
+
+### 实践启发
+- **"OS 抽象移植到 GPU 是 paradigm shift"**：CPU OS 用了几十年的 time-sharing、空间调度、isolation、DVFS——LithOS 证明这些抽象对 GPU 同样有效。从 "GPU 是黑盒加速器" 到 "GPU 是可调度计算平台" 的范式转变
+- **"Transparency = adoption"**：不修改模型/框架/runtime 是 LithOS 的最高设计原则——贯穿 Rust 实现（~5K 行）+ CUDA Driver API interposition。类似 hS/Incr "bolt-on" 哲学——降低 adoption barrier 比追求 optimal 更重要
+- **"Kernel atomization = GPU 抢占的务实方案"**：GPU 没有硬件 timer interrupt→atomization 以软件方式实现 "伪抢占"→在 atom 边界重新分配 TPC。这是一个**被硬件限制但可通过软件创新绕过的案例**
+- **"Per-kernel right-sizing > whole-model right-sizing"**：不同 kernel 的 TPC scaling 行为差异极大（部分线性 scaling、部分快速 diminishing returns）→per-kernel 决策远优于 uniform 分配。类似 SANI "core-kernel affinity"——细粒度差异化 > 全局统一策略

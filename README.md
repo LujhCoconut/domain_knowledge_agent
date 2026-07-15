@@ -34,22 +34,21 @@ domain-knowledge/
 
 <!-- 以下区域由 /domain-knowledge 后置操作自动更新，请勿手动编辑本节 -->
 
-- **总计**: 137 篇
-- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 133 篇（'26）
+- **总计**: 138 篇
+- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 133 篇（'26），SOSP 1 篇（'25）
 - **领域分布**:
   - CXL/内存系统/stall 回收: 10 篇
   - 存储层次/体系结构: 5 篇（Soul/GCP, Duhu, Blowfish, InfiniDefrag, Megalon） — 见 `architecture/memory-storage-hierarchy/KNOWLEDGE.md`
   - 云基础设施/虚拟化: 11 篇（mwait-sched, Xkernel, Janus, Nested SEV, PowerSight, M3U, Quark, DVLA, PIMS, ASI-Heterogeneity, Svalinn） — 见 `operations/cloud-infrastructure/KNOWLEDGE.md`
   - 云原生/解耦式服务: 5 篇（DGC, OpenTela, Arca, Spice, libDSE） — 见 `architecture/cloud-native/KNOWLEDGE.md`
-  - LLM 推理服务: 9 篇（含 agentic workflow + 本地 CPU-GPU 混合 MoE + 批量推理协程调度）
-  - LLM 大规模训练+数据管线: 10 篇（含 RL 五篇 + Kareus 训练能耗）
+  - LLM 推理/GPU-AI/训练: 36 篇（含 LithOS GPU OS） — 见 `performance/gpu-ai-performance/KNOWLEDGE.md`
   - OS 安全/隐私/程序分析: 16 篇 — 见 `security/os-security/KNOWLEDGE.md`
   - 软件测试/DBMS/云服务: 2 篇（ValScope, S3 MBT） — 见 `algorithms/`, `operations/os-testing/KNOWLEDGE.md`
   - OS 内核/调优: 2 篇（kSTEP, ECO） — 见 `operations/os-performance-tuning/KNOWLEDGE.md`
   - 监控/可观测性: 9 篇 — 见 `operations/monitoring-observability/KNOWLEDGE.md`
   - 存储/文件系统: 9 篇（ByteDance DataPipeline, DeLFS, Espresso, FORGE, Oxbow, DINGO, Umap, Helmsman, WiseCode） — 见 `performance/storage-filesystem/KNOWLEDGE.md`
-  - 程序分析与动态优化: 4 篇（hS, Incr, UCSan, Aletheia） — 见 `operations/program-analysis/KNOWLEDGE.md`
-  - 并发数据结构: 1 篇（Arctic） — 见 `algorithms/concurrent-data-structures/KNOWLEDGE.md`
+  - 程序分析与动态优化: 5 篇（hS, Incr, UCSan, Aletheia, RT） — 见 `operations/program-analysis/KNOWLEDGE.md`
+  - 并发数据结构: 2 篇（Arctic, FARLock） — 见 `algorithms/concurrent-data-structures/KNOWLEDGE.md`
   - 资源调度与供给: 2 篇（SPADE, Quota Marketplace） — 见 `algorithms/resource-scheduling/KNOWLEDGE.md`
   - 分布式共识: 6 篇（Bodega, Pompē-SRO, Jetpack, Ambulance, LogDrive, WriteGuards） — 见 `algorithms/distributed-consensus/KNOWLEDGE.md`
   - 图处理: 1 篇（Pluto） — 见 `algorithms/graph-processing/KNOWLEDGE.md`
