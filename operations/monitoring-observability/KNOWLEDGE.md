@@ -11,6 +11,7 @@
 | GPU SDC 在线检测 | cSensor-cVerifier, mixed-precision checksum, self-equivalence, algorithmic detection, permanent SDC | AEGIS(OSDI'26) |
 | LLM 训练Bitwise调试 | bitwise alignment, semantic-stable boundary, schedule-tolerant mapper, longest prefix match, benign nondeterminism | OpGuard(OSDI'26) |
 | SMART SSD 遥测 LLM 解释 | representation layer, SMART logs, temporal trend tokens, CNN patches, online pattern memory, chain-of-thought, SSD failure prediction | SMARTTalk(OSDI'26) |
+| 数据类型感知性能分析 | type-centric profiling, DWARF, Linux perf, data locality, struct field reordering, memory layout optimization | TypeCraft(OSDI'26) |
 
 ---
 
@@ -113,3 +114,22 @@ SMART 属性是 SSD 健康监控的主要遥测——每个 drive 每天报告 m
 ### 实践启发
 - **"Numeric telemetry → symbolic tokens → LLM reasoning 是通用三层 pipeline"**：不只是 SMART 日志——任何 multivariate time-series 遥测（网络流量、CPU metrics、sensor data）都可以受益于这种表示层桥接。类似 Mimesys "diffusion for workload synthesis"——核心是找到正确的中间表示
 - **"Online adaptation 比定期重训练更实用"**：生产环境中 firmware/硬件的持续变化使离线训练的模型快速过时→online pattern memory 在不重训练的情况下吸收新行为
+
+---
+
+## 数据类型感知性能分析 (TypeCraft)
+
+### 核心问题
+Google 数据中心 40-60% CPU cycle 用于等待内存。现有 perf 工具（Linux perf、VTune、SCALENE）提供 code-centric 视图（hot functions/instructions）和 data-centric 视图（hot allocations），但**缺少连接两者的桥梁**——不知道一个 hot cache miss 对应的到底是什么数据类型的什么字段。现有分析说 "这行代码 cache miss 很多"，但不提供 "因为 struct task_struct 的 clock 字段跨越了两个 cache line 的边界"。优化者需要手工猜测→耗时长、不可规模化。
+
+### 关键洞察
+
+1. **"Type-centric profiling——不是只看代码或数据，而是看数据类型的访问模式"**：每个内存访问指令被注释上其对应的 type 和 field→性能 profile 可以按 type、按 field 聚合和排序。类似 Merlin "per-object characterization" 和 LifeLine "object-page lifetime alignment"——更细粒度的语义感知使优化意图更明确。
+2. **"DWARF debug info→perf annotations——桥接调试世界和性能分析世界"**：DWARF 记录本质为调试设计→在优化后二进制上准确度大打折扣（AutoFDO/LTO/BOLT 严重破坏 DWARF 质量）。TypeCraft 修正这些退化以获得高准确度类型解析。
+3. **"轻量级集成 + 数据中心 profiler 生态"**：不增加额外在线数据采集负担→适合持续生产 profiling。已上游化到 Linux perf→可作为数据中心标准 profiler 的一部分。Google 规模的生产验证。
+
+- 来源：TypeCraft(OSDI'26)
+
+### 实践启发
+- **"Type-centric 是 code-centric 和 data-centric 之外的第三维度"**：不仅要知道 "哪里慢" 和 "哪个数据对象热"，还需要知道 "什么数据类型的什么字段产生了这些慢操作"。这是 profiling 的三维空间——code×data×type
+- **"Struct reordering = 最廉价且最高效的内存优化之一"**：Linux 内核 rq 结构体的 clock 字段重排→将频繁共同访问的字段紧凑到同一 cache line。这是 per-type profile 直接引导的优化

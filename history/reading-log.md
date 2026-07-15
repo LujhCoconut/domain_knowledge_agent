@@ -135,4 +135,5 @@
 | 2026-07-15 | Drs.NAS(OSDI'26) | 论文-系统/ML | OSDI '26, osdi26-wang-ruixuan.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | 推荐系统NAS，superproxy度量替代训练验证，搜索5-18GPU-h→2min CPU，模型108×更小 |
 | 2026-07-15 | Svalinn(OSDI'26) | 论文-系统 | OSDI '26, osdi26-pardeshi.pdf | knowledge-synthesis | operations/cloud-infrastructure/ | 多资源瓶颈过载控制，credit admission+per-resource AQM+m_semaphore，goodput up to 6.51× |
 | 2026-07-15 | PeeR(OSDI'26) | 论文-系统 | OSDI '26, osdi26-carin.pdf | knowledge-synthesis | performance/system-tuning/ | eBPF可抢占调度，verifier helper call抢占点+hybrid softirq-kthread+sched_ext，p99降3-19.8× |
+| 2026-07-15 | TypeCraft(OSDI'26) | 论文-系统/性能工具 | OSDI '26, osdi26-li-zecheng.pdf | knowledge-synthesis | operations/monitoring-observability/ | 类型感知perf，DWARF→mem指令标注type+field，Linux内核优化，已上游化perf |
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
