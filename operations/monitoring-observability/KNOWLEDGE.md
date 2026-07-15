@@ -12,6 +12,7 @@
 | LLM 训练Bitwise调试 | bitwise alignment, semantic-stable boundary, schedule-tolerant mapper, longest prefix match, benign nondeterminism | OpGuard(OSDI'26) |
 | SMART SSD 遥测 LLM 解释 | representation layer, SMART logs, temporal trend tokens, CNN patches, online pattern memory, chain-of-thought, SSD failure prediction | SMARTTalk(OSDI'26) |
 | 数据类型感知性能分析 | type-centric profiling, DWARF, Linux perf, data locality, struct field reordering, memory layout optimization | TypeCraft(OSDI'26) |
+| 统一可观测性平台 | trinity of observability, logs-metrics-traces unification, harvested cloud resources, telemetry query optimization, CapEx efficiency | DiTing(OSDI'26) |
 
 ---
 
@@ -133,3 +134,22 @@ Google 数据中心 40-60% CPU cycle 用于等待内存。现有 perf 工具（L
 ### 实践启发
 - **"Type-centric 是 code-centric 和 data-centric 之外的第三维度"**：不仅要知道 "哪里慢" 和 "哪个数据对象热"，还需要知道 "什么数据类型的什么字段产生了这些慢操作"。这是 profiling 的三维空间——code×data×type
 - **"Struct reordering = 最廉价且最高效的内存优化之一"**：Linux 内核 rq 结构体的 clock 字段重排→将频繁共同访问的字段紧凑到同一 cache line。这是 per-type profile 直接引导的优化
+
+---
+
+## 统一可观测性平台 (DiTing)
+
+### 核心问题
+Logs、metrics、traces 三种 telemetry 在云环境中被存储在**隔离系统**中（Dapper/LogStore/Prometheus）。SRE 处理一个事件需要切换多个系统、不同查询语言、手工脚本关联数据→高延迟、冗余数据移动、低运维效率。统一方案尝试过但失败：data-lake 方案（Iceberg/Delta Lake）统一接口但数据仍分散→data transfer overhead；in-memory NewSQL 方案（Kraken/Monarch/Scuba）TCO 太高；ClickHouse 方案扩展到全云服务时 CPU+内存瓶颈→需 +20% CapEx。
+
+### 关键洞察
+
+1. **"Harvest 云中闲置 CPU/内存做 cost-effective 处理"**：作为云厂商，服务器 fleet 经常 underutilized（类似 PowerSight 的 "capacity buffer" 和 Quark 的 "harvesting idle CPU"）。DiTing 用 harvested transient 资源做 compute layer 处理，集中式存储负责 persistence 和 failover→CapEx 比传统方案低 **up to 65×**。
+2. **"分离 Compute/Interface/Persistence 三层——不同需求用不同层"**：Compute layer（零成本闲置资源做处理）≠ Interface layer（统一 API/Frontend）≠ Persistence layer（集中式存储保证可靠性+故障切换）。类似 Svalinn "分离 throughput 和 latency control"——不同关注点不应耦合在同层。
+3. **"Unified storage schema 实现 trinity of observability"**：logs/metrics/traces 格式不同但共享通用模式（timestamp、tags、values）→统一存储模式使跨 telemetry 查询无需手动数据关联→SRE 可以从 metric 下钻到 trace 到 log 一路顺畅。
+
+- 来源：DiTing(OSDI'26)
+
+### 实践启发
+- **"Harvest idle resources 降低 CapEx"** 是云厂商可观测性的正确路径：类似 PowerSight "power oversubscription" 和 Quark "eliminating four idles"——将闲置转化为有用工作而非付费扩展
+- **"Unified observability is not about a single database——it's about a single query interface"**：三类 telemetry 不需要在同数据库中存储，只需要通过统一 interface 呈现给 SRE。类似 OpenTela "unified API over heterogeneous clusters"——抽象层 > 下层统一
