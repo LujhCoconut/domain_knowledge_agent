@@ -142,4 +142,5 @@
 | 2026-07-15 | Spain(OSDI'26) | 论文-安全/密码学 | OSDI '26, osdi26-destefano.pdf | knowledge-synthesis | security/os-security/ | 数值succinct proofs，近似约束+新协议，prover overhead <1000× first for numerical |
 | 2026-07-15 | RT(OSDI'26) | 论文-编程语言/系统 | OSDI '26, osdi26-li-zekai.pdf | knowledge-synthesis | operations/program-analysis/ | Shell管道静态类型检查，regular types+FST，多项式时间TC，91%精度，0.02s avg |
 | 2026-07-15 | LithOS(SOSP'25) | 论文-系统/GPU OS | SOSP '25, DOI:10.1145/3731569.3764818 | knowledge-synthesis | performance/gpu-ai-performance/ | 首个GPU OS，TPC级调度+kernel原子化+hardware right-sizing+DVFS，13×尾延迟下降vs MPS，25%节能 |
+| 2026-07-15 | μFork(SOSP'25) | 论文-系统/OS安全 | SOSP '25, DOI:10.1145/3731569.3764809 | knowledge-synthesis | security/os-security/ | 单地址空间OS fork，CHERI能力+CoPA延迟重定位，54μs fork(3.7× faster)，24%更高FaaS吞吐 |
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
