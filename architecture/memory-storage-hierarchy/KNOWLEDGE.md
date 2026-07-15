@@ -10,6 +10,7 @@ CXL/分离式内存与缓存一致性体系结构。
 | 共享分离式内存对象存储 (Duhu) | CXL, pass-by-reference, immutable objects, non-temporal writes, cache coherence avoidance | Duhu(OSDI'26) |
 | VM 弹性内存超卖 (Blowfish) | disaggregated memory, paravirtualization, THP-aware tracking, far memory swapping, hypervisor bypass | Blowfish(OSDI'26) |
 | 虚拟化无压缩内存碎片整理 | infinite GPA space, compaction-free, GPA-HPA remap, memory trade, huge page defragmentation | InfiniDefrag(OSDI'26) |
+| CXL 部分一致性数据共享 | split metadata, SCR-LNR tiering, CXL shared log, hardware-coherent region, cross-host sharing, HCMeta | Megalon(OSDI'26) |
 
 ---
 
@@ -89,4 +90,23 @@ CXL/分离式内存与缓存一致性体系结构。
 ### 实践启发
 - **"多一层虚拟化 = 多一个解决碎片的机会"**：GPA 已经是虚拟层→guest 端 compaction 完全多余。类似 Blowfish "硬件速度已来，软件栈没跟上"——当底层是虚拟化的，上层的某些优化可能根本不需要
 - **"穷举空间换简单性"**：PB 级 GPA 空间远超实际需求→可以用空间换取避免昂贵操作的简单性
+
+---
+
+## CXL 部分一致性数据共享 (Megalon)
+
+### 核心问题
+CXL 允许多主机共享内存，但硬件一致性（cache coherence）仅覆盖 CXL 的一个小区域（SCR，几百 MB），而 CXL 总容量可达数 TB——这是**部分一致性 CXL 模型**。现有 HCMeta 方案（如 Tigon）在 SCR 中存储 per-object coherence 元数据——数据集增大时元数据超出 SCR→反复 unshare/reshare (churn)→吞吐降 **10×**。
+
+### 关键洞察
+
+1. **"Split 元数据——大-低频 vs 小-高频——策略化分离"**：大的 index 条目复制到 LNR（低频更新），仅 coherence record 关键字段 + shared-log tail pointer 在 SCR（小、高频）。类似 Megalon "Cache-level vs object-level"——不是简单的缓存分层，是不同性质的元数据的策略化分离。
+2. **"CXL shared log 保持 index replica 一致"**：所有对 index 的更新通过 shared log 序列化（increment tail→append update→check tail to sync）→消除单独的一致性协议开销。利用 CXL 低延迟 load-store 实现高效 shared log。
+3. **"'利用 CXL 特性改变软件设计'——与 Duhu/Blowfish/InfiniDefrag 共享哲学"**：不是把现有设计移植到 CXL，而是重新设计以利用 CXL 独特特性（部分一致性模型、低延迟 load-store、shared memory 语义）。
+
+- 来源：Megalon(OSDI'26)
+
+### 实践启发
+- **"分层策略不是大小分层——是按更新频率分层"**：large-seldom-updated vs small-heavily-updated 才是合理的分离维度。类似 LAH/S4-FIFO "cache-level learning vs object-level prediction"——分离维度的选择比分离本身更重要
+- **"Shared log over shared memory 是高效的跨主机协调原语"**：当共享内存有低延迟时，shared log 可以替代传统的 message passing。类似 LogDrive "shared log over cloud storage"——shared log 是跨架构的通用协调模式
 
