@@ -7,6 +7,7 @@
 | 主题 | 关键词 | 来源 |
 |------|--------|------|
 | Spatial 数据流加速器 Tile 编译 | tile-to-core mapping, dataflow planning, MLIR, Triton, spatial architecture, on-chip network, data reuse | TileLoom(OSDI'26) |
+| Microkernel FPGA Shell | μShell, hardware IPC, composable modules, vFPGA, capability isolation, component-aware scheduling | μShell(OSDI'26) |
 
 ---
 
@@ -24,3 +25,22 @@ Spatial dataflow accelerators (Tenstorrent/Cerebras/Groq 等) 通过 on-chip net
 
 ### 实践启发
 - **"Spatial architecture = 显式数据移动管理——编译器的角色根本不同"**：不是生成更好的 SIMD/SIMT 代码，而是规划 tile-to-core 的数据流。这是一个新的编译器设计空间
+
+---
+
+## Microkernel FPGA Shell (μShell)
+
+### 核心问题
+现有 FPGA shell 为**单体应用**设计——所有硬件模块静态连接为单个不可分的加速器在一个 vFPGA 上。但实际应用是模块化的、可组合的（共享函数使用导致模块间达 93% 相关性）。单体方法：改一个模块→重建整个加速器、不可跨 vFPGA 扩展、所有模块被每个应用实例化→资源浪费、切换应用需完全重配置→调度开销大。
+
+### 关键洞察
+
+1. **"Microkernel 原则应用于 FPGA——硬件模块 = 进程"**：加速器分解为可共享、可组合的硬件模块→部署到独立 vFPGA→通过硬件 IPC 动态连接。类似 OS 中 microkernel 将服务分解为独立用户态进程——最小化内核、IPC 作为核心原语。
+2. **"Capability-enforced isolation"**：硬件模块间通过 capability 机制隔离——类似 OS 的 capability-based security。不仅是隔离，也是组合的基础——模块不知道也不需要知道其他模块的具体实现。
+3. **"Component-aware task scheduler"**：知道哪些模块被哪些应用使用→高效调度 vFPGA 资源。类似 vBOIDs "container-aware scheduling"——理解应用结构优于盲目调度。
+
+- 来源：μShell(OSDI'26)
+
+### 实践启发
+- **"Microkernel 思想可迁移到硬件设计"**：IPC 作为硬件模块间通信原语、capability 作为隔离机制、细粒度模块化 > 单体重构。类似 Arca "OS 为 serverless 重新设计"——μShell "FPGA shell 为模块化应用重新设计"
+- **"静态连接→动态 IPC 是 FPGA 可组合性的关键"**：类似 Spice "spliceVMA" 和 Nixie "temporal multiplexing"——从静态分配转向动态组合
