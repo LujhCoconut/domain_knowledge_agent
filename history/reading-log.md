@@ -128,4 +128,5 @@
 | 2026-07-15 | Megalon(OSDI'26) | 论文-系统 | OSDI '26, osdi26-hu-jiyu.pdf | knowledge-synthesis | architecture/memory-storage-hierarchy/ | CXL部分一致性split metadata共享，large-LNR+small-SCR，vs Tigon支持更大数据集 |
 | 2026-07-15 | Sereno(OSDI'26) | 论文-系统 | OSDI '26, osdi26-xin.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | 移动LLM推理NPU带宽不对称干扰，specDec yield+抢占式让出带宽，jank-92.6% |
 | 2026-07-15 | LifeLine(OSDI'26) | 论文-系统 | OSDI '26, osdi26-huang-jiacheng.pdf | knowledge-synthesis | performance/system-tuning/ | 对象-页生存期对齐GC，bimodal liveness+page remapping替代copy，GC copy-57.4%, GC time-22.7% |
+| 2026-07-15 | SANI(OSDI'26) | 论文-系统 | OSDI '26, osdi26-sang.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | AMP CPU不对称感知DNN推理，adaptive granularity+core-kernel affinity，延迟-17.6-23.7% |
 <!-- 追加新记录时，复制上面一行并修改即可。 -->

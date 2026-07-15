@@ -41,6 +41,7 @@ GPU 与 AI/ML 推理和训练的性能优化知识。
 | 训练中断弹性运行时 | delta communication group, sandbox warmup, standby replacement, interruption-resilient, elastic GPUs, ETTR | TrainMover(OSDI'26) |
 | 消费者 GPU 时间复用 | temporal multiplexing, UVM thrashing, working set eviction, MLFQ scheduling, consumer GPU, transparent swap | Nixie(OSDI'26) |
 | 移动端 LLM 推理内存带宽 | asymmetric interference, NPU bandwidth priority, speculative decoding preemption, jank rate, mobile SoC UMA, foreground QoS | Sereno(OSDI'26) |
+| 移动 AMP CPU DNN 推理 | AMP asymmetry, performance-collapse paradox, adaptive granularity scheduling, core-kernel affinity, big.LITTLE | SANI(OSDI'26) |
 
 ---
 
@@ -908,3 +909,23 @@ ML 工作负载每次迭代 launch 数百个短 GPU kernel，每个 CPU→GPU ke
 - **"继承的硬件特权可能是隐形杀手"**：NPU 的内存优先级为视频录制设计→LLM 继承了它→前台 UI 受损。当 repurpose 硬件给新 workload 时，必须检查继承的硬件策略是否仍适用
 - **"推测解码的多重价值——不仅降低延迟，还提供抢占点"**：speculative tokens 可作为自然的 preemption boundary→类似 Ambulance "非 non-equivocation phase 也是 race"——已有的机制可以被重新利用为其他目的
 - **"Jank rate 是移动端的真实 SLO"**：移动 LLM 推理不能只看 throughput/latency——用户的感知流畅度（jank frame 比例）才是真正的体验指标
+
+---
+
+## 移动 AMP CPU DNN 推理 (SANI)
+
+### 核心问题
+移动 SoC 的 AMP CPU（big+LITTLE cores）在 DNN 推理中面临 **performance-collapse paradox**——将所有核用于并行推理，反而因 big/LITTLE 不对称导致吞吐下降（最多 +37% 延迟）。根因是工作负载不平衡：big core 线程在 barrier 等待 LITTLE core 线程完成。现有方案：对称执行（只用 big core，浪费 LITTLE）、静态 partition（不适应 runtime 干扰）、忽略 core-kernel affinity。
+
+### 关键洞察
+
+1. **"Affinity-aware kernel issuer——每种 kernel 有最适合的 core 类型"**：离线 profiling 建立 kernel→core affinity map，运行时优先匹配。类似 ADAngel "oracle policy map" 但应用于 core-kernel 配对而非 bit-width。不是所有 kernel 在 big core 上都更快——某些 memory-bound kernel 在 LITTLE core 上匹配更好。
+2. **"Adaptive granularity scheduler——给小核 small tasks，给大核 large tasks"**：动态融合/拆分任务以匹配异构计算能力。类似 Ambulance "protocol-rigged racing"——用偏置使更快一方承担更多工作。不是消除不对称，而是利用不对称。
+3. **"On-demand kernel switcher"**：工作负载在 core 间迁移时高效转换 kernel 实现→保持 core-kernel affinity。避免迁移后性能下降（因为新 core 的 optimal kernel 可能不同）。
+
+- 来源：SANI(OSDI'26)
+
+### 实践启发
+- **"AMP asymmetry 不应被克服而应被利用"**：performance-collapse paradox 的根源是试图消除不对称（均分任务），而 SANI 的策略是拥抱不对称（给大核更多任务）。类似 Nixie "不要给调度器太多选择"——适当偏置 > 均匀分配
+- **"Core-kernel affinity 是被忽视的维度"**：同一种 kernel 在不同 core 类型上效率差异显著→不是所有工作都应在大核上运行。类似 ADAngel "bit-width aware kernel selection"——多维度的 affinity 匹配值得更多关注
+- **"三篇移动端论文形成主题簇"**：LifeLine（GC copy→移动卡顿）、Sereno（NPU 带宽→移动 jank）、SANI（AMP 核间不平衡→移动推理延迟）——三篇都来自 OSDI '26，共同主题是**移动端系统性能的系统化解决**
