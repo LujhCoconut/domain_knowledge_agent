@@ -119,4 +119,5 @@
 | 2026-07-15 | μShell(OSDI'26) | 论文-系统/架构 | OSDI '26, osdi26-chen-jiyang.pdf | knowledge-synthesis | architecture/accelerators/ | microkernel FPGA shell，硬件IPC+capability隔离+组件感知调度，可组合加速器 |
 | 2026-07-15 | vBPF(OSDI'26) | 论文-系统/安全 | OSDI '26, osdi26-zhang-jing.pdf | knowledge-synthesis | security/os-security/ | eBPF late-binding虚拟化，Sniffer+Dispatcher O(1)+编译隔离，多租户延迟降3.9× |
 | 2026-07-15 | DVLA(OSDI'26) | 论文-运维系统 | OSDI '26, osdi26-zhang-zhengtong.pdf | knowledge-synthesis | operations/cloud-infrastructure/ | VM lifetime感知调度，placement debt+动态affinity+离线整流，Alibaba节省数千台 |
+| 2026-07-15 | PIMS(OSDI'26) | 论文-运维系统 | OSDI '26, osdi26-leonhardi.pdf | knowledge-synthesis | operations/cloud-infrastructure/ | Meta五年维护系统，fault domain alignment+maintenance contract，buffer降15%，可预测SLO |
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
