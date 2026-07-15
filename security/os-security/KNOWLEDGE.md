@@ -21,6 +21,7 @@
 | eBPF 多租户虚拟化 | late-binding, vBPF, static-binding, Sniffer event attribution, O(1) Dispatcher, state isolation | vBPF(OSDI'26) |
 | 加密协作编辑 | CRDT, cryptographic accumulator, secure GC, snapshot consistency, edit-history privacy, fork-causal consistency, collaborative editing | Acumen(OSDI'26) |
 | 神经-符号证明生成 | neuro-symbolic verification, best-first proof search, LLM+ITP, Isabelle REPL, seL4, sledgehammer, automated theorem proving | NeuroSym-Prover(OSDI'26) |
+| 数值计算 Succinct Proof | succinct proof, numerical approximation, approximate constraints, arithmetization, execution integrity, finite field | Spain(OSDI'26) |
 
 ---
 
@@ -340,3 +341,21 @@ eBPF 已成为云原生系统的内核可编程性标准——但设计时隐含
 - **"LLM 提议 + 符号验证确认"是 AI+验证的通用模式**：类似 Mimesys "execution as verification" 和 Twill "constraint solver as correctness oracle"——LLM 做创造性的搜索/提议，符号工具做严格的确认/修复。两个世界的最优组合
 - **"Best-first search > beam search for proof generation"**：beam search 可能过早排除正确的 proof path→best-first 与符号修剪结合更具鲁棒性
 - **"Data-efficient through proof state-step pairs"**：不需要海量数据——few-shot proof state→step 映射即可有效 fine-tune。类似 LAH "single model pretrained on traces"——数据效率使部署可行
+
+---
+
+## 数值计算 Succinct Proof (Spain)
+
+### 核心问题
+Succinct proofs（执行完整性/零知识）要求将计算翻译为有限域上的约束（arithmetization）。但数值计算（浮点/定点近似实数）在有限域中没有自然表达——有限域没有负数概念、没有大小关系、条件分支基于数值比较极难表达。现有方案要么做特殊化编码（牺牲通用性），要么做 end-to-end 专用协议（牺牲通用性+性能）。LLM 训练/推理、物理模拟等数值密集型工作负载完全无法从 succinct proofs 中受益。
+
+### 关键洞察
+
+1. **"数值计算的近似误差是机遇而非障碍——约束应允许近似满足"**：既然数值计算本身就有近似误差，约束系统也应允许**近似满足**而非精确满足→大幅降低证明生成开销。这是将数值特性转化为协议优势：近似正确 = 真正正确（因为原始计算本身就不可达到精确）。
+2. **"新证明协议专为近似约束设计"**：传统 SNARK/STARK 要求约束精确成立。Spain 的新协议处理 "approximately satisfied" 约束→证明器开销三个数量级以内（vs 原生执行）→远超现有方案的 10^5-10^6×。
+3. **"通用 + 高效不是矛盾的"**：核心协议不依赖具体计算→改变数值程序不需要重做底层数学→同时达到通用性、verifier 比原生执行便宜、prover <1000× overhead 三个目标。
+
+- 来源：Spain(OSDI'26)
+
+### 实践启发
+- **"Approximation as a feature, not a bug"**：数值计算的近似特性不是 succinct proof 的障碍——是可以利用的特性。约束系统的 "近似满足" 是全新的设计点。类似 Kareus "恒定频率 > 频率波动"——将约束转化为优势
