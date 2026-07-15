@@ -11,6 +11,7 @@
 | 通用共识 Fast-Path 框架 | 1-RTT plugin, view change hazard, promise, dual-path, super-quorum, TLA+ verification | Jetpack(OSDI'26) |
 | 协议操控竞速 BFT | protocol-rigged racing, cooperative+productive, proposal lane, slowdown detection, non-equivocation as race | Ambulance(OSDI'26) |
 | 云存储共享日志耐久层 | LogDrive, durability-sequencing separation, composable quorum, cloud storage SMR, weakTail | LogDrive(OSDI'26) |
+| 分布式强一致性缓存 | WriteGuards, delayed-writes anomaly, key-range fencing, linearizable reads, linked cache, resharding | WriteGuards(OSDI'26) |
 
 ---
 
@@ -128,3 +129,22 @@
 - **"弱语义抽象使实现变得简单"**：不强求每个地址的 linearizability 使得 LogDrive 可以实现在任意云存储上——语义越弱，可部署性越强
 - **"分离 concerns 以简化每层"**：durability（LogDrive）+ sequencing（AtomicLog）分离→各自简单→组合起来功能完整
 - **"Metadata 成本常被低估"**：75% 的总成本来自元数据层——这不仅仅是性能问题，是经济可行性问题
+
+---
+
+## 分布式强一致性缓存 (WriteGuards)
+
+### 核心问题
+分布式缓存提供低延迟读但需要**强一致性（linearizable reads）**才能用于生产关键路径（权限检查、SQL 协调、实时竞价）。核心难点是 **delayed-writes anomaly**——reshard 后前任 owner 仍有 in-flight 写到存储，新 owner 在那些写到达前读到的缓存值可能是 stale 的。生产系统观察到此延迟可达 ~90 秒（GitHub outage 期间）。Per-key fencing 在大规模场景下不可扩展——需要 key-range 粒度的轻量方案。
+
+### 关键洞察
+
+1. **"WriteGuards = key-range 粒度 fencing——存储只加一个条件检查"**：每个写携带关联当前 owner 的 fencing 值（类似 epoch number），存储系统在写路径检查后拒绝落后写。关键是 key-range 粒度而非 per-key→与 sharding 系统自然对齐→大规模可扩展且不增加 metadata 开销。
+2. **"松耦合存储——只改写路径，读路径完全不受影响"**：WriteGuards 只需要存储系统在写操作上增加一个条件检查（if write.fencing_value >= key_range.current_fencing_value）→不需要修改存储的数据模型或读路径。这是类似 Bodega "roster leases" 的设计哲学——non-intrusive 扩展。
+3. **"CLINK = 首个从内存提供 linearizable reads 的分布式 linked cache"**：传统 linked cache（如 memcached + storage）只提供最终一致性。CLINK 进程内 linked cache + CRINK 远程缓存→不需要 contact storage 就能保证 linearizable reads→tail read latency 降三个数量级。
+
+- 来源：WriteGuards(OSDI'26)
+
+### 实践启发
+- **"Key-range fencing > per-key fencing——粒度与 sharding 自然对齐"**：sharding 的粒度已经是 key-range→在此粒度上做 fencing 消除耦合。类似 DVLA "align maintenance with fault domains" 和 PIMS "fault domain alignment"——与现有组织结构对齐总是更简单
+- **"松耦合存储的最小侵入性"**：只改写路径的一个条件检查→对存储系统的侵入性极低。类似 Bodega "non-intrusive extension to classic consensus"——好的设计让存储团队容易接受

@@ -124,4 +124,5 @@
 | 2026-07-15 | Mimesys(OSDI'26) | 论文-系统/测试 | OSDI '26, osdi26-kim-donghyun.pdf | knowledge-synthesis | operations/os-testing/ | 扩散模型trace→可执行workload合成，state-aware conditioning+execution alignment，相似度5.5× |
 | 2026-07-15 | Merlin(OSDI'26) | 论文-算法/系统 | OSDI '26, osdi26-li-liujia.pdf | knowledge-synthesis | algorithms/cache-algorithms/ | 自适应缓存淘汰，per-object特征化解耦组件，5423 traces，吞吐1.4-7.8× |
 | 2026-07-15 | S4-FIFO/LAH(OSDI'26) | 论文-算法/系统 | OSDI '26, osdi26-xia.pdf | knowledge-synthesis | algorithms/cache-algorithms/ | LAH解耦数据-控制面，cache级学习增强S3-FIFO，效率+26%，最差trace仅+0.8% |
+| 2026-07-15 | WriteGuards(OSDI'26) | 论文-系统 | OSDI '26, osdi26-mao-ziming-writeguards.pdf | knowledge-synthesis | algorithms/distributed-consensus/ | key-range fencing解决delayed-writes，分布式强一致性缓存，read tail延迟降1000× |
 <!-- 追加新记录时，复制上面一行并修改即可。 -->

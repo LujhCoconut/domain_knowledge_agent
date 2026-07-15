@@ -34,8 +34,8 @@ domain-knowledge/
 
 <!-- 以下区域由 /domain-knowledge 后置操作自动更新，请勿手动编辑本节 -->
 
-- **总计**: 120 篇
-- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 116 篇（'26）
+- **总计**: 121 篇
+- **会议分布**: ASPLOS 4 篇（'22–'26），OSDI 117 篇（'26）
 - **领域分布**:
   - CXL/内存系统/stall 回收: 10 篇
   - 存储层次/体系结构: 4 篇（Soul/GCP, Duhu, Blowfish, InfiniDefrag） — 见 `architecture/memory-storage-hierarchy/KNOWLEDGE.md`
@@ -51,7 +51,7 @@ domain-knowledge/
   - 程序分析与动态优化: 4 篇（hS, Incr, UCSan, Aletheia） — 见 `operations/program-analysis/KNOWLEDGE.md`
   - 并发数据结构: 1 篇（Arctic） — 见 `algorithms/concurrent-data-structures/KNOWLEDGE.md`
   - 资源调度与供给: 2 篇（SPADE, Quota Marketplace） — 见 `algorithms/resource-scheduling/KNOWLEDGE.md`
-  - 分布式共识: 5 篇（Bodega, Pompē-SRO, Jetpack, Ambulance, LogDrive） — 见 `algorithms/distributed-consensus/KNOWLEDGE.md`
+  - 分布式共识: 6 篇（Bodega, Pompē-SRO, Jetpack, Ambulance, LogDrive, WriteGuards） — 见 `algorithms/distributed-consensus/KNOWLEDGE.md`
   - 图处理: 1 篇（Pluto） — 见 `algorithms/graph-processing/KNOWLEDGE.md`
   - 缓存算法: 2 篇（Merlin, S4-FIFO） — 见 `algorithms/cache-algorithms/KNOWLEDGE.md`
   - 加速器架构与编译: 2 篇（TileLoom, μShell） — 见 `architecture/accelerators/KNOWLEDGE.md`
