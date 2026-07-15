@@ -13,6 +13,7 @@
 | 混布批处理 Serverless 优化 | colocation, effective utilization, slot/gap/start/stop idle, serverless batch analytics, fine-grained allocation | Quark(OSDI'26) |
 | VM 生命周期感知调度 | VM lifetime prediction, placement debt, dynamic affinity, live migration rectification, packing density, long-lived VM scattering | DVLA(OSDI'26) |
 | 数据中心 Fleet 维护调度 | capacity buffer, fault domain alignment, maintenance contract, predictable deployment SLO, hardware placement | PIMS(OSDI'26) |
+| 异构 GPU 集群调度 | GPU fragmentation, stranded resources, defragmentation, SpotGPU preemption, hyperscale AI cluster, multi-tenant GPU | ASI Heterogeneity(OSDI'26) |
 
 ---
 
@@ -199,3 +200,22 @@ Meta 数百万服务器、数万服务、数十亿用户的维护编排。三种
 - **"Fault domain = 最小共享故障单元 = 最优维护粒度"**：对齐维护与故障域消除 '维护中故障域故障' 的 double-loss 风险——同一 domain 内维护+故障不比单独一项更糟。这是高可靠性系统中的通用原则
 - **"'一池多用'降低 buffer 需求"**：三类事件共享同一 capacity buffer 而非各自保留——类似 TrainMover "general standby"——通用资源池 > 专用资源池
 - **"Maintenance contract 使维护从 black-box 变为显式约束"**：不是 '我们需要 buffer for maintenance'，而是各团队显式声明维护时间窗口和容量需求→可预测的 SLO（OS 45 天、firmware 90 天）
+
+---
+
+## 异构 GPU 集群调度 (ASI Heterogeneity)
+
+### 核心问题
+生产 AI 集群不再为单一 workload 设计——LLM 训练/推理、经典 DNN、推荐模型共存，GPU 型号跨多代/多供应商。Alibaba 的 ASI 集群 155,410 GPU、81 部门、六个月 trace。**高需求 != 高有效利用率**：GPU 空闲但因碎片化（scattered across wrong nodes、CPU 不足、网络拓扑约束）而无法被分配。一个重要发现：**先前学术关注集中在 fractional-GPU 共享，但实际生产集群中几乎不使用 GPU 共享**——碎片化有更根本的来源。
+
+### 关键洞察
+
+1. **"Fractional-GPU fragmentation 不再是主要问题——shared GPU 几乎不用"**：真正的问题是 stranded GPU（多 GPU 节点上单个空闲 GPU）、CPU-GPU 匹配（有 GPU 无足够 CPU）、网络拓扑约束。与学术文献假设的重大偏离。
+2. **"Defrag 算法将蕴藏闲置资源的节点数减 20.2%"**：实用 GPU 碎片整理——重新分配调度以统一碎片化的空闲。类似 Quark "消除四种闲置"——诊断碎片来源再针对性消除。
+3. **"SpotGPU = preemption-cost-aware 安全收获闲置"**：在保证 SLO 的前提下从已分配的闲置中提前获取——分配率从 68%→93%。类似 Quark "colocation + overcommitment" 但针对 GPU。
+
+- 来源：ASI Heterogeneity(OSDI'26)
+
+### 实践启发
+- **"生产 trace 公开的巨大价值"**：155K GPU 六个月 trace 是迄今为止最全面的异构 AI 集群数据——释放给研究社区将推动整个领域
+- **"学术假设与生产现实的 gap"**：fractional-GPU 共享被大量研究但几乎不使用——提醒我们始终需要验证生产数据中的假设
