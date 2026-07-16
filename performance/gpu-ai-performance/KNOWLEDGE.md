@@ -522,6 +522,7 @@ RL 训练工作流包含高度异构的组件（LLM 推理、training、reward m
 | DynaRL | 动态超图 + 资源迁移 | 运行时资源重分配 | 1.98× |
 | **Seer** | **divided rollout + context-aware speculative decode** | **同步 rollout 长尾优化** | **2.04×, 长尾 -72-94%** |
 | **SolidAttention** | **KV interleaving + speculative prefetch + SSD-aware scheduler** | **本地低并发 SSD-based 推理** | **3.1×, KV memory -98%** |
+| **CacheSlide** | **RPDC paradigm + CoPE positional encoding + weighted correction attention + dirty-page eviction** | **Agent 场景 KV cache 复用** | **3.11-4.3× latency, 3.5-5.8× throughput** |
 
 ---
 
@@ -1000,3 +1001,28 @@ AI PC 内存受限（8-16GB DRAM + 6-8GB VRAM），128k context Llama-3.1-8B 仅
 - **"Co-design > 叠加优化——对齐粒度而非各自加速"**：KV 交织不是更快地读 K 和 V——而是改变了问题，使原有两个小 I/O 变成一个粗 I/O。适用场景：任何"应用层自然粒度 ≠ 硬件最优粒度"的 mismatch（database page size vs SSD block size, RPC message size vs NIC packet size）
 - **"Synchronization reuse = 减少 device handshake 频率"**：在细粒度计算-I/O overlap 调度中，同步开销可以超过延迟收益→让非关键操作复用关键路径的同步点→类似 batch 化系统调用中的 merging。适用场景：GPU-CPU handshake、RPC coalescing、中断合并
 - **"81% temporal locality 可用于 ML serving 系统的多个层面"**：不仅是预取——也是缓存策略、增量 attention 重算、KV cache 压缩的基础。这个数字应该成为 LLM inference system 设计的"已知常数"
+
+---
+
+## Agent 场景 KV cache 复用 (CacheSlide)
+
+### 核心问题
+LLM Agent（CoT 推理、Memory 管理、Function Calling）的输入 prompt 结构包含 invariant fixed segments（system prompt + historical memory）和 per-turn updated segments。每次推理即使大部分 prompt 不变仍需从零重算 KV cache→prefill 重复计算浪费。现有两种 KV cache 复用范式在 Agent 场景均有致命缺陷：PDC（仅复用 prefix→固定段在 suffix 位置无法复用）和 PIC（重置位置索引=0 → Positionally Misaligned KV Drift 导致精度不稳+需大量重算 token→I/O 瓶颈）。
+
+### 关键洞察
+
+1. **"RPDC = PDC 和 PIC 之间的第三种 KV cache 复用范式"**：Agent 场景中固定段虽然绝对位置随更新段长度漂移，但**相对顺序保持不变**→形成一种独立于 PDC（严格位置复用）和 PIC（完全位置无关）的新范式→固定段的 intra-segment + cross-fixed-segment attention 可以近无损复用，仅需恢复 fixed↔updated 跨注意力。
+
+2. **"CoPE 降位置敏感度→让 PMKD 从 '需要纠正的错误' 变成 '可忽略的偏差'"**：RoPE 下位置偏移 1000 tokens → CKSim 降 >90%；CoPE 下同等偏移 → CKSim 降仅 28%。这是根本性的——不是修复漂移，而是通过更换编码降低漂移的幅度。CCPE 通过 task-specific pretraining 学习固定 chunk 的最频 CoPE 编码模式→推理时复用段的 cached position ≈ real position (∆pos 可忽略)。
+
+3. **"Layer 1 全量重算作为 lightweight profiler→后续层仅重算 top-k token→加权融合缓存与重算 KV"**：跨层 KV 相似性意味着 layer 1 偏差最大的 token 也是后续层偏差最大的 token → layer 1 全量重算→选出 top-k (26%) → 后续层仅重算这些 token → 以偏差归一化权重 αi 融合缓存和重算 KV。每四层 CKSim 门控检查收敛→不收敛的 token 退出 Sk，从候选集 S 中补充偏差最大的 token。
+
+4. **"SLIDE——Load–Write Decoupling + Dirty-page 感知淘汰"**：Intra-layer load-before-write lock→解耦：load 开始时同步发起 recompute→完成时写入新分配页而非等 load 完成。脏页淘汰策略：clean pages 优先淘汰→脏页按 selected-token 数降序淘汰→多 selected token 的页有更大合并写机会→降 SSD 随机写 + WAF。语义信息（哪些 token 被重算）指导存储层决策（哪些页优先淘汰）的跨层优化。
+
+- 来源：CacheSlide(FAST'26)
+
+### 实践启发
+- **"三种 KV cache 复用范式（PDC/PIC/RPDC）是理解和选择缓存策略的通用框架"**：根据 prompt 中固定段的性质选择范式——绝对位置不变→PDC；可任意重排→PIC；相对顺序不变但绝对位置漂移→RPDC。适用场景：任何需要跨请求复用计算结果的 LLM serving 系统
+- **"更换位置编码→降低漂移幅度→漂移从 error 变为 noise"**：RoPE 的 per-token 唯一位置是 PMKD 的根本原因→CoPE 的语义边界粒度天然抗漂移。适用场景：跨文档检索、RAG、多轮对话等需要"相同内容在不同位置"的场景
+- **"Layer 1 lightweight profiling→后续层继承的 few-shot probing 策略"**：不在每层都全量重算→最小的层探测问题→后续层继承结果。适用场景：任何多层系统中需要定位异常或偏差的场景（transformer debugging、多层缓存一致性检查、分布式系统中的分层诊断）
+- **"Dirty-page 感知淘汰 = 语义信息指导存储层决策"**：计算层的"哪些 token 被重算"指导存储层的"哪些页优先淘汰"——跨层信息协同的又一个案例，与 RubikFS 的 hotness grouper（访问热度信息指导排序）和 PACT 的 PAC metric（CPU stall 代价指导 tiering）共享哲学
