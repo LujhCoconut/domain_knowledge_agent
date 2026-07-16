@@ -12,6 +12,7 @@ CXL/分离式内存与缓存一致性体系结构。
 | 虚拟化无压缩内存碎片整理 | infinite GPA space, compaction-free, GPA-HPA remap, memory trade, huge page defragmentation | InfiniDefrag(OSDI'26) |
 | CXL 部分一致性数据共享 | split metadata, SCR-LNR tiering, CXL shared log, hardware-coherent region, cross-host sharing, HCMeta | Megalon(OSDI'26) |
 | DM 树索引计算侧协同设计 | disaggregated memory, range index, compute-side collaborative cache, fingerprint offloading, collaborative locking, RDMA resource rebalancing | DMTree(FAST'26) |
+| CXL-SSD 全系统仿真 | CXL.mem emulation, Dynamic EPT Remapping, hybrid fast/slow path, cache policy exploration, FEMU-based, hardware-software co-design | Cylon(FAST'26) |
 
 ---
 

@@ -34,11 +34,11 @@ domain-knowledge/
 
 <!-- 以下区域由 /domain-knowledge 后置操作自动更新，请勿手动编辑本节 -->
 
-- **总计**: 157 篇
-- **会议分布**: ASPLOS 4 篇（'22–'26），FAST 18 篇（'26），OSDI 133 篇（'26），SOSP 2 篇（'25）
+- **总计**: 158 篇
+- **会议分布**: ASPLOS 4 篇（'22–'26），FAST 19 篇（'26），OSDI 133 篇（'26），SOSP 2 篇（'25）
 - **领域分布**:
   - CXL/内存系统/stall 回收: 10 篇
-  - 存储层次/体系结构: 6 篇（Soul/GCP, Duhu, Blowfish, InfiniDefrag, Megalon, DMTree） — 见 `architecture/memory-storage-hierarchy/KNOWLEDGE.md`
+  - 存储层次/体系结构: 7 篇（Soul/GCP, Duhu, Blowfish, InfiniDefrag, Megalon, DMTree, Cylon） — 见 `architecture/memory-storage-hierarchy/KNOWLEDGE.md`
   - 云基础设施/虚拟化: 11 篇（mwait-sched, Xkernel, Janus, Nested SEV, PowerSight, M3U, Quark, DVLA, PIMS, ASI-Heterogeneity, Svalinn） — 见 `operations/cloud-infrastructure/KNOWLEDGE.md`
   - 云原生/解耦式服务: 8 篇（DGC, OpenTela, Arca, Spice, libDSE, Latte, TapeOBS, ACOS） — 见 `architecture/cloud-native/KNOWLEDGE.md`
   - LLM 推理/GPU-AI/训练: 41 篇（含 ..., Seneca） — 见 `performance/gpu-ai-performance/KNOWLEDGE.md`
