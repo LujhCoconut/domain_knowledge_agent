@@ -159,4 +159,5 @@
 | 2026-07-16 | Seneca(FAST'26) | 论文-系统 | FAST '26, fast26-desai.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | ML 训练 DSI pipeline 缓存分区+机会主义采样，makespan -45%, 吞吐 3.45× |
 | 2026-07-16 | GCR(FAST'26) | 论文-系统 | FAST '26, fast26-zeng.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | GPU 系统级 C/R，hybrid control/data 分离+dirty template 增量 ckpt，ckpt -72%, restore -87%, 开销 <1% |
 | 2026-07-16 | AITurbo(FAST'26) | 论文-系统 | FAST '26, fast26-hao.pdf | knowledge-synthesis | performance/gpu-ai-performance/, network/os-networking/ | 华为云 AI 存储加速，compute fabric staging+grouped I/O API+透明去重，checkpoint 3.9-58.8× faster |
+| 2026-07-16 | AdaCheck(FAST'26) | 论文-系统 | FAST '26, fast26-liu-weijie.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | LLM 训练自适应 ckpt，tensor redundancy+三阶段通信+online gradient-only 存储，size -6~896×, freq +111× |
 <!-- 追加新记录时，复制上面一行并修改即可。 -->

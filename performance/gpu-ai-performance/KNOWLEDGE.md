@@ -528,6 +528,7 @@ RL 训练工作流包含高度异构的组件（LLM 推理、training、reward m
 | **Seneca** | **Model-driven cache partitioning + opportunistic data sampling + DSI pipeline modeling** | **ML 训练数据预处理加速** | **-45% makespan, 3.45× throughput** |
 | **GCR** | **Hybrid GPU C/R + control/data separation + CPU shadow execution + dirty template + incremental checkpointing** | **GPU 系统级 checkpoint/restore** | **-72% ckpt, -87% restore, <1% overhead** |
 | **AITurbo** | **Compute fabric staging + grouped I/O API + transparent dedup + load-balanced read/write plan** | **AI 云存储加速** | **3.9-58.8× faster checkpoint, 5.9× vs Gemini** |
+| **AdaCheck** | **Tensor redundancy + hash-based consistency check + ring communication + offline/online redundancy utilization** | **LLM 训练自适应 checkpointing** | **-6~896× size, +1.46~111× frequency** |
 
 ---
 
