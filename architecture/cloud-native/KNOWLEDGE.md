@@ -11,6 +11,7 @@
 | 分布式推测执行容错 | durable execution, distributed speculative execution, speculation sandbox, reactive repair, message-passing, persistence elision | libDSE(OSDI'26) |
 | 本地-云盘混合存储架构 | local-cloud hybrid, ML I/O dispatch, write-back cache, auto-scale IOPS, append-only ordering, tiered pricing | Latte(FAST'26) |
 | 全异步存储池 + 批量调度 | asynchronous pool, staging buffer as scheduling enabler, bulk scheduling, lifetime-based placement, dedicated resource partitioning, hardware-aware flow control | TapeOBS(FAST'26) |
+| 跨地域对象存储架构演进 | geo-distributed object store, XOR parity, two-layer encoding, local LRC + regional XOR, replication factor optimization, metadata prefetch, EB-scale cost efficiency | ACOS(FAST'26) |
 
 ---
 
@@ -158,3 +159,31 @@ Durable execution 引擎（Temporal/Azure Durable Functions/Beldi）自动持久
 - **"异步 = 可调度"的窗口效益**：异步不仅隐藏延迟，更重要的是打开了全局优化窗口——按 deadline 收集→分组→排序→批量下发。适用场景：任何"同步快速层 + 异步慢速层"的组合（日志→归档、WAL→compaction、CDC→数据湖）
 - **"Capacity headroom 不是浪费——是故障维修窗口"**：HDD 池 25% 空余 = 24h+ 用户写入缓冲 = 磁带库完全不可用时仍有充分维修时间。容量规划中 headroom 的容错价值常被低估，尤其适合以"维护窗口"而非"即时恢复"为 SLA 目标的系统
 - **"Batch at upper layer to achieve cross-entity optimization at lower layer"**：当底层原语只能做单实体操作时，上层批处理可以无感地实现跨实体优化——不限于 EC，也适用于跨文件 compression、跨行编码等
+
+---
+
+## 跨地域对象存储架构演进 (ACOS)
+
+### 核心问题
+EB 级用户数据（iCloud 照片/备份、Apple Music/TV、Maps）需要跨地域高可用 + 高耐久 + 低成本。双 region 全量副本提供最强可用性但总 RF=2.40（含 local LRC）——EB 级数据下浪费不菲。能否在保持 11 nines 耐久性 + 5 nines 可用性的前提下，将 RF 降到 1.50？关键是找到一种跨域编码方案，容忍单 region 故障但不引入全副本的 2× 冗余。
+
+### 关键洞察
+
+1. **"N-way XOR parity 替代跨域全副本——多 region 使简单编码获得低 RF"**：ACOS 2.0 将每个对象分为 4 data segment + 1 XOR parity → 分布到 5 region → RF_跨域 = 5/4 = 1.25（vs 1.0 的全副本 RF=2.00）。不是编码算法创新（XOR 是最简单的纠删码），而是"从 2 region 扩展到 5 region → 使 XOR-5 可行"的架构决策——region 数量增长创造了使用更简单、更低 RF 编码的空间。
+
+2. **"两层故障分离——local LRC 处理高频低严重度，regional XOR 处理低频高严重度"**：Local (20,2,2) LRC 处理盘/主机/机架故障（频率高，自动修复），Regional XOR-5 仅在 stamp/region 级故障时被调用（频率极低）。每一层优化各自最擅长的故障模式——local 层避免 99.9%+ 的事件触发跨域修复流量，regional 层仅作为灾难恢复的最后手段。
+
+3. **"Metadata optimistic prefetch——用 99.999% 的正确率 gamble 隐藏跨域延迟"**：GET 请求同时发 consistent + inconsistent metadata 读 → inconsistent 在本地 region 完成（个位数 ms P99.9）→ 立即触发 segment 获取 → consistent 返回后比对 → 99.999% 匹配→已预取的数据可直接流式返回。将 metadata 延迟隐藏在 segment 磁盘 I/O 中——类似 libDSE 的 speculative durable execution。
+
+4. **"Sealed container 直接复制——利用不可变性使迁移 → 零 I/O 放大"**：Rebalancer 在不同 stamp 间迁移数据时，不做对象级重建、不重新计算 EC——直接 file-level copy of sealed containers。不可变 sealed container = "已经是最优布局"→ 迁移就是复制文件。不变性在系统操作中被系统性低估。
+
+5. **"Segment regional preference——CPU 换网络延迟"**：GET 时优先读 RTT 最小的 4 个 segment → 通常 parity segment 比一个远距离 data segment 的 RTT 更短 → 用 XOR 重建代替跨大陆读 → 小 CPU 代价换大网络延迟节省。
+
+- 来源：ACOS(FAST'26)
+
+### 实践启发
+- **"Region 数量增长 → 可用更简单编码达到更低 RF"**：多 region 不仅是为了更接近用户——更大的 N 意味着 (N-1)/N 更接近 1→ 更低的跨域冗余开销。这是一个被低估的架构决策维度
+- **"两层故障分离是 geo-distributed 系统的通用模式"**：local 层快速修复→避免跨域流量；regional 层低频触发→可接受更高的修复时间。适用场景：任何跨地域分布式系统（CDN、分布式数据库、全球 KV store）
+- **"Speculative metadata read——不一致读的机会主义"**：当 writes 极少而 metadata updates 更少时（archival/object store 常见），不一致读几乎总是正确的→用它做乐观预取是纯收益。适用场景：读主导、更新少的 metadata 系统
+- **"不可变数据 = 零复制成本迁移"**：一旦数据 sealed → 不需要重新编码/压缩/去重→迁移 = 文件级复制。为可扩展性设计时，确保有明确的"不可变阶段"可以大幅简化运维操作
+- **"Segment 选择的物理距离 > 逻辑角色"**：不区分 data vs parity segment——统一按网络距离选择。打破"data 优先于 parity"的传统思维→数据放置中物理拓扑优先级高于逻辑类型

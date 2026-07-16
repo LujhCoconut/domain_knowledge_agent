@@ -146,4 +146,5 @@
 | 2026-07-16 | Latte(FAST'26) | 论文-系统（工业经验） | FAST '26, fast26-yang.pdf | knowledge-synthesis | performance/storage-filesystem/, architecture/cloud-native/ | 阿里云三代本地存储演进（Espresso→Doppio→Ristretto）+ 本地-云盘混合 Latte，ML I/O dispatch 实现近物理性能+高可用+1/5-1/10 EBSX 成本 |
 | 2026-07-16 | TapeOBS(FAST'26) | 论文-系统（工业部署） | FAST '26, fast26-wang.pdf | knowledge-synthesis | performance/storage-filesystem/, architecture/cloud-native/ | 华为云磁带归档存储，全异步磁带池+HDD缓冲+批量EC+专用驱动器+生存期分组写入+TCO 4.95× 低于 HDD |
 | 2026-07-16 | RubikFS(FAST'26) | 论文-系统 | FAST '26, fast26-huang.pdf | knowledge-synthesis | performance/storage-filesystem/ | 排序增强压缩只读FS，相似度图+子图分割聚类+hotness分组，压缩比+42.60%，读放大-70.70% |
+| 2026-07-16 | ACOS(FAST'26) | 论文-系统（工业部署） | FAST '26, fast26-baron-updated.pdf | knowledge-synthesis | architecture/cloud-native/, performance/storage-filesystem/ | Apple EB 级跨地域对象存储，两代演进，XOR-5 parity+LRC 将 RF 从 2.40 降至 1.50，十年生产部署 |
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
