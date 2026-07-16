@@ -525,6 +525,7 @@ RL 训练工作流包含高度异构的组件（LLM 推理、training、reward m
 | **CacheSlide** | **RPDC paradigm + CoPE positional encoding + weighted correction attention + dirty-page eviction** | **Agent 场景 KV cache 复用** | **3.11-4.3× latency, 3.5-5.8× throughput** |
 | **Bidaw** | **Bidirectional compute-storage awareness + I/O-aware scheduling + answer-based eviction + storage-efficient tensor** | **交互式对话 LLM serving KV cache** | **3.58× latency, 1.83× throughput** |
 | **PPC+MAIO** | **Programmable page cache + stacked FS + I/O template + interruptible prefetch + XPU affinity + BAR eviction** | **LLM 模型加载加速** | **-79% load latency, +36% throughput** |
+| **Seneca** | **Model-driven cache partitioning + opportunistic data sampling + DSI pipeline modeling** | **ML 训练数据预处理加速** | **-45% makespan, 3.45× throughput** |
 
 ---
 
