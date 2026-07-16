@@ -151,4 +151,5 @@
 | 2026-07-16 | CacheSlide(FAST'26) | 论文-系统 | FAST '26, fast26-liu-yang.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | Agent KV cache 复用，RPDC 范式+CoPE 位置编码+加权校正注意力+SLIDE 脏页感知淘汰，延迟 -3.11-4.3×，吞吐 +3.5-5.8× |
 | 2026-07-16 | Bidaw(FAST'26) | 论文-系统 | FAST '26, fast26-hu-shipeng.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | 交互式对话 LLM serving 双向感知 KV cache，I/O 感知调度+回答长度淘汰+存储高效张量，延迟 -3.58×，吞吐 +1.83× |
 | 2026-07-16 | PPC+MAIO(FAST'26) | 论文-系统 | FAST '26, fast26-liu-yubo.pdf | knowledge-synthesis | performance/gpu-ai-performance/, operations/os-performance-tuning/ | 华为可编程页缓存框架+模型加载加速，I/O 模板+可中断预取+XPU 亲和+BAR 淘汰，加载延迟 -79%，推理启动吞吐 +36% |
+| 2026-07-16 | OdinANN(FAST'26) | 论文-系统 | FAST '26, fast26-guo.pdf | knowledge-synthesis | performance/storage-filesystem/ | 十亿级图-based ANNS direct insert，GC-free overprovision+近似并发控制+delta pruning，搜索延迟波动仅 1.07×，内存 -~70% |
 <!-- 追加新记录时，复制上面一行并修改即可。 -->

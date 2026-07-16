@@ -20,6 +20,7 @@
 | 排序增强压缩只读文件系统 | sort-enhanced compression, data mixture, similarity graph, subgraph partitioning, METIS, hotness grouping, read-only FS compression, chunk deduplication | RubikFS(FAST'26) |
 | EB 级跨地域对象存储 | geo-distributed object store, two-layer encoding, XOR parity, LRC, replication factor optimization, sealed container immutability, metadata prefetch, EB-scale production | ACOS(FAST'26) |
 | SSD-based LLM 推理 KV cache 卸载 | KV cache offloading, attention sparsity-SSD co-design, KV interleaving, speculative prefetch, temporal locality, DAG microtask scheduling, memory-constrained inference | SolidAttention(FAST'26) |
+| 十亿级图-based 在线 ANNS | direct insert, GC-free update combining, space overprovision, approximate concurrency control, delta pruning, buffered delete, billion-scale vector search | OdinANN(FAST'26) |
 
 ---
 
@@ -305,3 +306,28 @@ Apple 需要为 iCloud/Apple Music/Apple TV/Maps 等全球服务存储 EB 级对
 - **"Region 数量 = RF 优化的杠杆"**：更多 region → 可用更简单的纠删码达到更低 RF → N-way XOR 在 N=5 时 RF=1.25，在 N=10 时 RF=1.11。geo-distribution 不仅是为了更低延迟——也是存储成本优化的架构工具
 - **"两层故障模型分离——local 和 regional 处理不同频率的故障"**：避免"一刀切"的复制策略——将频繁的小故障隔离在 local 层（快速自动修复），将罕见的大故障留给 regional 层（可接受人工介入时间）
 - **"不变性 = 运维简化"**：一旦拥有不可变数据段（sealed containers），跨节点/跨数据中心迁移变为纯文件复制——对于 EB 级数据，这个简化意味着操作可行性的质变
+
+---
+
+## 十亿级图-based 在线 ANNS (OdinANN)
+
+### 核心问题
+十亿级 ANNS 索引需要在线向量更新（新数据不断产生→索引重建需数天不可接受）。现有图-based 索引（DiskANN）使用 buffered insert——先写入内存索引→达到阈值→批量 merge 到磁盘。但这有三个致命问题：(1) merge 期间磁盘读干扰前端搜索→P50 延迟抖动 2.44×；(2) 内存飙升——merge 3% 向量到十亿索引需 125GB；(3) merge 本身瓶颈——吞吐被 in-memory merge 的逐向量磁盘搜索限制在 ~3000 QPS，不随 batch 增长。
+
+### 关键洞察
+
+1. **"Fixed-size records → GC-free out-of-place update combining"**：图索引使用固定大小 record → 更新时写新 record 到预留空 slot，旧位置直接标记复用→无需 log-structured GC。空间过度分配（默认 2×）+ 三条分配规则（empty/page-path pages 优先）→组合多个 record 更新到一次页面写入→写放大仅 2×。用 ~$100 的 1TB SSD 换 >$200 的 128GB DRAM——TCO-driven 架构决策。
+
+2. **"ANNS 的近似性 = 并发控制的自由度"**：不要求 ACID 的 atomicity 和 strict isolation→per-record consistency（搜索仅保证每条 record 一致快照）+ approximate neighbor snapshot（插入不验证结果集不变）→消除 per-node RW-lock 争用（DiskANN P99 spike 来源），降低临界区。
+
+3. **"Delta pruning——假设历史状态正确，仅验证增量"**：已有邻接大概率满足三角不等式→仅检查新插入邻接→从 O(R²) 降为 O(R) →插入临界区计算开销骤降→仅当无法 prune 任何 neighbor 时 fallback 到 O(R²)。
+
+4. **"Write-back cache + 后台 I/O 线程 → 磁盘 I/O 移出临界区"**：插入所需的磁盘读写都在搜索已缓存的页面中进行→写入仅更新 cache→后台提交到磁盘。临界区仅剩锁定+验证+裁剪+缓存更新→极短。
+
+- 来源：OdinANN(FAST'26)
+
+### 实践启发
+- **"数据结构约束 = 系统优化机遇"**：Fixed-size records 被视为局限→但恰是 out-of-place 复用+GC-free 的基础。适用场景：任何已使用 fixed-size data layout 的存储系统——将其从约束转变为"原地复用"的优势
+- **"TCO-driven overprovision——用便宜存储换昂贵内存"**：2× SSD 空间开销 < 内存节省的美元价值。这是"硬件价格比驱动架构决策"的又一案例——类似 Latte 的 auto-scale IOPS 降价格、ACOS 的 XOR-5 降 RF
+- **"近似 = 放松一致性换并发"**：no atomicity, no isolation, approximate snapshots——在近似系统中，一致性可以降级为 per-record consistency→大幅简化并发控制。适用场景：推荐系统、缓存、流处理等 soft-state 应用
+- **"Delta pruning = 增量验证的乐观策略"**：假设大部分旧状态正确→只检查新增→fallback to full check when needed。类似数据库的 incremental view maintenance——"乐观假设 + 安全降级"是通用优化模式
