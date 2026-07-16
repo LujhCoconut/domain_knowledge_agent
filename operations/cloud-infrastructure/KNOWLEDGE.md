@@ -15,6 +15,7 @@
 | 数据中心 Fleet 维护调度 | capacity buffer, fault domain alignment, maintenance contract, predictable deployment SLO, hardware placement | PIMS(OSDI'26) |
 | 异构 GPU 集群调度 | GPU fragmentation, stranded resources, defragmentation, SpotGPU preemption, hyperscale AI cluster, multi-tenant GPU | ASI Heterogeneity(OSDI'26) |
 | 多资源瓶颈过载控制 | single-queue fallacy, credit-based admission, per-resource AQM, m_semaphore, memory bandwidth throttling, utility function | Svalinn(OSDI'26) |
+| 分布式 LSM-tree 协同调度 | read-compaction co-scheduling, coarse-fine grained load balancing, Gossip+Raft state sharing, unified score replica selection, compaction rate control, replica decoupling | HATS(FAST'26) |
 
 ---
 
