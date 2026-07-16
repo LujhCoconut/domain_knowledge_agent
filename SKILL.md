@@ -1,7 +1,10 @@
 ---
 name: domain-knowledge
-description: 个人领域知识库路由 skill。当用户请求涉及论文/资料解析、Linux/Kubernetes 运维、性能优化（串行/并行/并发/系统/数据库/网络/GPU）、架构设计/计算机体系结构（分布式/微服务/云原生/微架构/存储层次/加速器）、算法（调度/负载均衡/共识/优化/问题求解/图算法/流式算法）、OS 安全与程序分析（MAC/SFI/动态追踪/策略提取/移动端分析）、故障排查或检查清单时，自动判断请求类型并调用对应子目录的 skill。
+description: >
+  个人领域知识库路由 skill。
+  支持命令: 解析一下这篇论文 [URL] | 润色一下 [语句] | 评价一下这篇论文 | 了解一下 [主题] | [方向]有什么最新进展 | 我读过 [论文名] 吗 | [主题] 应该怎么归档 | 更多见请求类型表。
 ---
+
 
 # Domain Knowledge
 
@@ -43,7 +46,13 @@ cd ~/.claude/skills/domain-knowledge && git pull --rebase
 | **网络系统问题** | 涉及用户态网络 runtime、内核网络栈、TCP/RPC 调度、去中心化网络架构 | `network/` |
 | **程序分析 / 运行时优化** | 涉及推测性执行、动态插桩、effect tracing、shell 脚本优化、syscall 拦截 | `operations/program-analysis/` |
 | **通用工具 / 检查清单 / 诊断手册** | 涉及脚本、常用命令、上线检查、排错流程 | `common/` |
-| **知识库组织问题** | 用户问“这个应该放哪”“如何归档”“skill 目录怎么设计” | 当前文件 + 各一级 `SKILL.md` |
+| **知识库组织问题** | 用户问”这个应该放哪””如何归档””skill 目录怎么设计” | 当前文件 + 各一级 `SKILL.md` |
+| **写作润色** | 用户要求”润色一下””润色这段话””polish 一下””帮我改改表达” | `common/writing-polish/` |
+| **论文评价/了解方向/最新进展** | 用户要求”评价一下这篇论文””xxx 方向有什么最新进展””了解一下 xxx” | 综合检索 `history/` + 对应领域 `KNOWLEDGE.md` |
+
+**特殊规则**：
+- **写作润色**请求**不触发知识库写入**——不更新 KNOWLEDGE.md、不修改 reading-log.md、不 commit
+- **论文评价/了解方向**——先检索已有知识（history/对应领域 KNOWLEDGE.md），再基于检索内容给出评价/概述；如果有未覆盖的新信息，引导用户提供更多输入
 
 如果请求同时涉及多个类型，按以下优先级组合检索：
 1. 先定位主要类型（论文解析 / 运维 / 性能 / 架构 / 算法 / 安全 / 网络 / 程序分析 / 通用）。
@@ -53,6 +62,7 @@ cd ~/.claude/skills/domain-knowledge && git pull --rebase
 
 1. **读取对应一级入口**
    - 论文解析：读取 `common/knowledge-synthesis/SKILL.md`
+   - 写作润色：读取 `common/writing-polish/SKILL.md`
    - 运维：读取 `operations/SKILL.md`
    - 性能：读取 `performance/SKILL.md`
    - 架构：读取 `architecture/SKILL.md`
@@ -73,8 +83,19 @@ cd ~/.claude/skills/domain-knowledge && git pull --rebase
 
 4. **基于检索内容组织回答**
    - 先说明信息来源（引用了哪些 skill 文件）。
-   - 再按“问题定义 → 相关知识 → 具体建议/命令/配置 → 验证方式”输出。
+   - 再按”问题定义 → 相关知识 → 具体建议/命令/配置 → 验证方式”输出。
    - 如果是论文解析，按 `common/knowledge-synthesis/SKILL.md` 的模板输出。
+   - **如果是写作润色，按 `common/writing-polish/SKILL.md` 的流程输出，不修改知识库。**
+
+## 写作润色的特殊处理
+
+当用户要求润色语句时：
+
+1. 读取 `common/writing-polish/SKILL.md`，对照其中的短语库和润色流程。
+2. 识别用户输入中的生硬/口语化表达，替换为更地道、学术化的表达。
+3. 保持原意不变，仅优化表达方式。
+4. **⚠️ 润色操作不触发后置操作**：不更新 KNOWLEDGE.md、不修改 reading-log.md、不 commit/push。
+5. 如果用户输入的语句过于简短或缺少上下文（不知道是论文/邮件/日常），先追问语境。
 
 ## 论文/资料解析的特殊处理
 
@@ -131,9 +152,12 @@ cd ~/.claude/skills/domain-knowledge && git pull --rebase
 - `security/SKILL.md` — OS 安全与程序分析
 - `network/SKILL.md` — 网络系统
 - `common/SKILL.md` — 通用工具、检查清单、诊断手册、知识整合方法论
+- `common/writing-polish/SKILL.md` — 写作润色，学术中英文短语库
 - `history/SKILL.md` — 阅读与解析记录说明
 
 ## ⚠️ 后置操作：提交并推送变更（必须最后执行）
+
+**仅当请求类型属于「论文/资料解析」「新增知识点」「知识库维护」等会产生知识库变更的类型时，才执行以下后置操作。写作润色请求直接跳过本步。**
 
 **在完成所有知识库变更（新建文件、编辑 SKILL.md、追加阅读记录等）之后，必须 commit 并 push：**
 
