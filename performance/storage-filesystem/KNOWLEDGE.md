@@ -23,6 +23,7 @@
 | 十亿级图-based 在线 ANNS | direct insert, GC-free update combining, space overprovision, approximate concurrency control, delta pruning, buffered delete, billion-scale vector search | OdinANN(FAST'26) |
 | 云块存储 Range-as-a-Key 树索引 | range indexing, log-structured leaf, ablation-based search, two-stage GC, range-conscious split, consecutive write pattern, memory-efficient EBS index | RASK(FAST'26) |
 | FDP SSD 仿真与表征 | Flexible Data Placement, write amplification, RUH isolation, II vs PI, Noisy RUH, Save Sequential, firmware design space, SSD emulation | WARP(FAST'26) |
+| I/O Completion 自适应方法 | hybrid polling, per-I/O adaptive sleep, UNDER/OVER binary feedback, dynamic mode switching, SSD latency tracking, CPU contention | DPAS(FAST'26) |
 
 ---
 
