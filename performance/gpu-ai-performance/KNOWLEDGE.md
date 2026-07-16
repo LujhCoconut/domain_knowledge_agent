@@ -524,6 +524,7 @@ RL 训练工作流包含高度异构的组件（LLM 推理、training、reward m
 | **SolidAttention** | **KV interleaving + speculative prefetch + SSD-aware scheduler** | **本地低并发 SSD-based 推理** | **3.1×, KV memory -98%** |
 | **CacheSlide** | **RPDC paradigm + CoPE positional encoding + weighted correction attention + dirty-page eviction** | **Agent 场景 KV cache 复用** | **3.11-4.3× latency, 3.5-5.8× throughput** |
 | **Bidaw** | **Bidirectional compute-storage awareness + I/O-aware scheduling + answer-based eviction + storage-efficient tensor** | **交互式对话 LLM serving KV cache** | **3.58× latency, 1.83× throughput** |
+| **PPC+MAIO** | **Programmable page cache + stacked FS + I/O template + interruptible prefetch + XPU affinity + BAR eviction** | **LLM 模型加载加速** | **-79% load latency, +36% throughput** |
 
 ---
 
@@ -1052,3 +1053,28 @@ LLM Agent（CoT 推理、Memory 管理、Function Calling）的输入 prompt 结
 - **"Hit Potential = 最优策略模拟 + 用户行为分布 + 实时约束信号"**：Ghost cache 提供"如果能看未来"的上界→用户历史提供个性化预测→实时信号提供约束→三源融合是预测性缓存的通用框架。类似 Belady 最优策略的工程化逼近——不追求完美预测，而追求 best-effort hit rate estimation
 - **"I/O 感知调度的最小可行方案 = 双队列 + 到达时间保留"**：将请求按 I/O 延迟分为两层→快层 FCFS、慢层 disk-HRRN。关键是慢层提升回快层时保留原始到达时间→防止尾延迟因提升延迟而恶化
 - **"选择缓存对象的 cost efficiency 而非传统对象"**：不要默认缓存 KV tensor——探索中间张量中 size/compute ratio 更优的选择。这种"不设默认值"的优化思维适用于任何缓存/物化系统
+
+---
+
+## LLM 模型加载加速 (PPC+MAIO)
+
+### 核心问题
+LLM 推理启动中模型加载占 >70% 耗时（DeepSeek-R1-671B 启动 ~1h）。虽然模型存储在本地 NVMe SSD 上，但内核页缓存的三个不足使带宽利用率仅 ~17%（峰值 5.93 GB/s vs 平均 1.05 GB/s）：预取仅连续小段、忽略 XPU NUMA 亲和、淘汰靠 LRU 采样无法感知模型加载的一次性消费特性。现有优化（ServerlessLLM/BlitzScale）以牺牲兼容性（需改框架/内核/绑硬件）换取性能→不被广泛采用。
+
+### 关键洞察
+
+1. **"可堆叠 FS + 用户态策略 runtime = 页缓存可编程的第四范式"**：PPC 填补了 FUSE（太重 ~14% overhead）、eBPF（太受限→不支持复杂策略+需内核侵入）、fadvise（太弱→无法深度协作）之间的空白。RFS（内核堆叠 FS）劫持 cache miss→UPC 事件→用户态策略决策→返回预取/淘汰列表→Cache Manager 执行。性能开销仅 ~3-6%（read）和 ~30MB 内存。
+
+2. **"I/O 模板 = 用部署元数据替代在线 I/O 预测"**：相同推理服务（相同模型+TP/PD 配置）的模型加载 I/O pattern 完全可复现→只需跟踪一次生成 I/O 模板（按 XPU Worker 分组的有序 I/O 序列）→同服务永久复用。DeepSeek-R1-671B (662GB) 的 I/O 模板仅 545KB。这是"利用已有运维元数据预测 I/O"的案例——不需要 ML/采样/统计。
+
+3. **"Interruptible Prefetching = last-writer-wins 自适应"**：从 miss 位置预取到 I/O group 末尾→新 miss 到达 = 前端已超过预取位置→PPC loader 中断旧预取跳到新位置→避免冗余加载+自适应进度。最朴素的反馈机制往往最有效。
+
+4. **"BAR 淘汰 = 利用只读+一次性消费的极致简单性"**：模型数据加载到 XPU 后 host 副本无用→miss position 之前的数据都可以淘汰→维护 eviction cursor（保持 1GB 安全距离）→不需要热度追踪/LRU。
+
+- 来源：PPC+MAIO(FAST'26)
+
+### 实践启发
+- **"I/O 模板 = 部署元数据 → I/O 预测"**：如果系统已有 service template（如 K8s deployment spec），它可能已包含预测 I/O 的全部信息——只需一次 tracking。适用场景：任何重复启动的服务（容器镜像加载、函数冷启动、数据库 recovery）
+- **"Stacked FS 是劫持内核 I/O 路径的最小侵入方案"**：不需要改 VFS/底层 FS→只需劫持 cache miss 事件→用户态决策。类似 eBPF 但支持复杂策略+无内核修改。"内核机制+用户态策略"分离的教科书设计
+- **"可中断预取 = 最简自适应"**：不需要预取进度预测→新 miss = 前端已超过→中断+跳转。比复杂的自适应预取算法更鲁棒
+- **"只读+一次性消费 → 淘汰 = 游标"**：当数据访问是无环 DAG 时（只前进不后退），淘汰可以用游标+安全距离实现→零计算开销
