@@ -523,6 +523,7 @@ RL 训练工作流包含高度异构的组件（LLM 推理、training、reward m
 | **Seer** | **divided rollout + context-aware speculative decode** | **同步 rollout 长尾优化** | **2.04×, 长尾 -72-94%** |
 | **SolidAttention** | **KV interleaving + speculative prefetch + SSD-aware scheduler** | **本地低并发 SSD-based 推理** | **3.1×, KV memory -98%** |
 | **CacheSlide** | **RPDC paradigm + CoPE positional encoding + weighted correction attention + dirty-page eviction** | **Agent 场景 KV cache 复用** | **3.11-4.3× latency, 3.5-5.8× throughput** |
+| **Bidaw** | **Bidirectional compute-storage awareness + I/O-aware scheduling + answer-based eviction + storage-efficient tensor** | **交互式对话 LLM serving KV cache** | **3.58× latency, 1.83× throughput** |
 
 ---
 
@@ -1026,3 +1027,28 @@ LLM Agent（CoT 推理、Memory 管理、Function Calling）的输入 prompt 结
 - **"更换位置编码→降低漂移幅度→漂移从 error 变为 noise"**：RoPE 的 per-token 唯一位置是 PMKD 的根本原因→CoPE 的语义边界粒度天然抗漂移。适用场景：跨文档检索、RAG、多轮对话等需要"相同内容在不同位置"的场景
 - **"Layer 1 lightweight profiling→后续层继承的 few-shot probing 策略"**：不在每层都全量重算→最小的层探测问题→后续层继承结果。适用场景：任何多层系统中需要定位异常或偏差的场景（transformer debugging、多层缓存一致性检查、分布式系统中的分层诊断）
 - **"Dirty-page 感知淘汰 = 语义信息指导存储层决策"**：计算层的"哪些 token 被重算"指导存储层的"哪些页优先淘汰"——跨层信息协同的又一个案例，与 RubikFS 的 hotness grouper（访问热度信息指导排序）和 PACT 的 PAC metric（CPU stall 代价指导 tiering）共享哲学
+
+---
+
+## 交互式对话 LLM Serving 的双向感知 KV Cache (Bidaw)
+
+### 核心问题
+交互式多轮对话 LLM serving 中，历史 KV 重算占 93.1% 的计算量→需要缓存 KV。但主机内存有限（1.6-3.2× GPU 内存）→并发用户多时 80% KV 访问的加权重用距离超过内存容量→两层存储（host memory + SSD）中命中率仅 ~20%。现有方案 (CachedAttention/FlashGen) 的根本问题是 compute engine 和 storage 双向互盲：计算端调度忽略 KV 加载延迟→慢 SSD I/O 阻塞快 memory I/O；存储端淘汰忽略用户对话模式→仅靠过去访问信息→命中率极低。vs 全内存 KV 上界：延迟 3.8× 更高，吞吐 2.0× 更低。
+
+### 关键洞察
+
+1. **"LLM 回答长度与 KV 下次访问延迟的正相关——计算输出编码了存储 I/O 的未来"**：来自百万轮真实用户对话 trace 的首次发现——LLM 回答越长→用户阅读/理解/构思下一问题耗时越长→该用户下次 KV 访问的加权重用距离越大。Spearman 相关系数 0.94-0.98（跨 12 组不同时段 trace）。这一发现使 Storage 可以"看到未来"：通过 compute engine 刚生成的回答长度来预测该用户的 KV 什么时候会再被访问。
+
+2. **"Hit Potential = Ghost Cache + user access distribution + answer-length lower bound 的三源融合"**：Ghost Cache（Belady 最优策略模拟→各重用距离 bucket 的命中率）+ user historical access distribution（下次访问落在各 bucket 的概率）+ answer-length lower bound（概率分布约束剪枝）→每个用户 KV 的下次访问命中潜力→最低 hit potential 的淘汰。不是 ML 预测→是统计估计+约束剪枝。
+
+3. **"Dual-queue + disk-HRRN = 按 I/O 延迟分离请求并平衡效率与公平"**：Ready Queue（KV 在 host memory）→FCFS 公平调度；Preparing Queue（KV 在 SSD）→disk-HRRN（Response Ratio = 1 + 等待时间/KV 大小）→小 KV 自然高优先级 + 大 KV 等待增长防饥饿。提升时按原始到达时间入 Ready Queue→避免尾延迟恶化。
+
+4. **"缓存不应卡在 KV tensor——选择 cost efficiency 最高的中间张量"**：不同中间张量的 size/saved compute 比差异巨大→cost efficiency (GFLOPs/MB) 最高的是 normalized activation（tensor 6, 51.0 vs KV tensor 30.5）。利用空闲 GPU SMs 在低优先级 CUDA stream 上转换（仅 ~10s ms）→性能层可容纳更多用户。
+
+- 来源：Bidaw(FAST'26)
+
+### 实践启发
+- **"LLM 输出本身编码了未来——计算端产出可作为存储端的预测信号"**：不仅是回答长度→用户下次访问时间——推理延迟、输出复杂度、用户纠错反馈等都可以 inform 资源调度。适用场景：任何 human-in-the-loop ML serving 系统（对话系统、代码补全、AIGC）
+- **"Hit Potential = 最优策略模拟 + 用户行为分布 + 实时约束信号"**：Ghost cache 提供"如果能看未来"的上界→用户历史提供个性化预测→实时信号提供约束→三源融合是预测性缓存的通用框架。类似 Belady 最优策略的工程化逼近——不追求完美预测，而追求 best-effort hit rate estimation
+- **"I/O 感知调度的最小可行方案 = 双队列 + 到达时间保留"**：将请求按 I/O 延迟分为两层→快层 FCFS、慢层 disk-HRRN。关键是慢层提升回快层时保留原始到达时间→防止尾延迟因提升延迟而恶化
+- **"选择缓存对象的 cost efficiency 而非传统对象"**：不要默认缓存 KV tensor——探索中间张量中 size/compute ratio 更优的选择。这种"不设默认值"的优化思维适用于任何缓存/物化系统

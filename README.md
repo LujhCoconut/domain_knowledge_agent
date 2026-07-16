@@ -34,14 +34,14 @@ domain-knowledge/
 
 <!-- 以下区域由 /domain-knowledge 后置操作自动更新，请勿手动编辑本节 -->
 
-- **总计**: 145 篇
-- **会议分布**: ASPLOS 4 篇（'22–'26），FAST 6 篇（'26），OSDI 133 篇（'26），SOSP 2 篇（'25）
+- **总计**: 146 篇
+- **会议分布**: ASPLOS 4 篇（'22–'26），FAST 7 篇（'26），OSDI 133 篇（'26），SOSP 2 篇（'25）
 - **领域分布**:
   - CXL/内存系统/stall 回收: 10 篇
   - 存储层次/体系结构: 5 篇（Soul/GCP, Duhu, Blowfish, InfiniDefrag, Megalon） — 见 `architecture/memory-storage-hierarchy/KNOWLEDGE.md`
   - 云基础设施/虚拟化: 11 篇（mwait-sched, Xkernel, Janus, Nested SEV, PowerSight, M3U, Quark, DVLA, PIMS, ASI-Heterogeneity, Svalinn） — 见 `operations/cloud-infrastructure/KNOWLEDGE.md`
   - 云原生/解耦式服务: 8 篇（DGC, OpenTela, Arca, Spice, libDSE, Latte, TapeOBS, ACOS） — 见 `architecture/cloud-native/KNOWLEDGE.md`
-  - LLM 推理/GPU-AI/训练: 38 篇（含 LithOS GPU OS, SolidAttention, CacheSlide） — 见 `performance/gpu-ai-performance/KNOWLEDGE.md`
+  - LLM 推理/GPU-AI/训练: 39 篇（含 LithOS GPU OS, SolidAttention, CacheSlide, Bidaw） — 见 `performance/gpu-ai-performance/KNOWLEDGE.md`
   - OS 安全/隐私/程序分析: 17 篇（含 μFork SASOS） — 见 `security/os-security/KNOWLEDGE.md`
   - 软件测试/DBMS/云服务: 2 篇（ValScope, S3 MBT） — 见 `algorithms/`, `operations/os-testing/KNOWLEDGE.md`
   - OS 内核/调优: 2 篇（kSTEP, ECO） — 见 `operations/os-performance-tuning/KNOWLEDGE.md`

@@ -149,4 +149,5 @@
 | 2026-07-16 | ACOS(FAST'26) | 论文-系统（工业部署） | FAST '26, fast26-baron-updated.pdf | knowledge-synthesis | architecture/cloud-native/, performance/storage-filesystem/ | Apple EB 级跨地域对象存储，两代演进，XOR-5 parity+LRC 将 RF 从 2.40 降至 1.50，十年生产部署 |
 | 2026-07-16 | SolidAttention(FAST'26) | 论文-系统 | FAST '26, fast26-zheng.pdf | knowledge-synthesis | performance/gpu-ai-performance/, performance/storage-filesystem/ | 本地低并发 SSD-based LLM 推理，KV 交织+推测预取+SSD 感知调度，加速 3.1×，KV 内存 -98% |
 | 2026-07-16 | CacheSlide(FAST'26) | 论文-系统 | FAST '26, fast26-liu-yang.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | Agent KV cache 复用，RPDC 范式+CoPE 位置编码+加权校正注意力+SLIDE 脏页感知淘汰，延迟 -3.11-4.3×，吞吐 +3.5-5.8× |
+| 2026-07-16 | Bidaw(FAST'26) | 论文-系统 | FAST '26, fast26-hu-shipeng.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | 交互式对话 LLM serving 双向感知 KV cache，I/O 感知调度+回答长度淘汰+存储高效张量，延迟 -3.58×，吞吐 +1.83× |
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
