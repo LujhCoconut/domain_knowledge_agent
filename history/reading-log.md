@@ -162,4 +162,5 @@
 | 2026-07-16 | AdaCheck(FAST'26) | 论文-系统 | FAST '26, fast26-liu-weijie.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | LLM 训练自适应 ckpt，tensor redundancy+三阶段通信+online gradient-only 存储，size -6~896×, freq +111× |
 | 2026-07-16 | SysSpec(FAST'26) | 论文-系统 | FAST '26, fast26-liu-qingyuan.pdf | knowledge-synthesis | operations/os-testing/ | LLM+规格生成式FS，Hoare-logic+rely-guarantee spec→LLM生成+验证反馈纠错→通过数百回归测试+10 Ext4特性 |
 | 2026-07-16 | Cylon(FAST'26) | 论文-系统 | FAST '26, fast26-yoon.pdf | knowledge-synthesis | architecture/memory-storage-hierarchy/ | CXL-SSD 全系统仿真器，DER hybrid path+configurable caching，validated against CMM-H |
+| 2026-07-17 | Xerxes(FAST'26) | 论文-系统 | FAST '26, fast26-an.pdf | knowledge-synthesis | architecture/memory-storage-hierarchy/ | CXL 3.1 全特性仿真框架, PBR+DMC+PCIe 6.0, 误差 0.1-10%, 首个大规模 CXL fabric 仿真 |
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
