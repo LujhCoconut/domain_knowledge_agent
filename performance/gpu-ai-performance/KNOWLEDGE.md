@@ -521,6 +521,7 @@ RL 训练工作流包含高度异构的组件（LLM 推理、training、reward m
 | RLinf | M2Flow 宏→微流变换 | 工作流变换 | 1.07-2.43× |
 | DynaRL | 动态超图 + 资源迁移 | 运行时资源重分配 | 1.98× |
 | **Seer** | **divided rollout + context-aware speculative decode** | **同步 rollout 长尾优化** | **2.04×, 长尾 -72-94%** |
+| **SolidAttention** | **KV interleaving + speculative prefetch + SSD-aware scheduler** | **本地低并发 SSD-based 推理** | **3.1×, KV memory -98%** |
 
 ---
 
@@ -972,3 +973,30 @@ Meta 生产 Ads 推理集群 GPU 利用率仅 27%，SM 利用率更只 14%（内
 - **"MPS 有 throughput 无 SLO，MIG 有 SLO 无 utilization——两者不存在本质矛盾"**：TPC 级 quota + stealing 首次同时满足三个目标。MPS throughput 1.08 but SLO 42% vs LithOS throughput 1.0 + SLO 100%
 - **"Transparency = no ML stack lock-in"**：LibLithOS 替换 CUDA library→对 PyTorch/TensorRT/JAX 全透明。ML 框架每几个月大版本迭代→非透明方案必然 lock-in outdated stack
 - **"Kernel atomization = GPU 抢占的务实方案"**：GPU 无硬件 timer interrupt→Prelude kernel 以软件方式实现 "伪抢占"。被硬件限制但可通过软件创新绕过的案例
+
+---
+
+## 本地低并发 SSD-based LLM 推理 (SolidAttention)
+
+### 核心问题
+AI PC 内存受限（8-16GB DRAM + 6-8GB VRAM），128k context Llama-3.1-8B 仅 KV cache 就需 16GB→超过物理内存。KV cache INT4 量化导致严重精度损失（Qwen-2.5-7B 平均分 71→18）。现有 SSD offloading 方案（FlexGen）为高并发吞吐设计→用批处理隐藏 I/O→本地单用户场景（batch=1）完全无效。根因：**稀疏注意力的细粒度随机 I/O（token 级）与 SSD 需要粗粒度顺序访问之间的矛盾被忽视了**。
+
+### 关键洞察
+
+1. **"Co-design 而非叠加——为 SSD 对齐数据访问粒度，而非分别优化注意力稀疏度和 I/O"**：KV 交织（token 级 K/V 交替排列）将两次独立小粒度 I/O 合并为一次粗粒度传输→传输单元翻倍但选择精度不变（不压缩 token 数量）→SSD 带宽利用率最大化而不牺牲 attention 精度。
+
+2. **"Self-attention 的弱有序性→推测性预取错误的代价为零"**：Attention 不要求 token 全局有序→预取错误的 KV block 直接就地覆盖，无需重排序。利用 transformer 架构的固有属性消除推测惩罚——这是"利用架构自由度"而非"优化惩罚路径"的思维。
+
+3. **"跨迭代 81% 选择相似度——temporal locality in attention sparsity"**：这是最重要的经验发现——相邻 decode step 中 LLM 关注相似的上下文→预取器按上一步的选择结果预测下一步→81% 命中率。这一发现不仅适用于预取，也可泛化到任何"跨层/跨迭代复用 KV 选择"的场景。
+
+4. **"同步点复用——非关键 I/O 搭关键路径的便车"**：Store（KV 写回 SSD）不需要单独同步→复用后续层 prefetch 的同步点→减少 device handshake 频率→额外 +22% 延迟缩减。这是 fine-grained scheduling 中控制 synchronization overhead 的通用策略。
+
+5. **"预拼接权重→单次 MatMul 直接生成交织 KV→消除运行时重排"**：K/V 投影矩阵离线拼接→单次矩阵乘法输出即为交织格式→strided read（stride=2H）逻辑分离 K/V→无需物理重排→额外延迟 ≤2%。
+
+- 来源：SolidAttention(FAST'26)
+
+### 实践启发
+- **"利用架构的弱有序性消除推测惩罚"**：Self-attention 不要求 token 顺序→覆盖替代重排。适用于任何需要推测性执行但结果可"就地覆盖"的场景（推测性解码、预测性 page prefetch、CPU branch prediction 中的 store buffer）
+- **"Co-design > 叠加优化——对齐粒度而非各自加速"**：KV 交织不是更快地读 K 和 V——而是改变了问题，使原有两个小 I/O 变成一个粗 I/O。适用场景：任何"应用层自然粒度 ≠ 硬件最优粒度"的 mismatch（database page size vs SSD block size, RPC message size vs NIC packet size）
+- **"Synchronization reuse = 减少 device handshake 频率"**：在细粒度计算-I/O overlap 调度中，同步开销可以超过延迟收益→让非关键操作复用关键路径的同步点→类似 batch 化系统调用中的 merging。适用场景：GPU-CPU handshake、RPC coalescing、中断合并
+- **"81% temporal locality 可用于 ML serving 系统的多个层面"**：不仅是预取——也是缓存策略、增量 attention 重算、KV cache 压缩的基础。这个数字应该成为 LLM inference system 设计的"已知常数"

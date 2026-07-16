@@ -19,6 +19,7 @@
 | 磁带归档存储系统 | tape library, drive thrashing, asynchronous tape pool, batched erasure coding, dedicated drives, lifetime-based placement, bulk scheduling, wrap-aware read reordering | TapeOBS(FAST'26) |
 | 排序增强压缩只读文件系统 | sort-enhanced compression, data mixture, similarity graph, subgraph partitioning, METIS, hotness grouping, read-only FS compression, chunk deduplication | RubikFS(FAST'26) |
 | EB 级跨地域对象存储 | geo-distributed object store, two-layer encoding, XOR parity, LRC, replication factor optimization, sealed container immutability, metadata prefetch, EB-scale production | ACOS(FAST'26) |
+| SSD-based LLM 推理 KV cache 卸载 | KV cache offloading, attention sparsity-SSD co-design, KV interleaving, speculative prefetch, temporal locality, DAG microtask scheduling, memory-constrained inference | SolidAttention(FAST'26) |
 
 ---
 
