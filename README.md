@@ -34,8 +34,8 @@ domain-knowledge/
 
 <!-- 以下区域由 /domain-knowledge 后置操作自动更新，请勿手动编辑本节 -->
 
-- **总计**: 150 篇
-- **会议分布**: ASPLOS 4 篇（'22–'26），FAST 11 篇（'26），OSDI 133 篇（'26），SOSP 2 篇（'25）
+- **总计**: 151 篇
+- **会议分布**: ASPLOS 4 篇（'22–'26），FAST 12 篇（'26），OSDI 133 篇（'26），SOSP 2 篇（'25）
 - **领域分布**:
   - CXL/内存系统/stall 回收: 10 篇
   - 存储层次/体系结构: 6 篇（Soul/GCP, Duhu, Blowfish, InfiniDefrag, Megalon, DMTree） — 见 `architecture/memory-storage-hierarchy/KNOWLEDGE.md`
@@ -46,7 +46,7 @@ domain-knowledge/
   - 软件测试/DBMS/云服务: 2 篇（ValScope, S3 MBT） — 见 `algorithms/`, `operations/os-testing/KNOWLEDGE.md`
   - OS 内核/调优: 3 篇（kSTEP, ECO, PPC+MAIO） — 见 `operations/os-performance-tuning/KNOWLEDGE.md`
   - 监控/可观测性: 9 篇 — 见 `operations/monitoring-observability/KNOWLEDGE.md`
-  - 存储/文件系统: 15 篇（ByteDance DataPipeline, DeLFS, Espresso, FORGE, Oxbow, DINGO, Umap, Helmsman, WiseCode, Latte, TapeOBS, RubikFS, ACOS, SolidAttention） — 见 `performance/storage-filesystem/KNOWLEDGE.md`
+  - 存储/文件系统: 16 篇（..., RASK） — 见 `performance/storage-filesystem/KNOWLEDGE.md`
   - 程序分析与动态优化: 5 篇（hS, Incr, UCSan, Aletheia, RT） — 见 `operations/program-analysis/KNOWLEDGE.md`
   - 并发数据结构: 2 篇（Arctic, FARLock） — 见 `algorithms/concurrent-data-structures/KNOWLEDGE.md`
   - 资源调度与供给: 2 篇（SPADE, Quota Marketplace） — 见 `algorithms/resource-scheduling/KNOWLEDGE.md`

@@ -154,4 +154,5 @@
 | 2026-07-16 | OdinANN(FAST'26) | 论文-系统 | FAST '26, fast26-guo.pdf | knowledge-synthesis | performance/storage-filesystem/ | 十亿级图-based ANNS direct insert，GC-free overprovision+近似并发控制+delta pruning，搜索延迟波动仅 1.07×，内存 -~70% |
 | 2026-07-16 | DMTree(FAST'26) | 论文-系统 | FAST '26, fast26-wei.pdf | knowledge-synthesis | architecture/memory-storage-hierarchy/ | DM 树索引计算侧协同设计，fingerprint+locks 卸载到 CS 间 RDMA，搜索/插入/扫描吞吐最高 5.7× SOTA |
 | 2026-07-16 | CloudTS(FAST'26) | 论文-系统 | FAST '26, fast26-zhang-kai.pdf | knowledge-synthesis | operations/monitoring-observability/ | 云原生时序存储模型，metadata-data分离+Patricia Trie tag字典+CSR bitmap时序-tag映射，消除读放大，1.43× Cortex |
+| 2026-07-16 | RASK(FAST'26) | 论文-系统 | FAST '26, fast26-zhao.pdf | knowledge-synthesis | performance/storage-filesystem/ | 云块存储 range-as-a-key 树索引，log-structured leaf+ablation search+two-stage GC, 内存 -98.9%, 吞吐 +31.0× |
 <!-- 追加新记录时，复制上面一行并修改即可。 -->

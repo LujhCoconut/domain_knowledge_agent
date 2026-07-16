@@ -21,6 +21,7 @@
 | EB 级跨地域对象存储 | geo-distributed object store, two-layer encoding, XOR parity, LRC, replication factor optimization, sealed container immutability, metadata prefetch, EB-scale production | ACOS(FAST'26) |
 | SSD-based LLM 推理 KV cache 卸载 | KV cache offloading, attention sparsity-SSD co-design, KV interleaving, speculative prefetch, temporal locality, DAG microtask scheduling, memory-constrained inference | SolidAttention(FAST'26) |
 | 十亿级图-based 在线 ANNS | direct insert, GC-free update combining, space overprovision, approximate concurrency control, delta pruning, buffered delete, billion-scale vector search | OdinANN(FAST'26) |
+| 云块存储 Range-as-a-Key 树索引 | range indexing, log-structured leaf, ablation-based search, two-stage GC, range-conscious split, consecutive write pattern, memory-efficient EBS index | RASK(FAST'26) |
 
 ---
 
@@ -331,3 +332,30 @@ Apple 需要为 iCloud/Apple Music/Apple TV/Maps 等全球服务存储 EB 级对
 - **"TCO-driven overprovision——用便宜存储换昂贵内存"**：2× SSD 空间开销 < 内存节省的美元价值。这是"硬件价格比驱动架构决策"的又一案例——类似 Latte 的 auto-scale IOPS 降价格、ACOS 的 XOR-5 降 RF
 - **"近似 = 放松一致性换并发"**：no atomicity, no isolation, approximate snapshots——在近似系统中，一致性可以降级为 per-record consistency→大幅简化并发控制。适用场景：推荐系统、缓存、流处理等 soft-state 应用
 - **"Delta pruning = 增量验证的乐观策略"**：假设大部分旧状态正确→只检查新增→fallback to full check when needed。类似数据库的 incremental view maintenance——"乐观假设 + 安全降级"是通用优化模式
+
+---
+
+## 云块存储 Range-as-a-Key 树索引 (RASK)
+
+### 核心问题
+EBS-index 消耗 ~57% 节点内存，存储利用率受内存约束。I/O compaction 和 CU alignment 可将索引粒度从 per-block 扩大到 per-CW → 理论内存节省 58-91%。但现有索引（B-tree/ART/interval tree/segment tree/HINT）要么是 point-based（需要 eager/lazy 适配→overlap 处理代价高），要么是 range-aware 但面向 secondary index（不自动移除 covered ranges→内存浪费）。需要一种原生支持 range-as-a-key 的高性能低内存索引。
+
+### 关键洞察
+
+1. **"改变索引粒度而非优化索引结构——range-as-a-key 匹配连续写 workload"**：65-81.5% 写请求属于连续写序列(CW)→每个 N-block CW 用 1 个 range entry 替代 N 个 per-block entries→内存减少 N-1 个 entry。这是从 workload 特征出发的根本性优化——不是"让索引更快"，而是"让索引索引更少的对象"。
+
+2. **"Log-structured leaf = LSM 思想的 leaf 级应用"**：append-only 写入→range overlap 不立即处理→leaf 满时 GC 批量回收 covered ranges。leaf 作为 GC 单元（足够小以保证及时回收+足够大以摊还开销）→在 range overlap 的写入代价和内存浪费间取得平衡。
+
+3. **"Two-stage GC：73.8% 仅需 O(1) LT Map（同左界检查）→剩余 26.2% 用 NonOverlap List（并集检查）"**：发现绝大多数可回收 entries 被同左界的新 range 覆盖→hash map 极简处理 common case→仅必要时用有序列表做完整并集检查。先处理容易的→amortized cost 极低。
+
+4. **"Ablation-based search：反向遍历 + Unfound List 逐步消融"**：不是一次性找所有重叠区间→反向 append-only leaf traversal + 维护 target range 未找到子区间有序列表→已找到部分 O(1) 移除→一旦 Unfound List 为空→early termination。log-structured layout 使新数据在后→反向遍历天然优先最新数据。
+
+5. **"Range-conscious split：Ps 选 NonOverlap List 左界（天然无 overlap）→平衡 entry count"**：利用 GC 阶段已构建的 NonOverlap List 作为 split 候选（其左界一定不与任何 range 相交→零 fragmentation split）→选最平衡的。Fallback: leaf 内 range boundaries 中位数→保证不会触发级联 split。Merge 通过 Nfrag 计数器感知 fragmentation severity→触发 workload-aware 调整。
+
+- 来源：RASK(FAST'26)
+
+### 实践启发
+- **"改变索引粒度匹配 workload 特征 > 优化索引结构"**：不是 faster per-block index→是 index fewer things。适用场景：任何发现"key 空间天然可聚合"的场景（时序数据的 time range index、日志的 session index、文件系统的 extent-based index）
+- **"Log-structured leaf = append + batch GC 的 leaf 级 LSM"**：同时受益于 append 的写入效率和 GC 的批量处理——不限于 range index。适用场景：任何有大量 overwrite/覆盖更新的 in-memory index
+- **"Two-stage GC = common case 极简 + complex case 完整"**：先统计 common case 占比→若高→用极简方案处理→仅剩余部分用完整方案。通用工程模式
+- **"User-provided MergeRange/DivideValue = 索引与 value 语义解耦"**：索引不知道 value 是否可合并/如何拆分→通过回调函数让上层定义 value 语义→索引保持通用性。这是"机制与策略分离"在索引设计中的应用
