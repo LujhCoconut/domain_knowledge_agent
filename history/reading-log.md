@@ -164,4 +164,5 @@
 | 2026-07-16 | Cylon(FAST'26) | 论文-系统 | FAST '26, fast26-yoon.pdf | knowledge-synthesis | architecture/memory-storage-hierarchy/ | CXL-SSD 全系统仿真器，DER hybrid path+configurable caching，validated against CMM-H |
 | 2026-07-17 | Xerxes(FAST'26) | 论文-系统 | FAST '26, fast26-an.pdf | knowledge-synthesis | architecture/memory-storage-hierarchy/ | CXL 3.1 全特性仿真框架, PBR+DMC+PCIe 6.0, 误差 0.1-10%, 首个大规模 CXL fabric 仿真 |
 | 2026-07-17 | WARP(FAST'26) | 论文-系统 | FAST '26, fast26-song.pdf | knowledge-synthesis | performance/storage-filesystem/ | 首个 FDP SSD 开放仿真器+跨设备表征, Noisy RUH+Save Sequential 现象, II vs PI 最优条件 |
+| 2026-07-17 | ScaleSwap(FAST'26) | 论文-系统 | FAST '26, fast26-ahn.pdf | knowledge-synthesis | performance/system-tuning/ | 全闪 swap 阵列去中心化 swap, one-to-one 模型+core-affinity LRU, 吞吐 3.4× Linux swap |
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
