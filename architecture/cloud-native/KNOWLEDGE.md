@@ -10,6 +10,7 @@
 | Serverless 冷启动快照 | SHELF format, spliceVMA, snapshot restore, cold start, physical-logical decoupling, bulk metadata restore | Spice(OSDI'26) |
 | 分布式推测执行容错 | durable execution, distributed speculative execution, speculation sandbox, reactive repair, message-passing, persistence elision | libDSE(OSDI'26) |
 | 本地-云盘混合存储架构 | local-cloud hybrid, ML I/O dispatch, write-back cache, auto-scale IOPS, append-only ordering, tiered pricing | Latte(FAST'26) |
+| 全异步存储池 + 批量调度 | asynchronous pool, staging buffer as scheduling enabler, bulk scheduling, lifetime-based placement, dedicated resource partitioning, hardware-aware flow control | TapeOBS(FAST'26) |
 
 ---
 
@@ -133,3 +134,27 @@ Durable execution 引擎（Temporal/Azure Durable Functions/Beldi）自动持久
 - **"ML per-request dispatch + auto-scale backend" 是混合云服务的通用架构模式**：不仅适用于存储——任何 "fast-but-limited local + slow-but-elastic remote" 的组合（计算、内存、网络）都可以借鉴：用轻量 ML 决定每个请求走哪条路径，用弹性后端吸收溢出。
 - **"价格可行性决定了架构能否落地"**：Latte 的 auto-scale IOPS 不仅仅是运维特性——它是架构从 PoC 走向生产的关键。在设计混合架构时，应该把"如何使边际成本可接受"作为一等架构约束。
 - **"Append-only ordering 是跨路径一致性的轻量方案"**：当有多个独立写入路径时，强制所有路径共享同一个 append-only 顺序可以避免复杂的冲突解决逻辑。
+
+---
+
+## 全异步存储池 + 批量调度 (TapeOBS)
+
+### 核心问题
+磁带库有严重的物理不对称性（1000 盘磁带 vs 仅 4 个驱动器，装载切换 ~80s）。如果磁带池同步服务于用户读写请求，驱动器 thrashing 会吞噬大部分带宽（有效带宽可降一半）。需要一个架构设计使得磁带在物理受限的情况下仍然能达到接近理论带宽的利用率。
+
+### 关键洞察
+
+1. **"Staging buffer 的语义从'缓存'升格为'调度基础设施'"**：TapeOBS 的 HDD 缓冲池（容量≈磁带池的 4%）不仅是性能缓冲——它是使得按生存期分组写入、批量恢复重排序等调度策略**物理可行**的前提。没有缓冲池，有限的驱动器和 80s 装载时间让"为每个生存期组维护可写磁带"不可能。
+
+2. **"全异步 = 将不可调度的物理约束转化为可调度的数据流"**：写入异步→数据在 HDD 池中积累→DataBrain 按 3 月粒度分组→同组批量 flush→同磁带上的数据同时删除→GC 几乎零开销。读取异步→小时级 SLA 提供调度窗口→按 ⟨plog-id, offset⟩ 排序后批量下发→每个磁带库收到有物理局部性的请求流。
+
+3. **"Dedicated static partitioning beats dynamic scheduling when workload is predictable"**：4 个驱动器→2 写 + 1 读 + 1 内部。写是 append-only（一个磁带写满才切换，无 thrashing）；读隔离到 1 个驱动（不影响写入吞吐）。没有优先级队列、没有抢占、没有动态分配——当 archive workload 特征（写占 99.99%+）清晰可预测时，最简单的方案最优。
+
+4. **"上层批处理利用下层原语——保持分层干净 + 实现跨对象优化"**：b-EC 在服务层聚合对象→单次 PLog append→持久层无感地实现跨对象 EC→小对象仅跨度 1-2 盘磁带而非全部 m 盘。不改持久层代码、不打破分层边界——纯粹用上层批处理实现下层无法做到的跨对象优化。
+
+- 来源：TapeOBS(FAST'26)
+
+### 实践启发
+- **"异步 = 可调度"的窗口效益**：异步不仅隐藏延迟，更重要的是打开了全局优化窗口——按 deadline 收集→分组→排序→批量下发。适用场景：任何"同步快速层 + 异步慢速层"的组合（日志→归档、WAL→compaction、CDC→数据湖）
+- **"Capacity headroom 不是浪费——是故障维修窗口"**：HDD 池 25% 空余 = 24h+ 用户写入缓冲 = 磁带库完全不可用时仍有充分维修时间。容量规划中 headroom 的容错价值常被低估，尤其适合以"维护窗口"而非"即时恢复"为 SLA 目标的系统
+- **"Batch at upper layer to achieve cross-entity optimization at lower layer"**：当底层原语只能做单实体操作时，上层批处理可以无感地实现跨实体优化——不限于 EC，也适用于跨文件 compression、跨行编码等

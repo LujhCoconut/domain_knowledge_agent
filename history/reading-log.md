@@ -144,4 +144,5 @@
 | 2026-07-15 | LithOS(SOSP'25) | 论文-系统/GPU OS | SOSP '25, DOI:10.1145/3731569.3764818 | knowledge-synthesis | performance/gpu-ai-performance/ | 首个GPU OS，TPC级调度+kernel原子化+hardware right-sizing+DVFS，13×尾延迟下降vs MPS，25%节能 |
 | 2026-07-15 | μFork(SOSP'25) | 论文-系统/OS安全 | SOSP '25, DOI:10.1145/3731569.3764809 | knowledge-synthesis | security/os-security/ | 单地址空间OS fork，CHERI能力+CoPA延迟重定位，54μs fork(3.7× faster)，24%更高FaaS吞吐 |
 | 2026-07-16 | Latte(FAST'26) | 论文-系统（工业经验） | FAST '26, fast26-yang.pdf | knowledge-synthesis | performance/storage-filesystem/, architecture/cloud-native/ | 阿里云三代本地存储演进（Espresso→Doppio→Ristretto）+ 本地-云盘混合 Latte，ML I/O dispatch 实现近物理性能+高可用+1/5-1/10 EBSX 成本 |
+| 2026-07-16 | TapeOBS(FAST'26) | 论文-系统（工业部署） | FAST '26, fast26-wang.pdf | knowledge-synthesis | performance/storage-filesystem/, architecture/cloud-native/ | 华为云磁带归档存储，全异步磁带池+HDD缓冲+批量EC+专用驱动器+生存期分组写入+TCO 4.95× 低于 HDD |
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
