@@ -157,4 +157,5 @@
 | 2026-07-16 | RASK(FAST'26) | 论文-系统 | FAST '26, fast26-zhao.pdf | knowledge-synthesis | performance/storage-filesystem/ | 云块存储 range-as-a-key 树索引，log-structured leaf+ablation search+two-stage GC, 内存 -98.9%, 吞吐 +31.0× |
 | 2026-07-16 | HATS(FAST'26) | 论文-系统 | FAST '26, fast26-ren.pdf | knowledge-synthesis | operations/cloud-infrastructure/, algorithms/resource-scheduling/ | 分布式 LSM-tree KV 协同调度，粗/细粒度副本选择+压缩速率控制+replica decoupling, P99 -58.6%, 吞吐 +2.41× |
 | 2026-07-16 | Seneca(FAST'26) | 论文-系统 | FAST '26, fast26-desai.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | ML 训练 DSI pipeline 缓存分区+机会主义采样，makespan -45%, 吞吐 3.45× |
+| 2026-07-16 | GCR(FAST'26) | 论文-系统 | FAST '26, fast26-zeng.pdf | knowledge-synthesis | performance/gpu-ai-performance/ | GPU 系统级 C/R，hybrid control/data 分离+dirty template 增量 ckpt，ckpt -72%, restore -87%, 开销 <1% |
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
