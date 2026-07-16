@@ -9,6 +9,7 @@
 | Continuation-Centric OS | continuation capture, effect system, serverless primitives, zero-copy snapshot, functional I/O | Arca(OSDI'26) |
 | Serverless 冷启动快照 | SHELF format, spliceVMA, snapshot restore, cold start, physical-logical decoupling, bulk metadata restore | Spice(OSDI'26) |
 | 分布式推测执行容错 | durable execution, distributed speculative execution, speculation sandbox, reactive repair, message-passing, persistence elision | libDSE(OSDI'26) |
+| 本地-云盘混合存储架构 | local-cloud hybrid, ML I/O dispatch, write-back cache, auto-scale IOPS, append-only ordering, tiered pricing | Latte(FAST'26) |
 
 ---
 
@@ -108,3 +109,27 @@ Durable execution 引擎（Temporal/Azure Durable Functions/Beldi）自动持久
 ### 实践启发
 - **"语义-物理解耦"是云应用持久化的通用策略**：开发者看到同步语义，runtime 异步执行——类似 CoPilotIO "GPU 看到 I/O 完成，CPU 实际处理" 的分工模式
 - **"Speculation sandbox = 外部边界缓冲"**：在所有外部可见的输出点设置缓冲→直到完成持久化才 release。这是 speculation 安全的必要前提——类似于事务的 write buffer/redo log
+
+---
+
+## 本地-云盘混合存储架构 (Latte)
+
+### 核心问题
+云本地存储（物理直连 SSD）提供近物理性能 + 低价，但缺乏云盘（EBS）的可用性、弹性和可访问性。高性能云盘（EBSX）可提供 30µs 延迟 + 1M IOPS + 强可用性，但价格是本地盘的 **20×**——对本地存储用户群体（CDN 缓存、大数据中间结果）无吸引力。需要一个架构同时获得本地盘的性能和 EBS 的弹性/可用性，且价格可行。
+
+### 关键洞察
+
+1. **"本地盘做高性能缓存 + 标准 EBS 做持久后端 → 用 ML dispatch 解耦两个路径"**：写入时 ML 二分类决定走缓存（吸收 burst + tail latency）还是后端（bypass 直写）；读取时 S3-FIFO 自动 promote 热数据到缓存。关键是 ML 模型足够轻量（Linear SVM, 200ns 推理），可 per-I/O 执行。
+
+2. **"Auto-scale IOPS 使价格可行——不是固定保证最高性能，而是按需弹性伸缩"**：如果始终保证 1M IOPS，Latte 价格是本地盘的 13×；启用 auto-scale 后降至 2.1-4.0×——通过后端 IOPS 弹性伸缩，用户只在实际用到高 IOPS 时付费。这是"价格作为架构约束"的典型案例。
+
+3. **"Append-only write ordering 替代分布式事务——两个独立路径的一致性由统一排序保证"**：写缓存和刷新后端都走 append-only 模式，compaction 期间保持相同顺序——简化为不需要复杂的一致性协议。
+
+4. **"S3-FIFO candidate queue → 用极低成本过滤 one-hit-wonder（占 trace 的 72%）"**：首次 miss 仅记录元数据，第二次访问才 promote→缓存不被一次性访问污染→命中率 > 82%。
+
+- 来源：Latte(FAST'26)
+
+### 实践启发
+- **"ML per-request dispatch + auto-scale backend" 是混合云服务的通用架构模式**：不仅适用于存储——任何 "fast-but-limited local + slow-but-elastic remote" 的组合（计算、内存、网络）都可以借鉴：用轻量 ML 决定每个请求走哪条路径，用弹性后端吸收溢出。
+- **"价格可行性决定了架构能否落地"**：Latte 的 auto-scale IOPS 不仅仅是运维特性——它是架构从 PoC 走向生产的关键。在设计混合架构时，应该把"如何使边际成本可接受"作为一等架构约束。
+- **"Append-only ordering 是跨路径一致性的轻量方案"**：当有多个独立写入路径时，强制所有路径共享同一个 append-only 顺序可以避免复杂的冲突解决逻辑。

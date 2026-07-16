@@ -15,6 +15,7 @@
 | mmap-IO DFS 矩阵访问优化 | file-backed matrix, abstraction mismatch, page-granularity network I/O, DFS-agnostic runtime, lazy-expansion cache | Umap(OSDI'26) |
 | 聚类型 SSD ANNS 生产系统 | clustering-based ANNS, userspace storage stack, learned pruning, GPU-accelerated index, SSD bandwidth | Helmsman(OSDI'26) |
 | 宽条带矢量纠删码 | template-unfold structure, sub-packetization, vector codes, wide-stripe erasure coding, repair throughput | WiseCode(OSDI'26) |
+| 云本地存储三代演进与混合架构 | SPDK user-space, ASIC DPU offloading, ASIC+SoC co-design, SR-IOV, context switch elimination, ML I/O dispatch, local-cloud hybrid, S3-FIFO caching | Latte(FAST'26) |
 
 ---
 
@@ -189,3 +190,32 @@ File-Backed Matrix (FBM) 通过 mmap-IO 提供开箱即用的 out-of-core 访问
 ### 实践启发
 - **"理论最优 ≠ 工程可行——可扩展性障碍需要结构创新而非参数调优"**：Vector codes 的理论优势数十年已知，但工程化需要打破 sub-packetization 等结构障碍
 - **"存储 redundancy 每 1% 都价值数百万"**：在 EB 级集群中，1.04× vs 1.375× 的存储 overhead 差异可以建少一个数据中心
+
+---
+
+## 云本地存储三代演进 (Latte)
+
+### 核心问题
+NVMe SSD 硬件快速演进（IOPS 500K→1.5M，吞吐 3→6 GB/s），但软件栈无法匹配——内核态存储栈仅发挥 NVMe SSD 9.54% 的最大 IOPS 却消耗 140% CPU（1.4 核）。核心瓶颈是高频 context switch（VM_Exit + system call + interrupt）。同时，本地存储的固有缺陷（单盘故障→小时级不可用、容量受单 SSD 限制、物理绑定→区域部署受限）使大量场景无法使用。
+
+### 关键洞察
+
+1. **"Context switch 是存储栈性能的第一杀手——每一代演进消除一类 context switch"**：Espresso 消除 system call + interrupt（polling mode），Doppio 消除 VM_Exit（SR-IOV 直通 + 硬件 MSI 中断），Ristretto 在 Doppio 基础上用 ASIC 并行执行消除处理瓶颈。从内核栈到 Ristretto，软件开销累计降低 82.35%。
+
+2. **"ASIC 做快路径、SoC 做灵活路径"的 co-design 是硬件 offload 的甜点**：纯 ASIC（Doppio）固定逻辑跟不上 SSD 代际演进（单 DPU 1.3M IOPS vs Gen4 SSD 1.5M+）且无法支持云特性（LVM/ZNS）；纯 SoC 成本高（ASIC 约 1/20 成本 + 1/3 功耗）。ASIC+SoC co-design（Ristretto）让 ASIC 处理 NVMe controller emulation、DMA routing、MSI injection 等快速路径，SoC 运行 SPDK + block abstraction layer 提供可编程的云特性支持。
+
+3. **"ML-based per-I/O dispatching — 模型必须轻到可以 per-I/O 执行"**：Latte 用 Linear SVM（200ns 推理、30 权重 < 1KB）做 I/O 路由决策（cache vs backend）——关键是选择了极其轻量的模型，使 per-I/O 推理开销可忽略（SSD 延迟 > 10µs）。每 60s 自动检测延迟漂移 → 重训练 (~5s)。类似 LinnOS 和 Heimdall 的 ML 预测 I/O 延迟思路，但 Latte 聚焦于二分类路由而非延迟预测。
+
+4. **"S3-FIFO candidate queue 过滤 one-hit-wonder——极低成本避免缓存污染"**：72% 的 I/O trace 对象只被访问一次。首次 miss 只记录元数据到 candidate queue（不占缓存空间），第二次访问才 promote 到主缓存 → 缓存命中率 > 82%。
+
+5. **"价格是系统架构的一等公民——auto-scale IOPS 使成本从 13× 降到 2.1-4.0×"**：如果始终保证最高 IOPS（Latte Max），价格是本地盘的 13×；启用 auto-scale IOPS（Latte Auto），价格降到 2.1-4.0×。这是 Latte 能从 PoC 走向生产的关键——不是性能最优，而是性能/价格 Pareto 最优。
+
+6. **"Append-only + 统一排序 → 消除 write-back inconsistency"**：两个写入路径（写缓存 + 刷新后端）都走 append-only 模式，且 compaction 期间保持相同顺序 → 无需复杂的事务协议即可保证一致性。
+
+- 来源：Latte(FAST'26)
+
+### 实践启发
+- **"每消除一层 context switch 都有可测量的收益——用数据驱动架构决策"**：从 VM_Exit（5-12µs）到 system call 到 interrupt，每一步的量化数据指导了下一代设计方向。适用场景：任何性能敏感系统的瓶颈分析。
+- **"ASIC+SoC co-design 适用于任何需要 '快速固定逻辑 + 灵活可编程逻辑' 的场景"**：不仅是存储（SmartNIC、安全 enclave、甚至 AI 推理的 speculative decode + fallback 都类似）。
+- **"用最轻量的 ML 模型做 per-request 决策"的工程智慧**：不是追求最高精度（95.6% precision），而是保证 200ns 推理延迟可忽略 + 自动重训练适应 pattern drift。适用场景：任何需要在线决策的系统（缓存准入、负载均衡、QoS 分级）。
+- **"价格作为一等架构约束"**：Latte 用 auto-scale 替代固定 IOPS 保证——这不仅是定价策略，更是架构决策（需要 backend 支持弹性 IOPS）。适用场景：云服务设计时，性能和成本的 trade-off 应该设计在架构中，而不是作为定价的 afterthought。
