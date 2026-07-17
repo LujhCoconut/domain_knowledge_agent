@@ -1,7 +1,7 @@
 {
   "$schema": "metadata.schema.json",
   "generated_at": "2026-07-17",
-  "total_papers": 178,
+  "total_papers": 179,
   "papers": [
     {
       "canonical_name": "PithTrain(arXiv'26)",
@@ -5794,6 +5794,67 @@
         "r3_relations": "与DRBoost互补：DRBoost优化degraded read的partial reconstruction、LESS优化repair的编码结构",
         "r4_refute": "multi-block repair在某些情况下仍需fallback到全stripe重建"
       }
+    },
+    {
+      "canonical_name": "FS-PI(FAST'26)",
+      "title": "Advancing Data Integrity in Linux",
+      "authors": [
+        "Anuj Gupta",
+        "Christoph Hellwig",
+        "Kanchan Joshi",
+        "Vikash Kumar",
+        "Javier Gonzalez",
+        "Roshan R Nair",
+        "Jinyoung Choi"
+      ],
+      "conference": "FAST",
+      "year": 2026,
+      "url": "https://www.usenix.org/system/files/fast26-gupta.pdf",
+      "date_read": "2026-07-17",
+      "type": "论文-系统",
+      "tags": [
+        "data integrity",
+        "E2EDP",
+        "PI",
+        "DIF/DIX",
+        "Linux",
+        "XFS",
+        "BTRFS",
+        "io_uring",
+        "checksumming",
+        "FAST"
+      ],
+      "techniques": [
+        "FS-PI (Filesystem-generated PI)",
+        "io_uring PI interface",
+        "flexible PI placement",
+        "native data checksumming (XFS)",
+        "checksum-tree replacement (BTRFS)"
+      ],
+      "builds_on": [
+        "Linux block-integrity",
+        "DIF/DIX",
+        "io_uring",
+        "XFS",
+        "BTRFS"
+      ],
+      "contrasts_with": [
+        "block-layer-only PI",
+        "BTRFS checksum tree (double metadata)",
+        "no-checksum FS (XFS default)"
+      ],
+      "industrial_applicability": "high",
+      "applicability_why": "Samsung + Christoph Hellwig (Linux kernel maintainer) 推动，上游化到 Linux 主线，直接集成到 XFS/BTRFS",
+      "prerequisites": "PI-capable NVMe/SCSI drive, Linux kernel with FS-PI support",
+      "knowledge_locations": [
+        "performance/storage-filesystem/"
+      ],
+      "review_rounds": {
+        "r1_tldr": "填补 Linux E2EDP gap (io_uring PI + flexible placement) + FS 层直接生成/验证 PI，BTRFS +26% perf, -58% CPU, -52% writes, +23% SSD lifetime",
+        "r2_insights": "Checksum 应该在最理解数据语义的层生成；io_uring PI 打通用户态-设备完整性链路；flexible PI placement 解锁更多硬件配置",
+        "r3_relations": "",
+        "r4_refute": "需要 PI-capable 硬件；仅验证 XFS + BTRFS（未覆盖 Ext4/f2fs 等 FS）"
+      }
     }
   ],
   "technique_index": {
@@ -6072,6 +6133,21 @@
     ],
     "balanced data access + I/O seek reduction": [
       "LESS(FAST'26)"
+    ],
+    "FS-PI (Filesystem-generated PI)": [
+      "FS-PI(FAST'26)"
+    ],
+    "io_uring PI interface": [
+      "FS-PI(FAST'26)"
+    ],
+    "flexible PI placement": [
+      "FS-PI(FAST'26)"
+    ],
+    "native data checksumming (XFS)": [
+      "FS-PI(FAST'26)"
+    ],
+    "checksum-tree replacement (BTRFS)": [
+      "FS-PI(FAST'26)"
     ]
   },
   "tag_index": {
@@ -6600,6 +6676,7 @@
       "DPAS(FAST'26)",
       "DRBoost(FAST'26)",
       "DisCoGC(FAST'26)",
+      "FS-PI(FAST'26)",
       "GCR(FAST'26)",
       "HATS(FAST'26)",
       "LESS(FAST'26)",
@@ -6686,6 +6763,7 @@
       "RosenBridge(FAST'26)"
     ],
     "io_uring": [
+      "FS-PI(FAST'26)",
       "RosenBridge(FAST'26)"
     ],
     "XRP": [
@@ -6951,6 +7029,30 @@
     ],
     "Clay codes": [
       "LESS(FAST'26)"
+    ],
+    "data integrity": [
+      "FS-PI(FAST'26)"
+    ],
+    "E2EDP": [
+      "FS-PI(FAST'26)"
+    ],
+    "PI": [
+      "FS-PI(FAST'26)"
+    ],
+    "DIF/DIX": [
+      "FS-PI(FAST'26)"
+    ],
+    "Linux": [
+      "FS-PI(FAST'26)"
+    ],
+    "XFS": [
+      "FS-PI(FAST'26)"
+    ],
+    "BTRFS": [
+      "FS-PI(FAST'26)"
+    ],
+    "checksumming": [
+      "FS-PI(FAST'26)"
     ]
   }
 }
