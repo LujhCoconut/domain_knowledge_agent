@@ -1,7 +1,7 @@
 {
   "$schema": "metadata.schema.json",
   "generated_at": "2026-07-17",
-  "total_papers": 165,
+  "total_papers": 166,
   "papers": [
     {
       "canonical_name": "PithTrain(arXiv'26)",
@@ -4991,6 +4991,77 @@
         "r3_relations": "",
         "r4_refute": ""
       }
+    },
+    {
+      "canonical_name": "RosenBridge(FAST'26)",
+      "title": "RosenBridge: A Framework for Enabling Express I/O Paths Across the Virtualization Boundary",
+      "authors": [
+        "Shi Qiu",
+        "Li Wang",
+        "Jianqin Yan",
+        "Ruofan Xiong",
+        "Leping Yang",
+        "Xin Yao",
+        "Renhai Chen",
+        "Gong Zhang",
+        "Dongsheng Li",
+        "Jiwu Shu",
+        "Yiming Zhang"
+      ],
+      "conference": "FAST",
+      "year": 2026,
+      "url": "https://www.usenix.org/system/files/fast26-qiu.pdf",
+      "date_read": "2026-07-17",
+      "type": "论文-系统",
+      "tags": [
+        "virtualization",
+        "NDP",
+        "near-data processing",
+        "virtio",
+        "uBPF",
+        "io_uring",
+        "XRP",
+        "GDS",
+        "I/O",
+        "FAST",
+        "production"
+      ],
+      "techniques": [
+        "virtio-ndp device",
+        "uBPF userspace sandbox",
+        "io_uring HQ/SQ+CQ dual hook points",
+        "I/O resubmission chaining",
+        "guest-host shared memory PCIe BAR",
+        "BPF_disk_trans/Bpf_mem_trans helpers",
+        "multi-path I/O throttling",
+        "NVMe passthrough"
+      ],
+      "builds_on": [
+        "XRP",
+        "GDS",
+        "virtio-blk",
+        "io_uring",
+        "uBPF",
+        "eBPF"
+      ],
+      "contrasts_with": [
+        "bare-metal XRP/GDS (no virtualization)",
+        "virtio-blk (no NDP)",
+        "vhost-kernel/vhost-user (no NDP)",
+        "VFIO passthrough (poor manageability)"
+      ],
+      "industrial_applicability": "high",
+      "applicability_why": "基于标准 virtio + QEMU + uBPF，无需修改 guest 应用（XRP/GDS 只需链接新 API），在 KVM 虚拟化环境可直接部署；华为参与，已有生产路径",
+      "prerequisites": "KVM/QEMU 虚拟化环境，需要加载 virtio-ndp 后端模块，guest 应用需重新链接 RosenBridge API（兼容 read/write 语义）",
+      "knowledge_locations": [
+        "operations/cloud-infrastructure/"
+      ],
+      "review_rounds": {
+        "r1_tldr": "virtio-ndp + uBPF 将 bare-metal NDP express I/O (XRP/GDS) 引入虚拟化：IOPS 接近裸金属，CPU 用量远低于 virtio-blk",
+        "r2_insights": "uBPF在QEMU userspace替代eBPF(安全可部署)；io_uring双hook支持I/O resubmission；共享内存PCIe BAR桥接guest-host语义鸿沟；多路径throttling防止QoS逃逸",
+        "r3_relations": "",
+        "r4_refute": ""
+      }
     }
   ],
   "technique_index": {
@@ -5032,6 +5103,30 @@
     ],
     "asynchronous write-back with VFS inode lock": [
       "CoFS(FAST'26)"
+    ],
+    "virtio-ndp device": [
+      "RosenBridge(FAST'26)"
+    ],
+    "uBPF userspace sandbox": [
+      "RosenBridge(FAST'26)"
+    ],
+    "io_uring HQ/SQ+CQ dual hook points": [
+      "RosenBridge(FAST'26)"
+    ],
+    "I/O resubmission chaining": [
+      "RosenBridge(FAST'26)"
+    ],
+    "guest-host shared memory PCIe BAR": [
+      "RosenBridge(FAST'26)"
+    ],
+    "BPF_disk_trans/Bpf_mem_trans helpers": [
+      "RosenBridge(FAST'26)"
+    ],
+    "multi-path I/O throttling": [
+      "RosenBridge(FAST'26)"
+    ],
+    "NVMe passthrough": [
+      "RosenBridge(FAST'26)"
     ]
   },
   "tag_index": {
@@ -5099,6 +5194,7 @@
       "PithTrain(arXiv'26)",
       "Pluto(OSDI'26)",
       "Prism(OSDI'26)",
+      "RosenBridge(FAST'26)",
       "Strata(OSDI'26)",
       "ThinkAhead(FAST'26)",
       "Umap(OSDI'26)"
@@ -5557,6 +5653,7 @@
       "OdinANN(FAST'26)",
       "PPC+MAIO(FAST'26)",
       "RASK(FAST'26)",
+      "RosenBridge(FAST'26)",
       "RubikFS(FAST'26)",
       "ScaleSwap(FAST'26)",
       "Seneca(FAST'26)",
@@ -5611,6 +5708,33 @@
     ],
     "metadata lookup": [
       "CoFS(FAST'26)"
+    ],
+    "virtualization": [
+      "RosenBridge(FAST'26)"
+    ],
+    "NDP": [
+      "RosenBridge(FAST'26)"
+    ],
+    "near-data processing": [
+      "RosenBridge(FAST'26)"
+    ],
+    "virtio": [
+      "RosenBridge(FAST'26)"
+    ],
+    "uBPF": [
+      "RosenBridge(FAST'26)"
+    ],
+    "io_uring": [
+      "RosenBridge(FAST'26)"
+    ],
+    "XRP": [
+      "RosenBridge(FAST'26)"
+    ],
+    "GDS": [
+      "RosenBridge(FAST'26)"
+    ],
+    "I/O": [
+      "RosenBridge(FAST'26)"
     ]
   }
 }

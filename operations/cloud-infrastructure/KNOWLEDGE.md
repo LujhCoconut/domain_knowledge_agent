@@ -16,6 +16,7 @@
 | 异构 GPU 集群调度 | GPU fragmentation, stranded resources, defragmentation, SpotGPU preemption, hyperscale AI cluster, multi-tenant GPU | ASI Heterogeneity(OSDI'26) |
 | 多资源瓶颈过载控制 | single-queue fallacy, credit-based admission, per-resource AQM, m_semaphore, memory bandwidth throttling, utility function | Svalinn(OSDI'26) |
 | 分布式 LSM-tree 协同调度 | read-compaction co-scheduling, coarse-fine grained load balancing, Gossip+Raft state sharing, unified score replica selection, compaction rate control, replica decoupling | HATS(FAST'26) |
+| 虚拟化 NDP Express I/O 路径 | virtio-ndp, uBPF, io_uring passthrough, near-data processing, VM I/O offload, guest-host address translation, XRP, GDS | RosenBridge(FAST'26) |
 
 ---
 
@@ -241,3 +242,32 @@ Meta 数百万服务器、数万服务、数十亿用户的维护编排。三种
 - **"Single-queue fallacy 广泛存在于 overload control 中——不止于缓存"**：仅看最瓶颈资源的表现（latency/queue length）→减少总负载→其他资源闲置。类似 ASI Heterogeneity "stranded GPU from packing mismatch"——维度错配导致系统性资源浪费
 - **"Memory bandwidth 是新的 CPU——需要专门的并发管理机制"**：CPU 有显式 runqueue，内存带宽没有→m_semaphore 为内存带宽创建等效的 "软件队列"。适用于任何隐式资源争抢场景（cache bandwidth、interconnect bandwidth）
 - **"Per-resource distributed control > centralized monolithic control"**：每个资源独立根据自身状态做决策→类似 Ambulance "decentralized SM scheduling" 和 Merlin "component decoupling"
+
+---
+
+## 虚拟化 NDP Express I/O 路径 (RosenBridge)
+
+### 核心问题
+
+高性能 NVMe SSD 已达百万 IOPS/µs 级延迟，但虚拟化环境下 virtio-blk 的软件栈开销占 4KB 随机读总延迟的 87%。bare-metal 上的 NDP（Near-Data Processing）express I/O 路径（如 XRP 的 NVMe driver 内 BPF 查询重提交、GDS 的 GPU-storage P2P DMA）无法跨越虚拟化边界——guest VM 看不到 host 物理设备，host 上的 eBPF hook 点对 guest 不可见。NVIDIA 报告 GPU 直通 + virtio-blk 的组合下 GDS 完全失效。挑战在于：如何让 guest 安全地将 NDP 优化 offload 到 host 执行，同时跨越 CPU 执行、内存映射、磁盘地址三个虚拟化边界。
+
+### 关键洞察
+
+1. **"uBPF（userspace BPF）替代 eBPF：将 NDP 执行从 host 内核移到 QEMU userspace"**：内核 eBPF 对云环境不现实（安全风险），uBPF 在 QEMU 进程的用户空间运行沙箱化 BPF 程序——继承了 QEMU 进程的权限限制，通过 PREVAIL verifier 在编译时保证内存安全，不需要信任 guest。这是"用 userspace sandbox 替代 kernel sandbox"的思路，牺牲少量性能换取可部署性。
+
+2. **"virtio-ndp：扩展 virtio 协议支持 BPF 语义"**：新增 4 个 virtio 请求类型（LOAD/READ_ND/WRITE_ND/UNLOAD），在 virtio-blk header 中扩展 bpf_fd/buf/len 字段，让 guest 通过标准 virtio 队列向 host 传递 BPF 代码和参数。设计上完全兼容现有 virtio 框架，不需要新的设备模型。
+
+3. **"io_uring SQ/CQ 双 hook 点支持 I/O 重提交（resubmission）"**：标准的 eBPF event-driven 模型只在 hook 点触发一次——无法实现 XRP 的"读完数据→检查索引→重提交下一个 I/O"循环。RosenBridge 在 io_uring 的 SQ（submission）和 CQ（completion）各插一个 uBPF hook，BPF 程序返回 RESUBMIT 时 worker 不完成原 I/O 而提交新 I/O → 实现 content-based I/O chaining，且用 io_uring passthrough 绕过 host 内核栈直达 NVMe 驱动。
+
+4. **"Guest-host 共享内存区域 + BPF helper 函数桥接语义鸿沟"**：QEMU 启动时分配 host 内存映射为 virtio-ndp 的 PCIe BAR → guest 直接访问。Guest 将文件系统元数据（如 inode→block 映射）写入共享区域 → host 侧 uBPF 程序通过 helper 函数（BPF_disk_trans、BPF_mem_trans）完成 guest 地址到 host 地址的翻译。XRP 的 metadata digest 版本号机制也被保留，防止 guest FS 元数据变更导致的 stale 访问。
+
+5. **"多路径 I/O throttling 保证租户公平"**：uBPF 程序可以绕过 QEMU 的 I/O 速率限制直接提交 I/O。RosenBridge 在所有 I/O 提交路径（virtio 正常提交 + uBPF 重提交 + passthrough）上协作限流，共享 throttling 数据结构，保证恶意 guest 无法通过 BPF 路径抢占带宽。
+
+- 来源：RosenBridge(FAST'26)
+
+### 实践启发
+
+- **"userspace BPF 是虚拟化环境下比 eBPF 更实际的选择"**：云厂商不会允许 guest 代码在 host 内核执行→uBPF 在 QEMU 进程内运行，安全边界缩小到单个进程。适用于任何"需要多租户自定义计算但不想开内核权限"的场景（serverless 函数运行时、数据库插件系统、CDN edge compute）。
+- **"io_uring passthrough + uBPF = userspace NDP 引擎"**：不需要内核模块就能实现接近 bare-metal eBPF 的 NDP 性能。io_uring passthrough 绕过 host 内核 I/O 栈→uBPF 程序直接操作 NVMe 队列。这是"userspace 实现内核级 I/O 性能"的通用模式。
+- **"共享内存 + BPF helper = 轻量 guest-host 元数据通道"**：不需要 hypercall 或额外的 virtio 队列——PCIe BAR 映射的共享内存就是通信通道。适用场景：任何需要 guest 向 host 传递频繁变化的小量元数据的虚拟化优化（内存气球、vCPU topology、I/O priority）。
+- **"多路 I/O throttling 的必要性——任何 bypass 路径都是潜在的 QoS 逃逸通道"**：当一个系统有多条 I/O 路径（normal + fast path + NDP bypass）时，必须在所有路径上统一 throttle。这是"QoS 不随优化而退化"的工程原则。
