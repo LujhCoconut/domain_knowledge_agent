@@ -1,7 +1,7 @@
 {
   "$schema": "metadata.schema.json",
   "generated_at": "2026-07-17",
-  "total_papers": 176,
+  "total_papers": 177,
   "papers": [
     {
       "canonical_name": "PithTrain(arXiv'26)",
@@ -5687,6 +5687,60 @@
         "r3_relations": "",
         "r4_refute": "仅在内核 prototype 验证，非上游化；修改 VFS 层→兼容性风险；scrap buffer 内存占用 vs page cache 的 trade-off 未量化"
       }
+    },
+    {
+      "canonical_name": "DRBoost(FAST'26)",
+      "title": "DRBoost: Boosting Degraded Read Performance in MSR-Coded Storage Clusters",
+      "authors": [
+        "Xiao Niu",
+        "Guangyan Zhang",
+        "Zhiyue Li",
+        "Sijie Cai"
+      ],
+      "conference": "FAST",
+      "year": 2026,
+      "url": "https://www.usenix.org/system/files/fast26-niu.pdf",
+      "date_read": "2026-07-17",
+      "type": "论文-方法",
+      "tags": [
+        "MSR",
+        "erasure coding",
+        "degraded read",
+        "partial reconstruction",
+        "coding theory",
+        "storage cluster",
+        "FAST"
+      ],
+      "techniques": [
+        "partial-chunk reconstruction",
+        "DSB (Determinant Sub-matrix Buffering)",
+        "intra-stripe data reuse",
+        "inter-stripe data reuse",
+        "reconstruction-friendly coding layout",
+        "fragmentation-free storage layout"
+      ],
+      "builds_on": [
+        "MSR codes (Minimum Storage Regenerating)",
+        "RS codes",
+        "LRCs"
+      ],
+      "contrasts_with": [
+        "full-chunk reconstruction",
+        "RS codes (high repair bandwidth)",
+        "LRCs (reduced fault tolerance)"
+      ],
+      "industrial_applicability": "medium",
+      "applicability_why": "需要部署 MSR coded storage + 修改 degraded read 路径；对生产中使用 erasure coding 的大型对象存储系统最有价值",
+      "prerequisites": "MSR-coded storage cluster, sub-chunk-level access API",
+      "knowledge_locations": [
+        "performance/storage-filesystem/"
+      ],
+      "review_rounds": {
+        "r1_tldr": "MSR code 大 chunk 致 degraded read I/O 放大：partial-chunk reconstruction + 两级数据复用 + layout 对齐，延迟 -1~2 数量级",
+        "r2_insights": "只重建需要的 sub-chunk 而非整个 chunk；intra+inter-stripe 复用降低重复拉取；object-to-subchunk 对齐减少跨边界重建",
+        "r3_relations": "",
+        "r4_refute": "依赖 DSB 缓存矩阵子块→需要额外的内存管理；只在 MSR codes 上验证，通用性待确认"
+      }
     }
   ],
   "technique_index": {
@@ -5935,6 +5989,24 @@
     ],
     "concurrent page management": [
       "WSBuffer(FAST'26)"
+    ],
+    "partial-chunk reconstruction": [
+      "DRBoost(FAST'26)"
+    ],
+    "DSB (Determinant Sub-matrix Buffering)": [
+      "DRBoost(FAST'26)"
+    ],
+    "intra-stripe data reuse": [
+      "DRBoost(FAST'26)"
+    ],
+    "inter-stripe data reuse": [
+      "DRBoost(FAST'26)"
+    ],
+    "reconstruction-friendly coding layout": [
+      "DRBoost(FAST'26)"
+    ],
+    "fragmentation-free storage layout": [
+      "DRBoost(FAST'26)"
     ]
   },
   "tag_index": {
@@ -6461,6 +6533,7 @@
       "DMTree(FAST'26)",
       "DOGI(FAST'26)",
       "DPAS(FAST'26)",
+      "DRBoost(FAST'26)",
       "DisCoGC(FAST'26)",
       "GCR(FAST'26)",
       "HATS(FAST'26)",
@@ -6775,6 +6848,24 @@
     ],
     "read-before-write": [
       "WSBuffer(FAST'26)"
+    ],
+    "MSR": [
+      "DRBoost(FAST'26)"
+    ],
+    "erasure coding": [
+      "DRBoost(FAST'26)"
+    ],
+    "degraded read": [
+      "DRBoost(FAST'26)"
+    ],
+    "partial reconstruction": [
+      "DRBoost(FAST'26)"
+    ],
+    "coding theory": [
+      "DRBoost(FAST'26)"
+    ],
+    "storage cluster": [
+      "DRBoost(FAST'26)"
     ]
   }
 }

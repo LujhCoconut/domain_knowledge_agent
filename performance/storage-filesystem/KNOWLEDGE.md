@@ -25,6 +25,7 @@
 | 日志结构系统数据放置优化 | WAF, log-structured, data placement, NoDaP oracle, ML prediction, garbage collection, group configuration | DOGI(FAST'26) |
 | 存储分层镜像优化 | tiering, mirroring, load balancing, hot data replication, heterogeneous storage, bandwidth utilization, CacheLib | MOST(FAST'26) |
 | 缓冲 I/O 架构重构 | buffered I/O, page cache, scrap buffer, partial-page write, read-before-write, high-bandwidth SSD, write buffering | WSBuffer(FAST'26) |
+| MSR 编码降级读优化 | MSR, erasure coding, degraded read, partial-chunk reconstruction, coding layout, I/O amplification, storage cluster | DRBoost(FAST'26) |
 | 云本地存储三代演进与混合架构 | SPDK user-space, ASIC DPU offloading, ASIC+SoC co-design, SR-IOV, context switch elimination, ML I/O dispatch, local-cloud hybrid, S3-FIFO caching | Latte(FAST'26) |
 | 磁带归档存储系统 | tape library, drive thrashing, asynchronous tape pool, batched erasure coding, dedicated drives, lifetime-based placement, bulk scheduling, wrap-aware read reordering | TapeOBS(FAST'26) |
 | 排序增强压缩只读文件系统 | sort-enhanced compression, data mixture, similarity graph, subgraph partitioning, METIS, hotness grouping, read-only FS compression, chunk deduplication | RubikFS(FAST'26) |
@@ -631,3 +632,26 @@ Buffered I/O（page cache）在高带宽 NVMe SSD 时代面临三个根本瓶颈
 
 - **"不是把慢速介质的优化策略照搬到快速介质就能工作——page cache 是为 HDD 设计的，对 NVMe SSD 它是瓶颈而非加速器"**：当一个系统的底层假设（存储比内存慢几个数量级）改变时，需要重新审视整个架构。这适用于任何"硬件性能跃迁使得原有抽象成为瓶颈"的场景（100Gbps 网络的 TCP stack、µs 级 SSD 的文件系统、CXL 内存的 NUMA 调度）。
 - **"Split-and-route：拆请求 + 差异化处理——大块直通、小块累积"**：适用于任何"不同大小的请求对底层硬件的友好程度不同"的系统（网络报文拼帧、GPU kernel launch batching、KV store batch write）。
+
+---
+
+## MSR 编码降级读优化 (DRBoost)
+
+### 核心问题
+
+MSR (Minimum Storage Regenerating) codes 在理论上同时提供最优容错（MDS）和最优修复带宽，但实际部署面临 chunk size 爆炸问题——为满足 MSR 矩阵运算的向量化约束，chunk 必须划分为 sub-chunk 且 stripe 越宽 chunk 越大（图 1a），导致即使只读一个 4KB object 也需要重建整个 chunk → 严重 I/O 放大。现有方案要么回到 RS/LRC（牺牲修复带宽），要么接受 degraded read 的巨大性能退化（1-2 数量级的延迟增加）。
+
+### 关键洞察
+
+1. **"Partial-chunk reconstruction——只重建你需要的那部分"**：传统 degraded read 需要获取 k 个完整 chunk → 重建整个数据 chunk → 提取目标 object。DRBoost 利用 DSB (Determinant Sub-matrix Buffering) 缓存解码矩阵子块，只从参与重建的 chunk 中读取目标 object 对应的 sub-chunk 范围 → 修复带宽从"整个 chunk"降到"目标 range"。
+
+2. **"两种数据复用——intra-stripe reuse + inter-stripe reuse"**：Intra-stripe：同一 stripe 内的多个 degraded read 可以共享已获取的 chunk 数据。Inter-stripe：如果多个 stripe 的 degraded chunk 在同一节点上，获取的 helper data 可以跨 stripe 复用。这降低了对同一 helper node 的"重复拉取"。
+
+3. **"Reconstruction-friendly coding layout——让 object 边界对齐 sub-chunk 边界"**：传统 layout 中 object 可能跨越 sub-chunk 边界 → 即使只读一个小 object 也可能需要重建两个 sub-chunk。DRBoost 的 layout 使 object 与 sub-chunk 对齐 → 大多数 degraded read 只涉及单个 sub-chunk 的重建。
+
+- 来源：DRBoost(FAST'26)
+
+### 实践启发
+
+- **"Partial reconstruction 是任何 block-level erasure coding 系统的通用优化"**：不限于 MSR——任何需要"读取 k 个 chunk 才能重建任何一个"的编码方案，都可以用 partial read + 矩阵子块缓存来减少 I/O。适用于 RS、LRC、Butterfly codes 等。
+- **"跨请求的数据复用是 erasure-coded 存储中未被充分利用的维度"**：传统系统将所有 I/O 都视为独立的随机请求→但 degraded reads 天然具有"从同一组节点的同一 stripe 中读取"的聚合特性→inter-stripe 和 intra-stripe 复用可以显著降低总修复带宽。
