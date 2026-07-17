@@ -1,7 +1,7 @@
 {
   "$schema": "metadata.schema.json",
   "generated_at": "2026-07-17",
-  "total_papers": 179,
+  "total_papers": 180,
   "papers": [
     {
       "canonical_name": "PithTrain(arXiv'26)",
@@ -5855,6 +5855,60 @@
         "r3_relations": "",
         "r4_refute": "需要 PI-capable 硬件；仅验证 XFS + BTRFS（未覆盖 Ext4/f2fs 等 FS）"
       }
+    },
+    {
+      "canonical_name": "CetoFS(FAST'26)",
+      "title": "CetoFS: A High-Performance File System with Host-Server Collaboration for Remote Storage",
+      "authors": [
+        "Wenqing Jia",
+        "Dejun Jiang",
+        "Jin Xiong"
+      ],
+      "conference": "FAST",
+      "year": 2026,
+      "url": "https://www.usenix.org/system/files/fast26-jia.pdf",
+      "date_read": "2026-07-17",
+      "type": "论文-系统",
+      "tags": [
+        "disaggregated storage",
+        "NVMe-oF",
+        "RDMA",
+        "file system",
+        "userspace",
+        "offloading",
+        "remote storage",
+        "FAST"
+      ],
+      "techniques": [
+        "userspace-kernel collaborative architecture",
+        "data plane userspace + control plane kernel",
+        "permission check offload to server",
+        "concurrency control offload",
+        "failure-atomic IO offload",
+        "NVMe-over-RDMA bypass"
+      ],
+      "builds_on": [
+        "Ext4",
+        "F2FS",
+        "NVMe-oF",
+        "RDMA"
+      ],
+      "contrasts_with": [
+        "kernel FS over NVMe-oF (66% kernel overhead)",
+        "local kernel FS (inode lock serialization)"
+      ],
+      "industrial_applicability": "medium",
+      "applicability_why": "需要 RDMA + NVMe-oF 硬件环境，userspace FS 需修改应用；适合高性能 disaggregated 存储集群",
+      "prerequisites": "RDMA NIC + NVMe-oF target, userspace RDMA library",
+      "knowledge_locations": [
+        "performance/storage-filesystem/"
+      ],
+      "review_rounds": {
+        "r1_tldr": "Userspace data plane + kernel control plane + server offload 三项设计消除 disaggregated NVMe SSD 的内核栈和串行化瓶颈，延迟 -52%、并发吞吐 +19×",
+        "r2_insights": "不要当远程盘本地盘用——server CPU 应参与计算；userspace data path + kernel control plane 是通用模板；offload 并发控制消除额外网络 round-trip",
+        "r3_relations": "",
+        "r4_refute": "仅测试单 storage server；userspace FS 需应用适配；无大规模多租户验证"
+      }
     }
   ],
   "technique_index": {
@@ -6148,6 +6202,24 @@
     ],
     "checksum-tree replacement (BTRFS)": [
       "FS-PI(FAST'26)"
+    ],
+    "userspace-kernel collaborative architecture": [
+      "CetoFS(FAST'26)"
+    ],
+    "data plane userspace + control plane kernel": [
+      "CetoFS(FAST'26)"
+    ],
+    "permission check offload to server": [
+      "CetoFS(FAST'26)"
+    ],
+    "concurrency control offload": [
+      "CetoFS(FAST'26)"
+    ],
+    "failure-atomic IO offload": [
+      "CetoFS(FAST'26)"
+    ],
+    "NVMe-over-RDMA bypass": [
+      "CetoFS(FAST'26)"
     ]
   },
   "tag_index": {
@@ -6276,6 +6348,7 @@
       "jwmalloc(OSDI'26)"
     ],
     "offloading": [
+      "CetoFS(FAST'26)",
       "DirectKV(OSDI'26)",
       "ECHO(OSDI'26)",
       "TMO(ASPLOS'22)"
@@ -6668,6 +6741,7 @@
       "AdaCheck(FAST'26)",
       "Bidaw(FAST'26)",
       "CacheSlide(FAST'26)",
+      "CetoFS(FAST'26)",
       "CloudTS(FAST'26)",
       "CoFS(FAST'26)",
       "Cylon(FAST'26)",
@@ -7053,6 +7127,24 @@
     ],
     "checksumming": [
       "FS-PI(FAST'26)"
+    ],
+    "disaggregated storage": [
+      "CetoFS(FAST'26)"
+    ],
+    "NVMe-oF": [
+      "CetoFS(FAST'26)"
+    ],
+    "RDMA": [
+      "CetoFS(FAST'26)"
+    ],
+    "file system": [
+      "CetoFS(FAST'26)"
+    ],
+    "userspace": [
+      "CetoFS(FAST'26)"
+    ],
+    "remote storage": [
+      "CetoFS(FAST'26)"
     ]
   }
 }
