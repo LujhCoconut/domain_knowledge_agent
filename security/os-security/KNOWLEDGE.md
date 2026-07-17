@@ -17,6 +17,7 @@
 | 安全计算 (SC) 内存管理 | obliviousness, speculative paging, garbled circuits, 128× expansion, transparent virtual memory | Osprey(OSDI'26) |
 | TrustZone USB 驱动重用 | record-lift-replay, kernel specialization, USB FSM determinism, mutational recorder, in-TEE driver | µUSB(OSDI'26) |
 | 物理块级 Timelock 防御 | transient immutability, isolated checker, delegate-but-verify, append-only metadata, formal verification, ransomware | Timelock Drive(OSDI'26) |
+| TEE 可信块存储 | out-of-place logging, layered secure logging, CIFC, Merkle Hash Tree, LSM-tree, SGX-PFS, SEV, authenticated encryption | MlsDisk(FAST'26) |
 | VM 自省框架 (LVMI) | shared-VMM observer, lock-aware memory coherence, native-speed introspection, mutualization layer, VMI | GOODKIT(OSDI'26) |
 | eBPF 多租户虚拟化 | late-binding, vBPF, static-binding, Sniffer event attribution, O(1) Dispatcher, state isolation | vBPF(OSDI'26) |
 | 加密协作编辑 | CRDT, cryptographic accumulator, secure GC, snapshot consistency, edit-history privacy, fork-causal consistency, collaborative editing | Acumen(OSDI'26) |
@@ -387,3 +388,33 @@ SASOS 的 lightweightness 来自同一地址空间（零页表切换、零 TLB f
 - **"CoPA = 区分 pointer access vs data access 的 lazy evaluation"**：fork 优化从 CoW 的 read vs write 进化到 data vs pointer × read vs write。Fork 后大部分页不会触发 capability load→CoPA 的共享率接近 CoW
 - **"SASOS 的 lightweightness 在 fork-intensive 场景最有价值"**：FaaS Zygote warm-up +24% 吞吐、Redis snapshot 1.4-1.9×、54μs fork (3.7× vs CheriBSD, 198× vs Nephele)→证明 lightweightness 可转化为实际收益。非 CHERI 硬件上的等价实现（pointer masking 或 compiler-assisted relocation）是值得探索的方向
 - **"POSIX 兼容性不是可选项——它是 OS 研究的 hard constraint"**：unmodified Redis/Nginx/MicroPython 零修改→研究系统必须兼容已有生态才有 adoption。类似 hS/Incr/LithOS "bolt-on transparency" 哲学
+
+---
+
+## TEE 可信块存储 (MlsDisk)
+
+### 核心问题
+
+SGX-PFS 是 TEE 可信存储的事实标准，使用 Merkle Hash Tree (MHT) 保护 in-place 更新的持久化数据，提供 confidentiality、integrity、freshness、consistency (CIFC) 四个安全属性。但 MHT 的级联更新机制导致严重的写放大——树高 H 时每次写入需要 2×H 次额外 I/O（MHT 节点更新 + recovery journal）。在 FIO 4KB 随机写下，SGX-PFS 吞吐仅为裸盘的 54%（CryptDisk 的 83%），且 MHT 块 I/O 占延迟的 31-82%。简单的 out-of-place logging 替代方案（NaiveLog）虽解决了写放大，但缺失索引（读需全扫描）和 GC（空间无限增长），而直接集成成熟的 LSM-tree 引擎（如 RocksDB）又因复杂的状态交互导致安全性分析困难。核心挑战：如何在保持 CIFC 可证明的前提下，用 log-structured 设计替代 MHT？
+
+### 关键洞察
+
+1. **"分层安全日志——每层只保护自己的数据，把元数据保护推给下层"**：MlsDisk 将 block device、KV store (LSM-tree)、log store、journal 四个抽象垂直分层（L3→L0），每一层暴露 CIFC-compliant API 给上层。L3 负责将用户数据块加密+MAC → 持久化为 log → 元数据（物理地址、密钥、MAC）由 L2 的 TxKV 安全存储。L2 的 WAL/SSTable 由 L1 的 TxLog 保护。L1 的 TxLogTable 变更由 L0 的 EditJournal 保护。每层的安全分析只需验证"如果我正确使用下层提供的 CIFC API，我的数据就满足 CIFC"。
+
+2. **"MHT 只在叶子层（L1 TxLog 内部）使用，且仅保护小量元数据而非所有用户数据"**：SGX-PFS 的 MHT 覆盖整个数据盘 → 任意写入都触发级联更新。MlsDisk 的 MHT 仅用于 L1 的 TxLog 内部（保护加密密钥和 MAC），而用户数据块走 L3 的 log-structured write → 绕过了级联更新。MHT 保护的数据量从"整个磁盘"缩小到"L1 元数据"，级联更新开销从磁盘级降到元数据级。
+
+3. **"LSM-tree 天然适合安全日志的分层抽象"**：LSM-tree 的 WAL + SSTable 结构恰好映射到 MlsDisk 的 L2→L1 抽象：WAL/SSTable 由 L1 的 TxLog 以 append-only 方式安全持久化，L2 只需关心 compaction 的事务性，无需关心底层加密/MAC/MHT。L2 的事务 API 将复杂的 compaction 操作封装为原子事务（begin→write→commit），崩溃后要么完整、要么不可见。
+
+4. **"CryptoBlob + CryptoChain 作为 L0 的最小安全原语"**：CryptoBlob（加密+MAC 的不可变快照）和 CryptoChain（链式 MAC 的增量 log）是 MlsDisk 仅有的两个需要从零验证 CIFC 的数据结构。L0 的 EditJournal 只用它们来维护 L1 的 TxLogTable（一个小型元数据表），整个系统的安全根基浓缩为这两个简单原语。
+
+5. **"分层架构使安全扩展成为模块化操作"**：在无需修改 core 逻辑的前提下，通过在 sync 路径增加 master sync ID + 写入 O(1) 可信存储实现 irreversibility（防御整盘 rollback）；通过 per-KV sync ID + compaction 时保留最新 sync ID 实现 atomicity（防御 eviction 攻击）。这证明了分层设计的可扩展性不只是理论优势。
+
+- 来源：MlsDisk(FAST'26)
+
+### 实践启发
+
+- **"分层安全推理是处理'性能优化 + 安全证明'冲突的通用方法论"**：当你需要在一个系统中同时引入复杂的性能优化（如 LSM-tree、GC、compaction）和安全证明时，垂直分层 + 每层独立 CIFC 证明 → 下层保证向上层暴露安全 API → 上层不需要理解下层的实现细节。适用于任何需要端到端安全证明的复杂存储/网络系统。
+- **"MHT 不是坏的——它只是用错了粒度"**：不要对整个数据盘用 MHT → 只对小量元数据用 MHT（L1 TxLog 内部）→ 级联开销从数据级降到元数据级。这是一个通用原则：昂贵的密码学原语应该保护元数据，大量数据走高效的 log-structured write + per-batch 加密 MAC。
+- **"NaiveLog → 索引 + GC → 分层 LSM 的渐进式设计是好的系统论文写作范式"**：从最简单的 strawman 开始 → 暴露问题 → 每个问题对应一层抽象 → 分层叠加后完整系统。读者可以清晰看到"每一层解决了什么、没有引入什么"。这也使安全证明可以逐层 reduce。
+- **"out-of-place logging 天然适合安全存储——不可变性消除了级联更新"**：旧数据不可变 → 不需要更新 MHT 链 → 加密和 MAC 在 batch 级别一次性完成 → 安全属性从"每次写入触发 MHT 路径"变成"每次写入追加 batch"。这一洞察不仅适用于 TEE 存储，也可推广到任何"频繁更新 + 需要完整性证明"的场景（如区块链状态存储、安全审计日志）。
+

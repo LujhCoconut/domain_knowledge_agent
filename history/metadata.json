@@ -1,7 +1,7 @@
 {
   "$schema": "metadata.schema.json",
   "generated_at": "2026-07-17",
-  "total_papers": 166,
+  "total_papers": 167,
   "papers": [
     {
       "canonical_name": "PithTrain(arXiv'26)",
@@ -5062,6 +5062,73 @@
         "r3_relations": "",
         "r4_refute": ""
       }
+    },
+    {
+      "canonical_name": "MlsDisk(FAST'26)",
+      "title": "MlsDisk: Trusted Block Storage for TEEs Based on Layered Secure Logging",
+      "authors": [
+        "Erci Xu",
+        "Xinyi Yu",
+        "Lujia Yin",
+        "Xinyuan Luo",
+        "Shaowei Song",
+        "Qingsong Chen",
+        "Shoumeng Yan",
+        "Jiwu Shu",
+        "Hongliang Tian",
+        "Yiming Zhang"
+      ],
+      "conference": "FAST",
+      "year": 2026,
+      "url": "https://www.usenix.org/system/files/fast26-xu.pdf",
+      "date_read": "2026-07-17",
+      "type": "论文-系统",
+      "tags": [
+        "TEE",
+        "SGX",
+        "trusted storage",
+        "CIFC",
+        "Merkle Hash Tree",
+        "log-structured",
+        "LSM-tree",
+        "authenticated encryption",
+        "SEV",
+        "FAST"
+      ],
+      "techniques": [
+        "layered secure logging (L0-L3)",
+        "out-of-place append-only writes",
+        "CIFC-by-layer security reduction",
+        "CryptoBlob + CryptoChain primitives",
+        "LSM-tree TxKV for metadata",
+        "TxLog MHT for metadata only",
+        "irreversibility via master sync ID",
+        "sync atomicity via per-KV sync ID"
+      ],
+      "builds_on": [
+        "SGX-PFS",
+        "LSM-tree (LevelDB/RocksDB)",
+        "NaiveLog (append-only secure log)",
+        "dm-crypt",
+        "dm-integrity"
+      ],
+      "contrasts_with": [
+        "SGX-PFS (in-place MHT)",
+        "CryptDisk (encryption-only, no freshness)",
+        "NaiveLog (no index/GC)"
+      ],
+      "industrial_applicability": "high",
+      "applicability_why": "Rust 开源实现，已集成 Linux/Occlum/Asterinas 三大平台，支持 AMD SEV 和 Intel SGX，Ant Group 参与，17.9 kLoC 可直接用于生产 TEE 存储",
+      "prerequisites": "Intel SGX 或 AMD SEV 硬件，TEE 运行环境（Occlum/libOS 或 SEV VM）",
+      "knowledge_locations": [
+        "security/os-security/"
+      ],
+      "review_rounds": {
+        "r1_tldr": "四层分层安全日志替代 SGX-PFS MHT in-place 更新：L3→L0 每层独立 CIFC 证明，写放大从 O(tree height) 降到 O(1)，7.3-21.1× 微基准提升",
+        "r2_insights": "分层 reduce 安全分析复杂度；MHT 仅用于 L1 元数据而非全部数据；LSM-tree natural fit for layered secure logging；CryptoBlob+CryptoChain 是仅有的两个需验证原语；分层架构使 irreversibility/atomicity 扩展模块化",
+        "r3_relations": "",
+        "r4_refute": ""
+      }
     }
   ],
   "technique_index": {
@@ -5127,6 +5194,30 @@
     ],
     "NVMe passthrough": [
       "RosenBridge(FAST'26)"
+    ],
+    "layered secure logging (L0-L3)": [
+      "MlsDisk(FAST'26)"
+    ],
+    "out-of-place append-only writes": [
+      "MlsDisk(FAST'26)"
+    ],
+    "CIFC-by-layer security reduction": [
+      "MlsDisk(FAST'26)"
+    ],
+    "CryptoBlob + CryptoChain primitives": [
+      "MlsDisk(FAST'26)"
+    ],
+    "LSM-tree TxKV for metadata": [
+      "MlsDisk(FAST'26)"
+    ],
+    "TxLog MHT for metadata only": [
+      "MlsDisk(FAST'26)"
+    ],
+    "irreversibility via master sync ID": [
+      "MlsDisk(FAST'26)"
+    ],
+    "sync atomicity via per-KV sync ID": [
+      "MlsDisk(FAST'26)"
     ]
   },
   "tag_index": {
@@ -5650,6 +5741,7 @@
       "GCR(FAST'26)",
       "HATS(FAST'26)",
       "Latte(FAST'26)",
+      "MlsDisk(FAST'26)",
       "OdinANN(FAST'26)",
       "PPC+MAIO(FAST'26)",
       "RASK(FAST'26)",
@@ -5735,6 +5827,33 @@
     ],
     "I/O": [
       "RosenBridge(FAST'26)"
+    ],
+    "TEE": [
+      "MlsDisk(FAST'26)"
+    ],
+    "SGX": [
+      "MlsDisk(FAST'26)"
+    ],
+    "trusted storage": [
+      "MlsDisk(FAST'26)"
+    ],
+    "CIFC": [
+      "MlsDisk(FAST'26)"
+    ],
+    "Merkle Hash Tree": [
+      "MlsDisk(FAST'26)"
+    ],
+    "log-structured": [
+      "MlsDisk(FAST'26)"
+    ],
+    "LSM-tree": [
+      "MlsDisk(FAST'26)"
+    ],
+    "authenticated encryption": [
+      "MlsDisk(FAST'26)"
+    ],
+    "SEV": [
+      "MlsDisk(FAST'26)"
     ]
   }
 }
