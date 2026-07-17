@@ -21,6 +21,7 @@
 | 文件同步细粒度并行化 | CDC, parallel chunking, streaming chunk matching, pipelined delta reconstruction, CRC32C combination, relative offset elimination | ParaSync(FAST'26) |
 | 分布式日志存储 GC 优化 | append-only, discard, compaction, write amplification, space amplification, TCO, EC stripe alignment, boundary loss, trim optimization | DisCoGC(FAST'26) |
 | 云原生数据库压缩存储 | dual-layer compression, CSD, hardware-software co-design, FTL byte-indexing, PolarDB, redo log optimization, compression-aware scheduling | PolarStore(FAST'26) |
+| 移动端 Zoned UFS 跨层优化 | ZUFS, zoned storage, F2FS, SRAM management, write ordering, GC overhead, Android, mobile storage | ZUFS(FAST'26) |
 | 云本地存储三代演进与混合架构 | SPDK user-space, ASIC DPU offloading, ASIC+SoC co-design, SR-IOV, context switch elimination, ML I/O dispatch, local-cloud hybrid, S3-FIFO caching | Latte(FAST'26) |
 | 磁带归档存储系统 | tape library, drive thrashing, asynchronous tape pool, batched erasure coding, dedicated drives, lifetime-based placement, bulk scheduling, wrap-aware read reordering | TapeOBS(FAST'26) |
 | 排序增强压缩只读文件系统 | sort-enhanced compression, data mixture, similarity graph, subgraph partitioning, METIS, hotness grouping, read-only FS compression, chunk deduplication | RubikFS(FAST'26) |
@@ -534,3 +535,26 @@ CDC-based 文件同步（dsync 等）的三阶段——File Chunking、Chunk Mat
 - **"双层压缩中的边界对齐是设计关键"**：软件层输出 4KB-aligned blocks→硬件层正好以 4KB LBA 接收→FTL 在 block 内部管理变长→两层之间不需要额外映射层。这是"对齐幸运"的一个案例——NVMe 的 4KB 约束恰好匹配数据库的 page 粒度。
 - **"Compression-aware cluster scheduling 对其他多租户存储系统也适用"**：当不同租户/用户的压缩比差异大时，按逻辑空间均匀分配会导致物理利用率失衡。按压缩比加权分配是轻量解决方案。
 
+---
+
+## 移动端 Zoned UFS 跨层优化 (ZUFS)
+
+### 核心问题
+
+Zoned UFS (ZUFS) 是 JEDEC 标准化的下一代移动存储技术，通过强制 zone 内顺序写入来减小 L2P mapping table，从而降低 SRAM 需求。但 ZUFS 在商用手机上的部署面临三个跨层挑战：(1) 多 open zone 争抢有限的 device SRAM——与传统 UFS 不同，ZUFS 至少需要 2 个 open zone 来防止写停滞，但移动端 SRAM 受限于面积和功耗约束；(2) 端到端写序保证——Android 的 I/O 栈有多层重排（block layer merging、SCSI queue reordering、device firmware scheduler），而 ZUFS 要求 zone 内严格顺序写；(3) 大 zone 尺寸（Android 默认 2 GB section）在没有 host-device 协同的情况下导致严重的 GC 开销——F2FS 需要迁移数百 MB 有效数据才能回收一个 zone。
+
+### 关键洞察
+
+1. **"Dynamic SRAM sharing across open zones——不是每个 zone 分配独立 SRAM buffer，而是在多个 open zone 间机会性地共享"**：ZUFS 设备驱动维护一个共享 SRAM pool，open zone 不独占而是按需从 pool 获取 buffer 空间。当 zone 的写流量低时，SRAM 自动迁移到活跃 zone → 在有限 SRAM 下最大化并发写性能。
+
+2. **"End-to-end write ordering 需要跨五层协同"**：设备 firmware → SCSI/UFS driver → block layer → F2FS → Android framework，每一层都可能重排写请求。ZUFS 通过三个机制保证：F2FS 提交写时附 sequence number、block layer 保留 FS 层的排序语义、driver 层确保命令按序到达设备。
+
+3. **"Proactive GC + background data migration 替代 emergency GC"**：传统 CUFS 在空间不足时触发紧急 GC→F2FS 必须迁移受影响 section 中的所有有效数据→几百 MB → 用户可感知的卡顿。ZUFS 在 Android framework 层检测空闲时段（屏幕关闭、充电、WiFi 连接）→ 提前触发 GC→ 分散 GC 开销。同时利用 ZUFS 的 zone reset 命令 O(1) 清空整个 zone（vs CUFS 的逐块 trim）。
+
+- 来源：ZUFS(FAST'26)
+
+### 实践启发
+
+- **"Zone reset = O(1) 空间回收是 zoned storage 被低估的优势"**：传统 block device 回收空间需要逐块 trim/discard → 大范围回收 IOPS 开销大。Zone reset 单条命令清空整个 zone → 对 mobile 场景（频繁小文件创建删除、应用安装卸载）极为有利。
+- **"跨层写序是 zoned storage 在复杂 I/O 栈中最大的实际障碍"**：zone 内顺序写的约束简单 → 但在经过 FS→block→driver→device 多层重排后保证顺序极其困难。ZUFS 的 sequence number + 逐层保留排序语义是一种通用方案。
+- **"Dynamic SRAM sharing 体现了 mobile 场景的独特约束——不追求 max performance 而是 stochastic fairness"**：与传统 SSD 的 per-zone dedicated buffer 不同，mobile 需要在极有限的 SRAM 下平衡多个 open zone → 机会性共享是唯一实际的选择。

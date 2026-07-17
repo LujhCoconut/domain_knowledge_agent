@@ -1,7 +1,7 @@
 {
   "$schema": "metadata.schema.json",
   "generated_at": "2026-07-17",
-  "total_papers": 172,
+  "total_papers": 173,
   "papers": [
     {
       "canonical_name": "PithTrain(arXiv'26)",
@@ -5454,6 +5454,71 @@
         "r3_relations": "",
         "r4_refute": "依赖自研 PolarCSD 硬件（非通用）；双层压缩对已压缩数据（图片/视频）收益有限；FSM 压缩比均衡的前提是 workload 混合度足够"
       }
+    },
+    {
+      "canonical_name": "ZUFS(FAST'26)",
+      "title": "Unleashing Zoned UFS: Cross-Layer Optimizations for Next-Generation Mobile Storage",
+      "authors": [
+        "Jungae Kim",
+        "Jaegeuk Kim",
+        "Kyu-Jin Cho",
+        "Sungjin Park",
+        "Jinwoo Kim",
+        "Jieun Kim",
+        "Iksung Oh",
+        "Chul Lee",
+        "Bart Van Assche",
+        "Daeho Jeong",
+        "Konstantin Vyshetsky",
+        "Jin-Soo Kim"
+      ],
+      "conference": "FAST",
+      "year": 2026,
+      "url": "https://www.usenix.org/system/files/fast26-kim-jungae.pdf",
+      "date_read": "2026-07-17",
+      "type": "论文-系统",
+      "tags": [
+        "zoned storage",
+        "UFS",
+        "mobile",
+        "F2FS",
+        "Android",
+        "GC",
+        "SRAM",
+        "write ordering",
+        "JEDEC",
+        "FAST",
+        "production"
+      ],
+      "techniques": [
+        "dynamic SRAM sharing across open zones",
+        "end-to-end write ordering (5-layer)",
+        "proactive background GC",
+        "zone reset O(1) space reclamation",
+        "sequence-number-based ordering"
+      ],
+      "builds_on": [
+        "F2FS",
+        "zoned storage (NVMe ZNS, SMR HDD)",
+        "JEDEC UFS",
+        "Android storage stack"
+      ],
+      "contrasts_with": [
+        "conventional UFS (CUFS)",
+        "traditional block-level trim/discard"
+      ],
+      "industrial_applicability": "high",
+      "applicability_why": "SK hynix + Google 联合，已推入 JEDEC ZUFS 标准 + Android 主线 Linux 内核，商用手机验证，硬件厂商和平台方共同推进",
+      "prerequisites": "ZUFS-compatible UFS device + Android/Linux kernel with ZUFS support",
+      "knowledge_locations": [
+        "performance/storage-filesystem/"
+      ],
+      "review_rounds": {
+        "r1_tldr": "SK hynix + Google 联合推出 Zoned UFS：动态 SRAM 共享 + 五层写序保证 + 主动 GC；碎片化下写吞吐 2×、游戏加载 -14%，已入 JEDEC 标准",
+        "r2_insights": "Zone reset O(1)回收是 zoned storage 被低估的优势；跨层写序是实际部署最大障碍；移动端 SRAM 约束迫使动态共享而非 per-zone dedicated buffer；proactive GC 利用 idle 时段避免用户可感知卡顿",
+        "r3_relations": "",
+        "r4_refute": "仅测试了一款商用手机；ZUFS 依赖 F2FS log-structured 设计（非通用 FS）；长期碎片化下的性能退化仍需观察"
+      }
     }
   ],
   "technique_index": {
@@ -5645,6 +5710,21 @@
     ],
     "PolarCSD hardware offload": [
       "PolarStore(FAST'26)"
+    ],
+    "dynamic SRAM sharing across open zones": [
+      "ZUFS(FAST'26)"
+    ],
+    "end-to-end write ordering (5-layer)": [
+      "ZUFS(FAST'26)"
+    ],
+    "proactive background GC": [
+      "ZUFS(FAST'26)"
+    ],
+    "zone reset O(1) space reclamation": [
+      "ZUFS(FAST'26)"
+    ],
+    "sequence-number-based ordering": [
+      "ZUFS(FAST'26)"
     ]
   },
   "tag_index": {
@@ -5718,7 +5798,8 @@
       "SkySync(FAST'26)",
       "Strata(OSDI'26)",
       "ThinkAhead(FAST'26)",
-      "Umap(OSDI'26)"
+      "Umap(OSDI'26)",
+      "ZUFS(FAST'26)"
     ],
     "ASPLOS": [
       "CAMP(ASPLOS'26)",
@@ -6143,6 +6224,7 @@
     "mobile": [
       "Sereno(OSDI'26)",
       "VTC(OSDI'26)",
+      "ZUFS(FAST'26)",
       "jwmalloc(OSDI'26)"
     ],
     "swap": [
@@ -6188,7 +6270,8 @@
       "TapeOBS(FAST'26)",
       "ThinkAhead(FAST'26)",
       "WARP(FAST'26)",
-      "Xerxes(FAST'26)"
+      "Xerxes(FAST'26)",
+      "ZUFS(FAST'26)"
     ],
     "EBS": [
       "ThinkAhead(FAST'26)"
@@ -6357,7 +6440,8 @@
       "DisCoGC(FAST'26)"
     ],
     "GC": [
-      "DisCoGC(FAST'26)"
+      "DisCoGC(FAST'26)",
+      "ZUFS(FAST'26)"
     ],
     "discard": [
       "DisCoGC(FAST'26)"
@@ -6406,6 +6490,27 @@
     ],
     "Alibaba Cloud": [
       "PolarStore(FAST'26)"
+    ],
+    "zoned storage": [
+      "ZUFS(FAST'26)"
+    ],
+    "UFS": [
+      "ZUFS(FAST'26)"
+    ],
+    "F2FS": [
+      "ZUFS(FAST'26)"
+    ],
+    "Android": [
+      "ZUFS(FAST'26)"
+    ],
+    "SRAM": [
+      "ZUFS(FAST'26)"
+    ],
+    "write ordering": [
+      "ZUFS(FAST'26)"
+    ],
+    "JEDEC": [
+      "ZUFS(FAST'26)"
     ]
   }
 }
