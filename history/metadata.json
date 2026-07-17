@@ -1,7 +1,7 @@
 {
   "$schema": "metadata.schema.json",
   "generated_at": "2026-07-17",
-  "total_papers": 183,
+  "total_papers": 184,
   "papers": [
     {
       "canonical_name": "PithTrain(arXiv'26)",
@@ -6069,6 +6069,62 @@
         "r3_relations": "",
         "r4_refute": "仅单地址空间 unikernel 模型验证；多应用共享缓存的场景未探索；需要应用适配 unikernel"
       }
+    },
+    {
+      "canonical_name": "UnICom(FAST'26)",
+      "title": "UnICom: A Universally High-Performant I/O Completion Mechanism for Modern Computer Systems",
+      "authors": [
+        "Riwei Pan",
+        "Yu Liang",
+        "Sam H. Noh",
+        "Lei Li",
+        "Nan Guan",
+        "Tei-Wei Kuo",
+        "Chun Jason Xue"
+      ],
+      "conference": "FAST",
+      "year": 2026,
+      "url": "https://www.usenix.org/system/files/fast26-pan.pdf",
+      "date_read": "2026-07-17",
+      "type": "论文-系统",
+      "tags": [
+        "I/O completion",
+        "polling",
+        "interrupt",
+        "NVMe",
+        "CXL-SSD",
+        "kernel",
+        "scheduling",
+        "FAST"
+      ],
+      "techniques": [
+        "TagSched (tag-guided scheduling)",
+        "TagPoll (centralized kernel polling)",
+        "SKIP (kernel-assisted direct access)",
+        "unified poll+interrupt completion"
+      ],
+      "builds_on": [
+        "Linux interrupt-based I/O",
+        "SPDK polling",
+        "NVMe driver"
+      ],
+      "contrasts_with": [
+        "interrupt-only (wake-up overhead)",
+        "polling-only (CPU waste)",
+        "SPDK (userspace complexity)"
+      ],
+      "industrial_applicability": "medium",
+      "applicability_why": "需要内核级修改；对混合 I/O+compute workload 场景最有价值",
+      "prerequisites": "Linux 内核修改，NVMe/CXL-SSD 设备",
+      "knowledge_locations": [
+        "performance/storage-filesystem/"
+      ],
+      "review_rounds": {
+        "r1_tldr": "TagSched+TagPoll+SKIP 统一 polling 和 interrupt：kernel trap 可忽略但 unlock kernel infra，低延迟 + CPU 高效",
+        "r2_insights": "Kernel trap overhead negligible vs disk I/O but enables centralized coordination; TagPoll consolidates cross-thread polling; SKIP eliminates userspace permission complexity",
+        "r3_relations": "",
+        "r4_refute": "仅测试 NVMe/CXL-SSD；未与 DPDK/SPDK 在最具可比性配置下全面对比"
+      }
     }
   ],
   "technique_index": {
@@ -6419,6 +6475,18 @@
     ],
     "kernel-bypass IO path": [
       "uCache(FAST'26)"
+    ],
+    "TagSched (tag-guided scheduling)": [
+      "UnICom(FAST'26)"
+    ],
+    "TagPoll (centralized kernel polling)": [
+      "UnICom(FAST'26)"
+    ],
+    "SKIP (kernel-assisted direct access)": [
+      "UnICom(FAST'26)"
+    ],
+    "unified poll+interrupt completion": [
+      "UnICom(FAST'26)"
     ]
   },
   "tag_index": {
@@ -6528,6 +6596,7 @@
       "Rakaia(OSDI'26)",
       "TMO(ASPLOS'22)",
       "TypeCraft(OSDI'26)",
+      "UnICom(FAST'26)",
       "Xkernel(OSDI'26)"
     ],
     "memory": [
@@ -6719,6 +6788,7 @@
       "SolidAttention(FAST'26)",
       "Strata(OSDI'26)",
       "Twill(OSDI'26)",
+      "UnICom(FAST'26)",
       "vBOIDs(OSDI'26)",
       "μShell(OSDI'26)"
     ],
@@ -6972,6 +7042,7 @@
       "SysSpec(FAST'26)",
       "TapeOBS(FAST'26)",
       "ThinkAhead(FAST'26)",
+      "UnICom(FAST'26)",
       "WARP(FAST'26)",
       "WSBuffer(FAST'26)",
       "Xerxes(FAST'26)",
@@ -7404,10 +7475,23 @@
       "uCache(FAST'26)"
     ],
     "NVMe": [
+      "UnICom(FAST'26)",
       "uCache(FAST'26)"
     ],
     "uVFS": [
       "uCache(FAST'26)"
+    ],
+    "I/O completion": [
+      "UnICom(FAST'26)"
+    ],
+    "polling": [
+      "UnICom(FAST'26)"
+    ],
+    "interrupt": [
+      "UnICom(FAST'26)"
+    ],
+    "CXL-SSD": [
+      "UnICom(FAST'26)"
     ]
   }
 }

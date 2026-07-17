@@ -32,6 +32,7 @@
 | 存储多资源分配 | cache-centric, multi-tenant, DRF, miss ratio curve, resource allocation, fairness, Redis, DynamoDB | HARE(FAST'26) |
 | 共享存储分布式锁管理 | DLM, shared-disk FS, GFS2, OCFS2, lock management, self-owner notification, filesystem scalability | Lockify(FAST'26) |
 | Unikernel IO 缓存 | unikernel, libOS, mmap, userspace cache, OS-level cache, NVMe, uVFS, application-specific caching | uCache(FAST'26) |
+| I/O 完成机制 | interrupt, polling, NVMe, kernel trap, I/O completion, TagSched, TagPoll, CXL-SSD, multi-core | UnICom(FAST'26) |
 | 云本地存储三代演进与混合架构 | SPDK user-space, ASIC DPU offloading, ASIC+SoC co-design, SR-IOV, context switch elimination, ML I/O dispatch, local-cloud hybrid, S3-FIFO caching | Latte(FAST'26) |
 | 磁带归档存储系统 | tape library, drive thrashing, asynchronous tape pool, batched erasure coding, dedicated drives, lifetime-based placement, bulk scheduling, wrap-aware read reordering | TapeOBS(FAST'26) |
 | 排序增强压缩只读文件系统 | sort-enhanced compression, data mixture, similarity graph, subgraph partitioning, METIS, hotness grouping, read-only FS compression, chunk deduplication | RubikFS(FAST'26) |
@@ -789,4 +790,26 @@ Shared-disk 文件系统（GFS2、OCFS2）的 DLM 在低竞争场景下仍然表
 ### 实践启发
 
 - **"Unikernel 正在从 niche 被重新评估：当应用和 OS 需要深度共享知识（如缓存策略）时，shared address space 比 userspace-kernel 边界更高效"**：这不仅是性能问题——POSIX 的通用语义是灵活性的根本瓶颈。当你想告诉 page cache"不要 evict 这个 page，它是未提交事务的一部分"时，你没有 API。uCache 的 unikernel 架构使这种跨层通信成为可能。
+
+---
+
+## I/O 完成机制 (UnICom)
+
+### 核心问题
+
+现代存储的 µs 级延迟使 I/O 完成机制成为瓶颈——软件开销贡献高达 50% 的总延迟。Polling（低延迟但浪费 CPU）和 Interrupt（省 CPU 但 wake-up 开销大）只在各自的"舒适区"有效——I/O 密集时 polling 好、I/O 稀疏时 interrupt 好。但实际 workload 经常混合 I/O 密集和计算密集线程，现有方案在不同条件下切换困难。核心洞察：**kernel trap 的开销相比 disk I/O 延迟可以忽略，但它解锁了使用内核基础设施实现高效和安全的能力**。
+
+### 关键洞察
+
+1. **"TagSched：轻量 tag-guided scheduling 最小化 sleep/wake-up 开销"**：传统 interrupt 的主要开销来自上下文切换和调度决策。TagSched 使用 tag 标记 I/O 完成状态 → 调度器不需要完整上下文切换就可以将线程从等待状态唤醒。
+
+2. **"TagPoll：内核态集中 polling 跨线程/进程合并轮询"**：多个线程各自 polling 浪费 CPU（每线程一个 poller）→ TagPoll 在内核态集中一个 polling 线程服务所有等待者 → 消除冗余 poll 开销 + 利用内核态访问设备队列的优势。
+
+3. **"SKIP：内核辅助直接访问消除 userspace 权限管理复杂性"**：userspace direct I/O（如 SPDK）需要复杂权限管理。SKIP 让内核处理一次权限检查后 → 后续访问直接从 userspace 操作，消除传统 kernel-by paths 的安全-性能 trade-off。
+
+- 来源：UnICom(FAST'26)
+
+### 实践启发
+
+- **"Kernel trap 不是敌人——当 disk I/O 是 µs 级时，trap 开销可以忽略，但它 unlock 的 kernel infrastructure 是 userspace 无法复制的"**：这是对"kernel-bypass 是唯一出路"叙事的修正。当 latency 瓶颈不在 trap 而在调度和同步时，集中式内核协调（TagPoll）比分布式 userspace polling 更高效。
 
