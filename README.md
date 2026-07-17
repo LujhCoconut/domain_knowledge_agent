@@ -35,7 +35,7 @@ domain-knowledge/
 <!-- 以下区域由 /domain-knowledge 后置操作自动更新，请勿手动编辑本节 -->
 
 - **总计**: 163 篇
-- **会议分布**: ASPLOS 4 篇（'22–'26），FAST 23 篇（'26），OSDI 133 篇（'26），SOSP 2 篇（'25），arXiv 1 篇（'26）
+- **会议分布**: ASPLOS 4 篇（'22–'26），arXiv 1 篇（'26），FAST 23 篇（'26），OSDI 133 篇（'26），SOSP 2 篇（'25）
 - **领域分布**:
   - CXL/内存系统/stall 回收: 10 篇
   - 存储层次/体系结构: 8 篇（..., Cylon, Xerxes） — 见 `architecture/memory-storage-hierarchy/KNOWLEDGE.md`
@@ -56,6 +56,7 @@ domain-knowledge/
   - 缓存算法: 2 篇（Merlin, S4-FIFO） — 见 `algorithms/cache-algorithms/KNOWLEDGE.md`
   - 加速器架构与编译: 3 篇（TileLoom, μShell, qTPU） — 见 `architecture/accelerators/KNOWLEDGE.md`
   - 网络系统: 7 篇（SBB, Rakaia, UEP, UCCL-Tran, BALBOA, DPA-Store, Sepia） — 见 `network/os-networking/KNOWLEDGE.md`
+- **🚀 新增功能**: JSON 结构化元数据 (`history/metadata.json`) + 技术倒排索引 + 四轮递进阅读 (R1-R4) + 工业可用性评分
 - **最后更新**: 2026-07-17
 
 <!-- 自动更新区域结束 -->

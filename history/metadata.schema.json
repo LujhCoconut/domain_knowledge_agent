@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Paper Metadata Schema",
+  "description": "每篇论文/资料的结构化元数据，用于程序化查询、交叉引用和统计",
+  "type": "object",
+  "properties": {
+    "papers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "canonical_name": {
+            "type": "string",
+            "description": "规范名称，格式 方案名(会议'年份)，如 PACT(ASPLOS'26)"
+          },
+          "title": {
+            "type": "string",
+            "description": "完整英文标题"
+          },
+          "authors": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "作者列表"
+          },
+          "conference": {
+            "type": "string",
+            "description": "会议/期刊缩写，如 OSDI、ASPLOS、FAST、SOSP、arXiv"
+          },
+          "year": {
+            "type": "integer",
+            "description": "发表年份"
+          },
+          "url": {
+            "type": "string",
+            "description": "论文 URL 或 DOI"
+          },
+          "date_read": {
+            "type": "string",
+            "format": "date",
+            "description": "阅读/解析日期 YYYY-MM-DD"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["论文-系统", "论文-方法", "论文-协议", "论文-编译器", "论文-OS设计", "论文-运维系统", "论文-安全", "论文-算法", "论文-架构", "论文-测试", "论文-验证", "论文-加速器", "论文-系统/GPU OS", "论文-系统/OS安全", "论文-系统/安全", "论文-系统/加速器", "论文-系统/测试", "论文-系统/性能工具", "论文-系统/ML", "论文-系统(工业部署)", "论文-系统(工业经验)", "论文-编程语言/系统", "论文-协议/系统", "论文-运维/调试", "论文-运维系统", "论文-OS/系统", "论文-编译器/系统", "论文-验证/AI", "论文-安全/密码学", "博客", "文档", "源码", "分享", "其他"],
+            "description": "论文类型细分"
+          },
+          "tags": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "主题标签，用于关键词搜索和分类"
+          },
+          "techniques": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "论文提出/使用的关键技术/方法名，用于倒排索引"
+          },
+          "builds_on": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "论文继承/改进的前置工作（规范名称或技术名）"
+          },
+          "contrasts_with": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "与本论文存在矛盾/不同假设的已有工作"
+          },
+          "industrial_applicability": {
+            "type": "string",
+            "enum": ["high", "medium", "low"],
+            "description": "工业可用性: high=可直接集成到生产系统, medium=需要适配但核心思想可复用, low=需要特殊硬件或远未成熟"
+          },
+          "applicability_why": {
+            "type": "string",
+            "description": "一句话说明工业可用性的判断依据"
+          },
+          "prerequisites": {
+            "type": "string",
+            "description": "应用该方案的前置条件（硬件、软件栈、组织条件等）"
+          },
+          "knowledge_locations": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "在知识库中的归档目录路径"
+          },
+          "review_rounds": {
+            "type": "object",
+            "properties": {
+              "r1_tldr": {"type": "string", "description": "R1 速览: 一句话TL;DR"},
+              "r2_insights": {"type": "string", "description": "R2 深读: 核心洞察摘要"},
+              "r3_relations": {"type": "string", "description": "R3 交叉验证: 与已有知识的关系"},
+              "r4_refute": {"type": "string", "description": "R4 对抗审视: 局限和过度声明"}
+            },
+            "required": ["r1_tldr"],
+            "description": "四轮 review 的阶段性产出"
+          }
+        },
+        "required": ["canonical_name", "conference", "year", "date_read", "tags", "knowledge_locations"]
+      }
+    },
+    "technique_index": {
+      "type": "object",
+      "description": "技术名→论文列表倒排索引，自动从 papers[].techniques 生成",
+      "additionalProperties": {
+        "type": "array",
+        "items": {"type": "string"}
+      }
+    },
+    "tag_index": {
+      "type": "object",
+      "description": "标签→论文列表倒排索引，自动从 papers[].tags 生成",
+      "additionalProperties": {
+        "type": "array",
+        "items": {"type": "string"}
+      }
+    }
+  }
+}

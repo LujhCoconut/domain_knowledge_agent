@@ -13,7 +13,11 @@
 
 | 文件 | 用途 |
 |------|------|
-| `reading-log.md` | 主日志，记录所有被解析的论文/资料 |
+| `reading-log.md` | 主日志，记录所有被解析的论文/资料（人类可读的表格） |
+| `metadata.json` | 结构化元数据，支持程序化查询、过滤和交叉引用（JSON 格式） |
+| `metadata.schema.json` | JSON schema 定义，规范 metadata.json 的字段类型和约束 |
+| `rebuild_index.py` | 从 papers[].techniques 和 papers[].tags 重建倒排索引 |
+| `generate_metadata.py` | 从 reading-log.md 初生成 metadata.json（用于回填或重建） |
 
 后续如果记录变多，可以按年份拆分，例如 `2025.md`、`2026.md`。
 
