@@ -1,7 +1,7 @@
 {
   "$schema": "metadata.schema.json",
   "generated_at": "2026-07-17",
-  "total_papers": 175,
+  "total_papers": 176,
   "papers": [
     {
       "canonical_name": "PithTrain(arXiv'26)",
@@ -5629,6 +5629,64 @@
         "r3_relations": "",
         "r4_refute": "仅在两 device 简化模型上验证；热数据识别准确性是关键但依赖 CacheLib；极端 write-heavy + 动态场景下 mirroring 的 double-write 开销未充分量化"
       }
+    },
+    {
+      "canonical_name": "WSBuffer(FAST'26)",
+      "title": "Rearchitecting Buffered I/O in the Era of High-Bandwidth SSDs",
+      "authors": [
+        "Yekang Zhan",
+        "Tianze Wang",
+        "Zheng Peng",
+        "Haichuan Hu",
+        "Jiahao Wu",
+        "Xiangrui Yang",
+        "Qiang Cao",
+        "Hong Jiang",
+        "Jie Yao"
+      ],
+      "conference": "FAST",
+      "year": 2026,
+      "url": "https://www.usenix.org/system/files/fast26-zhan.pdf",
+      "date_read": "2026-07-17",
+      "type": "论文-系统",
+      "tags": [
+        "buffered I/O",
+        "page cache",
+        "NVMe SSD",
+        "write buffering",
+        "partial-page write",
+        "read-before-write",
+        "FAST"
+      ],
+      "techniques": [
+        "scrap buffer",
+        "split-and-route write handling",
+        "buffer-minimized data access",
+        "opportunistic two-stage flushing",
+        "concurrent page management"
+      ],
+      "builds_on": [
+        "Linux page cache",
+        "ScaleCache",
+        "direct I/O"
+      ],
+      "contrasts_with": [
+        "page-cache-buffer-all writes (EXT4/BTRFS/F2FS/XFS)",
+        "direct I/O (loss of buffer benefits)",
+        "ScaleCache"
+      ],
+      "industrial_applicability": "medium",
+      "applicability_why": "需要内核级修改，但可直接替代现有 page cache 架构，吞吐 +3.91×/延迟 -82.80× vs Linux FS",
+      "prerequisites": "Linux 内核改造，NVMe SSD",
+      "knowledge_locations": [
+        "performance/storage-filesystem/"
+      ],
+      "review_rounds": {
+        "r1_tldr": "Scrap buffer 替代 page cache 全缓冲写入：大块直通 SSD + 小块累积批量，消除 RMW 开销，吞吐 +3.91× vs EXT4/F2FS/BTRFS/XFS",
+        "r2_insights": "不是所有写入都该走 buffer——高带宽 SSD 不需要 page cache 的缓冲；scrap buffer 只缓冲 SSD-I/O-unfriendly 请求；硬件性能跃迁要求重新审视整个架构假设",
+        "r3_relations": "",
+        "r4_refute": "仅在内核 prototype 验证，非上游化；修改 VFS 层→兼容性风险；scrap buffer 内存占用 vs page cache 的 trade-off 未量化"
+      }
     }
   ],
   "technique_index": {
@@ -5862,6 +5920,21 @@
     ],
     "Cerberus storage layer": [
       "MOST(FAST'26)"
+    ],
+    "scrap buffer": [
+      "WSBuffer(FAST'26)"
+    ],
+    "split-and-route write handling": [
+      "WSBuffer(FAST'26)"
+    ],
+    "buffer-minimized data access": [
+      "WSBuffer(FAST'26)"
+    ],
+    "opportunistic two-stage flushing": [
+      "WSBuffer(FAST'26)"
+    ],
+    "concurrent page management": [
+      "WSBuffer(FAST'26)"
     ]
   },
   "tag_index": {
@@ -6409,6 +6482,7 @@
       "TapeOBS(FAST'26)",
       "ThinkAhead(FAST'26)",
       "WARP(FAST'26)",
+      "WSBuffer(FAST'26)",
       "Xerxes(FAST'26)",
       "ZUFS(FAST'26)"
     ],
@@ -6683,6 +6757,24 @@
     ],
     "CacheLib": [
       "MOST(FAST'26)"
+    ],
+    "buffered I/O": [
+      "WSBuffer(FAST'26)"
+    ],
+    "page cache": [
+      "WSBuffer(FAST'26)"
+    ],
+    "NVMe SSD": [
+      "WSBuffer(FAST'26)"
+    ],
+    "write buffering": [
+      "WSBuffer(FAST'26)"
+    ],
+    "partial-page write": [
+      "WSBuffer(FAST'26)"
+    ],
+    "read-before-write": [
+      "WSBuffer(FAST'26)"
     ]
   }
 }
