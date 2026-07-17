@@ -1,7 +1,7 @@
 {
   "$schema": "metadata.schema.json",
   "generated_at": "2026-07-17",
-  "total_papers": 185,
+  "total_papers": 186,
   "papers": [
     {
       "canonical_name": "PithTrain(arXiv'26)",
@@ -6181,6 +6181,69 @@
         "r3_relations": "",
         "r4_refute": "仅验证了 congestion control + ABR 两个任务；预训练数据覆盖范围决定泛化能力；推理延迟是否满足实时需求未充分讨论"
       }
+    },
+    {
+      "canonical_name": "BURST(NSDI'26)",
+      "title": "BURST: Seeking High-performance, Interoperability and Scalability in Soft-RDMA",
+      "authors": [
+        "Huijun Shen",
+        "Zelong Yue",
+        "Jian Yang",
+        "Zhuo Jiang",
+        "Lang An",
+        "Yulin Chen",
+        "Yong Zhang",
+        "Luochangqi Ding",
+        "Xiaolong Zhong",
+        "Zhihong Wang",
+        "Jie Ding",
+        "Hongyu Wu",
+        "Jianxi Ye",
+        "Xijin Yin",
+        "Xingyu Zhang",
+        "Xingyu Guo",
+        "Guo Chen"
+      ],
+      "conference": "NSDI",
+      "year": 2026,
+      "url": "https://www.usenix.org/system/files/nsdi26-shen.pdf",
+      "date_read": "2026-07-17",
+      "type": "论文-系统(工业)",
+      "tags": [
+        "RDMA",
+        "Soft-RDMA",
+        "NR2R",
+        "interoperability",
+        "userspace",
+        "heterogeneous NIC",
+        "ByteDance",
+        "NSDI"
+      ],
+      "techniques": [
+        "user-space soft-RDMA stack",
+        "NR2R (Non-RNIC-to-RNIC) communication",
+        "kernel-bypass RDMA emulation"
+      ],
+      "builds_on": [
+        "RXE (SoftRoCE)",
+        "commercial RNICs"
+      ],
+      "contrasts_with": [
+        "RXE (kernel SoftRoCE, CPU overhead)",
+        "TCP/IP fallback"
+      ],
+      "industrial_applicability": "high",
+      "applicability_why": "ByteDance 生产部署，解决异构 NIC 环境下商业 RNIC 与非 RNIC 的互操作问题",
+      "prerequisites": "用户态 Soft-RDMA 部署，heterogeneous NIC 环境",
+      "knowledge_locations": [
+        "network/os-networking/"
+      ],
+      "review_rounds": {
+        "r1_tldr": "用户态 Soft-RDMA 解决 NR2R 互操作：高性能+跨 vendor+可扩展，消除 RXE CPU 瓶颈",
+        "r2_insights": "",
+        "r3_relations": "",
+        "r4_refute": ""
+      }
     }
   ],
   "technique_index": {
@@ -6555,6 +6618,15 @@
     ],
     "pre-trained embeddings": [
       "Unum(NSDI'26)"
+    ],
+    "user-space soft-RDMA stack": [
+      "BURST(NSDI'26)"
+    ],
+    "NR2R (Non-RNIC-to-RNIC) communication": [
+      "BURST(NSDI'26)"
+    ],
+    "kernel-bypass RDMA emulation": [
+      "BURST(NSDI'26)"
     ]
   },
   "tag_index": {
@@ -7314,6 +7386,7 @@
       "DisCoGC(FAST'26)"
     ],
     "ByteDance": [
+      "BURST(NSDI'26)",
       "DisCoGC(FAST'26)"
     ],
     "cloud-native database": [
@@ -7478,12 +7551,14 @@
       "CetoFS(FAST'26)"
     ],
     "RDMA": [
+      "BURST(NSDI'26)",
       "CetoFS(FAST'26)"
     ],
     "file system": [
       "CetoFS(FAST'26)"
     ],
     "userspace": [
+      "BURST(NSDI'26)",
       "CetoFS(FAST'26)"
     ],
     "remote storage": [
@@ -7581,7 +7656,20 @@
       "Unum(NSDI'26)"
     ],
     "NSDI": [
+      "BURST(NSDI'26)",
       "Unum(NSDI'26)"
+    ],
+    "Soft-RDMA": [
+      "BURST(NSDI'26)"
+    ],
+    "NR2R": [
+      "BURST(NSDI'26)"
+    ],
+    "interoperability": [
+      "BURST(NSDI'26)"
+    ],
+    "heterogeneous NIC": [
+      "BURST(NSDI'26)"
     ]
   }
 }
