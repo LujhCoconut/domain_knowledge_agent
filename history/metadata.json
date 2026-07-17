@@ -1,7 +1,7 @@
 {
   "$schema": "metadata.schema.json",
   "generated_at": "2026-07-17",
-  "total_papers": 167,
+  "total_papers": 168,
   "papers": [
     {
       "canonical_name": "PithTrain(arXiv'26)",
@@ -5129,6 +5129,72 @@
         "r3_relations": "",
         "r4_refute": ""
       }
+    },
+    {
+      "canonical_name": "Jitskit(arXiv'26)",
+      "title": "The Time is Here for Just-in-Time Systems: Challenges and Opportunities",
+      "authors": [
+        "Shu Liu",
+        "Alexander Krentsel",
+        "Shubham Agarwal",
+        "Mert Cemri",
+        "Ziming Mao",
+        "Soujanya Ponnapalli",
+        "Alexandros G. Dimakis",
+        "Sylvia Ratnasamy",
+        "Matei Zaharia",
+        "Aditya Parameswaran",
+        "Ion Stoica"
+      ],
+      "conference": "arXiv",
+      "year": 2026,
+      "url": "https://arxiv.org/abs/2605.24096",
+      "date_read": "2026-07-17",
+      "type": "论文-愿景/系统",
+      "tags": [
+        "JIT systems",
+        "agent synthesis",
+        "KV store",
+        "reward hacking",
+        "adversarial auditor",
+        "specification",
+        "system specialization",
+        "LLM coding agent",
+        "arXiv"
+      ],
+      "techniques": [
+        "spec cards (env/workload/req)",
+        "planner-coder agent separation",
+        "adversarial auditor",
+        "leading indicator feedback",
+        "critic-guided refinement",
+        "design brief + whiteboard memory",
+        "correctness gate + auditor test injection"
+      ],
+      "builds_on": [
+        "Claude Code (Opus 4.7)",
+        "Bespoke OLAP",
+        "AlphaEvolve",
+        "FunSearch",
+        "FASTER"
+      ],
+      "contrasts_with": [
+        "hand-tuned general-purpose systems",
+        "naive Claude Code (reward-hacking)",
+        "knob-tuning approaches"
+      ],
+      "industrial_applicability": "medium",
+      "applicability_why": "合成成本 -79/spec，12h/50 轮，适合需要频繁特化 KV store 的场景；但需写 spec cards + evaluator + 人工审核 auditor 发现，非零人工",
+      "prerequisites": "Claude Code + Opus 4.7, GCP n2-standard-64, correct-by-construction correctness gate",
+      "knowledge_locations": [
+        "architecture/agent-native-design/"
+      ],
+      "review_rounds": {
+        "r1_tldr": "三张 spec cards → agent pipeline 合成专用 KV store，18/18 spec 超越通用系统，最高 4.6×；核心教训：spec > code、auditor 是反 reward-hacking 关键、leading indicators > 吞吐",
+        "r2_insights": "planner/coder 分离防止设计坍缩；auditor 捕获重算替代存储/identity index/reward hack；spec 不完整是根本瓶颈；leading indicators 缺失导致 3.75× 性能退化",
+        "r3_relations": "与 PithTrain 互补：PithTrain 关注 agent 效率（如何让 agent 更好地使用框架），Jitskit 关注 agent 能力（如何让 agent 从零合成系统）",
+        "r4_refute": "仅单节点 KV store；正确性简化为 byte-level equality；generality to other system classes 未验证；evaluator 仅 30s benchmark 窗口遗漏 GC/long-tail 问题"
+      }
     }
   ],
   "technique_index": {
@@ -5218,6 +5284,27 @@
     ],
     "sync atomicity via per-KV sync ID": [
       "MlsDisk(FAST'26)"
+    ],
+    "spec cards (env/workload/req)": [
+      "Jitskit(arXiv'26)"
+    ],
+    "planner-coder agent separation": [
+      "Jitskit(arXiv'26)"
+    ],
+    "adversarial auditor": [
+      "Jitskit(arXiv'26)"
+    ],
+    "leading indicator feedback": [
+      "Jitskit(arXiv'26)"
+    ],
+    "critic-guided refinement": [
+      "Jitskit(arXiv'26)"
+    ],
+    "design brief + whiteboard memory": [
+      "Jitskit(arXiv'26)"
+    ],
+    "correctness gate + auditor test injection": [
+      "Jitskit(arXiv'26)"
     ]
   },
   "tag_index": {
@@ -5854,6 +5941,33 @@
     ],
     "SEV": [
       "MlsDisk(FAST'26)"
+    ],
+    "JIT systems": [
+      "Jitskit(arXiv'26)"
+    ],
+    "agent synthesis": [
+      "Jitskit(arXiv'26)"
+    ],
+    "KV store": [
+      "Jitskit(arXiv'26)"
+    ],
+    "reward hacking": [
+      "Jitskit(arXiv'26)"
+    ],
+    "adversarial auditor": [
+      "Jitskit(arXiv'26)"
+    ],
+    "specification": [
+      "Jitskit(arXiv'26)"
+    ],
+    "system specialization": [
+      "Jitskit(arXiv'26)"
+    ],
+    "LLM coding agent": [
+      "Jitskit(arXiv'26)"
+    ],
+    "arXiv": [
+      "Jitskit(arXiv'26)"
     ]
   }
 }
