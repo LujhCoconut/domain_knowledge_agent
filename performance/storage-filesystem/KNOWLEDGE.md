@@ -17,6 +17,7 @@
 | 宽条带矢量纠删码 | template-unfold structure, sub-packetization, vector codes, wide-stripe erasure coding, repair throughput | WiseCode(OSDI'26) |
 | EBS 镜像预加载与 I/O 预测 | lazy loading, slow I/O, preloading, genetic algorithm, score-based block selection, zero-shot prediction, Jaccard Index, Alibaba EBS | ThinkAhead(FAST'26) |
 | 容器镜像快速启动文件系统 | MPHF, FUSE, on-demand pulling, container cold start, metadata lookup, kernel-space caching, sparse files | CoFS(FAST'26) |
+| 文件同步 Delta 生成加速 | delta sync, storage-layer checksum reuse, CRC32C, checksum combining, rsync, dsync, Sky computing, collaborative delta generation | SkySync(FAST'26) |
 | 云本地存储三代演进与混合架构 | SPDK user-space, ASIC DPU offloading, ASIC+SoC co-design, SR-IOV, context switch elimination, ML I/O dispatch, local-cloud hybrid, S3-FIFO caching | Latte(FAST'26) |
 | 磁带归档存储系统 | tape library, drive thrashing, asynchronous tape pool, batched erasure coding, dedicated drives, lifetime-based placement, bulk scheduling, wrap-aware read reordering | TapeOBS(FAST'26) |
 | 排序增强压缩只读文件系统 | sort-enhanced compression, data mixture, similarity graph, subgraph partitioning, METIS, hotness grouping, read-only FS compression, chunk deduplication | RubikFS(FAST'26) |
@@ -420,3 +421,31 @@ EBS-index 消耗 ~57% 节点内存，存储利用率受内存约束。I/O compac
 - **"双哈希函数（不同 key→相同 value）+ 并行解析"是可推广的加速模式**：任何需要"从不同入口定位同一资源"的场景都可以用多个 MPHF 共享 value array，然后并行查询。例如：文件系统同时按 inode number 和 full path 查找、DNS 同时按域名和 IP 查找。
 - **"kernel-space cache + sparse file + SEEK_HOLE 是零开销 FUSE 缓存的通用方案"**：利用 host 文件系统的 sparse file 特性，不需要维护独立的缓存元数据——vfs_lseek(SEEK_HOLE) 本身就是缓存命中判断。适用于任何 FUSE-based 读缓存场景。
 - **"异步写回 + inode lock 的并发控制"**：cofs-snapshotter 异步写数据到镜像文件，cofs-driver 通过 host FS 的 inode lock 保证与 lseek 互斥——不引入额外锁机制，直接利用 VFS 已有的并发控制。这是一个"不要重新发明锁"的工程范例。
+
+---
+
+## 文件同步 Delta 生成加速 (SkySync)
+
+### 核心问题
+
+文件同步（file sync）在 Sky computing（多云互操作）场景下至关重要，但现有 delta sync 方案（rsync 的 FSC + Adler32/MD5、dsync 的 CDC + FastFP/SHA-1）的 delta generation 三步——chunking、checksum 计算、chunk searching——消耗大量 CPU。rsync 需要在客户端逐字节滑动窗口计算 Adler32，dsync 需要对文件中所有字节计算 FastFP weak checksum。这些开销不仅拖慢同步本身，还在 Sky computing 场景下与主计算任务争抢 CPU。核心观察：现代存储系统（块设备 dm-verity、文件系统 BTRFS/ZFS/EXT4、去重系统、分布式系统 HDFS/BlueStore）早已为数据完整性、错误检测、去重等目的维护了丰富的 checksum 元数据，但从未被用于 delta sync。
+
+### 关键洞察
+
+1. **"存储层已有的 checksum 就是免费的 delta generation 原料"**：dm-verity 的 SHA-256、BTRFS/ZFS 的 CRC32C、HDFS 的 MD5、去重系统的 SHA——这些 checksum 已经计算好了。SkySync 直接从存储层提取（user-space tools / system APIs / custom functions），将 delta sync 的 checksum 计算开销降至接近零。
+
+2. **"CRC32C 的线性可组合性使任意 block 大小的衍生成为 O(1)"**：如果 client 使用 4KB chunk 的 CRC32C 而 server 使用 8KB，传统方案需要重新计算 8KB 的 checksum。SkySync 利用 CRC32C 在 GF(2) 上的线性性——CRC(S) = CRC(A′) ⊕ CRC(B)，只需 XOR 两个已有 4KB 的 CRC32C 即可得到 8KB 的 CRC32C——零 I/O、纯寄存器操作。
+
+3. **"Cuckoo hashing + CRC32C 的低碰撞率压缩 chunk searching"**：rsync 的 hash table 用 16-bit hash code → 32-bit Adler32 → MD5 三级查找，需要频繁指针解引用。SkySync 用 32-bit CRC32C 作为一次性 key，Cuckoo hashing 两候选桶（primary = CRC mod 2^l，secondary = primary ⊕ 2^{l-1}），每个桶 4 entries → load factor 0.85-0.91 → collision 远少于 16-bit hash。插入和查找都是 O(1) 且 cache-friendly。
+
+4. **"增强通信协议解决 client/server 异构性"**：现实场景中 client 和 server 可能有不同的 chunk size 和 checksum 类型。SkySync 在握手阶段协商——FSC 模式按 server 的 chunk size 对齐（client 用线性组合从自己的小 chunk 衍生大 chunk 的 CRC32C），CDC 模式按 client 的 chunk 策略对齐。Checksum 类型冲突时优先选 server 的（减少 server 端计算开销），弱校验默认 CRC32C（最广泛支持），强校验优先 SHA-256/SHA-1。
+
+- 来源：SkySync(FAST'26)
+
+### 实践启发
+
+- **"已有的元数据是最便宜的——不要重新算"**：这一原则不仅适用于 checksum——存储系统的 compression dictionary、database 的 statistics、file system 的 extent map——任何已有元数据都可能被上层应用复用。SkySync 的核心方法论是"识别现有 metadata → 简单适配/组合 → 替代重新计算"。这适用于 CDN cache 验证（复用 object store 的 ETag）、P2P 文件分发（复用 torrent 的 piece hash）、WAN optimization（复用 FS compression 信息）。
+- **"线性可组合的校验函数有额外价值——选 CRC32C 而非 MurmurHash 可能不是 performance 而是 composability 的考量"**：如果校验函数有 XOR 友好的代数结构（如 CRC 族），不同粒度的校验可以高效推导。这在存储系统中形成"校验层级"（4KB → 8KB → 64KB → file-level），每一层都是下层的 XOR 组合。
+- **"Cuckoo hashing 的 deterministic secondary bucket 是低冲突查找的轻量方案"**：不需要完整的多哈希函数——用同一 CRC32C 的 bit-flip 作为第二候选位置，既保证两个桶在不同半区，又消除额外哈希计算开销。适用于任何"一个 key、两个候选位置"的查找优化。
+- **"通信协议层的协商是跨异构系统复用的关键"**：SkySync 不讲"你必须用我的格式"——而是定义握手协议协商 chunk size 和 checksum type → 双方对齐到最低共同分母 → 各自用本地已有元数据高效提供所需 checksum。这是 "interoperability through negotiation" 的典范。
+
