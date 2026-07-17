@@ -1,7 +1,7 @@
 {
   "$schema": "metadata.schema.json",
   "generated_at": "2026-07-17",
-  "total_papers": 174,
+  "total_papers": 175,
   "papers": [
     {
       "canonical_name": "PithTrain(arXiv'26)",
@@ -5576,6 +5576,59 @@
         "r3_relations": "",
         "r4_refute": "NoDaP 是 offline oracle 不能直接部署；ML 模型依赖 trace 训练，跨 workload 泛化能力未系统评估"
       }
+    },
+    {
+      "canonical_name": "MOST(FAST'26)",
+      "title": "Getting the MOST out of your Storage Hierarchy with Mirror-Optimized Storage Tiering",
+      "authors": [
+        "Kaiwei Tu",
+        "Kan Wu",
+        "Andrea C. Arpaci-Dusseau",
+        "Remzi H. Arpaci-Dusseau"
+      ],
+      "conference": "FAST",
+      "year": 2026,
+      "url": "https://www.usenix.org/system/files/fast26-tu.pdf",
+      "date_read": "2026-07-17",
+      "type": "论文-系统",
+      "tags": [
+        "tiering",
+        "mirroring",
+        "load balancing",
+        "heterogeneous storage",
+        "CacheLib",
+        "FAST"
+      ],
+      "techniques": [
+        "partial hot-data mirroring",
+        "routing-based load adaptation",
+        "Mirror-Optimized Storage Tiering (MOST)",
+        "Cerberus storage layer"
+      ],
+      "builds_on": [
+        "CacheLib",
+        "tiering",
+        "mirroring",
+        "caching"
+      ],
+      "contrasts_with": [
+        "pure tiering (migration overhead)",
+        "caching (capacity waste)",
+        "full mirroring (2× space)",
+        "striping (static)"
+      ],
+      "industrial_applicability": "medium",
+      "applicability_why": "基于 CacheLib 实现用户态存储管理层的 Cerberus prototype，需集成到现有存储栈",
+      "prerequisites": "异构存储 hierarchy + CacheLib 缓存框架",
+      "knowledge_locations": [
+        "performance/storage-filesystem/"
+      ],
+      "review_rounds": {
+        "r1_tldr": "镜像少量热数据 + tiering 冷数据：结合 mirroring 负载均衡（routing 替代 migration）与 tiering 空间效率，在 I/O 密集动态 workload 下优于纯方案",
+        "r2_insights": "Partial mirroring = space-efficiency of tiering + load-balancing of mirroring；routing-based adaptation 更快且写更少；modern storage hierarchy 的 device 边界模糊使二分法失效",
+        "r3_relations": "",
+        "r4_refute": "仅在两 device 简化模型上验证；热数据识别准确性是关键但依赖 CacheLib；极端 write-heavy + 动态场景下 mirroring 的 double-write 开销未充分量化"
+      }
     }
   ],
   "technique_index": {
@@ -5797,6 +5850,18 @@
     ],
     "WAF upper-bound analysis": [
       "DOGI(FAST'26)"
+    ],
+    "partial hot-data mirroring": [
+      "MOST(FAST'26)"
+    ],
+    "routing-based load adaptation": [
+      "MOST(FAST'26)"
+    ],
+    "Mirror-Optimized Storage Tiering (MOST)": [
+      "MOST(FAST'26)"
+    ],
+    "Cerberus storage layer": [
+      "MOST(FAST'26)"
     ]
   },
   "tag_index": {
@@ -6327,6 +6392,7 @@
       "GCR(FAST'26)",
       "HATS(FAST'26)",
       "Latte(FAST'26)",
+      "MOST(FAST'26)",
       "MlsDisk(FAST'26)",
       "OdinANN(FAST'26)",
       "PPC+MAIO(FAST'26)",
@@ -6602,6 +6668,21 @@
     ],
     "heuristic": [
       "DOGI(FAST'26)"
+    ],
+    "tiering": [
+      "MOST(FAST'26)"
+    ],
+    "mirroring": [
+      "MOST(FAST'26)"
+    ],
+    "load balancing": [
+      "MOST(FAST'26)"
+    ],
+    "heterogeneous storage": [
+      "MOST(FAST'26)"
+    ],
+    "CacheLib": [
+      "MOST(FAST'26)"
     ]
   }
 }
