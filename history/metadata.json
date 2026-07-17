@@ -1,7 +1,7 @@
 {
   "$schema": "metadata.schema.json",
   "generated_at": "2026-07-17",
-  "total_papers": 173,
+  "total_papers": 174,
   "papers": [
     {
       "canonical_name": "PithTrain(arXiv'26)",
@@ -5519,6 +5519,63 @@
         "r3_relations": "",
         "r4_refute": "仅测试了一款商用手机；ZUFS 依赖 F2FS log-structured 设计（非通用 FS）；长期碎片化下的性能退化仍需观察"
       }
+    },
+    {
+      "canonical_name": "DOGI(FAST'26)",
+      "title": "DOGI: Data Placement with Oracle-Guided Insights for Log-Structured Systems",
+      "authors": [
+        "Jeeyun Kim",
+        "Seonggyun Oh",
+        "Jungwoo Kim",
+        "Jisung Park",
+        "Jaeho Kim",
+        "Sungjin Lee",
+        "Sam H. Noh"
+      ],
+      "conference": "FAST",
+      "year": 2026,
+      "url": "https://www.usenix.org/system/files/fast26-kim-jeeyun.pdf",
+      "date_read": "2026-07-17",
+      "type": "论文-方法",
+      "tags": [
+        "log-structured",
+        "WAF",
+        "data placement",
+        "GC",
+        "ML",
+        "oracle",
+        "heuristic",
+        "SSD",
+        "FAST"
+      ],
+      "techniques": [
+        "NoDaP oracle baseline",
+        "hybrid heuristic+ML invalidation prediction",
+        "GC-written block lifetime estimation",
+        "dynamic group configuration",
+        "WAF upper-bound analysis"
+      ],
+      "builds_on": [
+        "log-structured storage (LFS)",
+        "F2FS",
+        "segment-based GC"
+      ],
+      "contrasts_with": [
+        "heuristic-only data placement",
+        "ML-only prediction (inference latency)"
+      ],
+      "industrial_applicability": "medium",
+      "applicability_why": "需要在存储固件内集成轻量 ML 推理引擎；模拟+zoned device prototype 验证，非生产部署",
+      "prerequisites": "日志结构存储系统 + 可收集 block lifetime trace",
+      "knowledge_locations": [
+        "performance/storage-filesystem/"
+      ],
+      "review_rounds": {
+        "r1_tldr": "NoDaP oracle 确立 WAF 上界，DOGI 混合启发式+ML + 动态 group 配置：WAF -23.2%、写吞吐 +13.3% vs SOTA",
+        "r2_insights": "Oracle-first 方法论先量化理论上界再分析差距；heuristic fast-path + ML hard-case 消除推理延迟；GC-written block 的剩余寿命多样性是关键但被忽视的维度；group granularity vs accuracy trade-off 是通用维度",
+        "r3_relations": "",
+        "r4_refute": "NoDaP 是 offline oracle 不能直接部署；ML 模型依赖 trace 训练，跨 workload 泛化能力未系统评估"
+      }
     }
   ],
   "technique_index": {
@@ -5725,6 +5782,21 @@
     ],
     "sequence-number-based ordering": [
       "ZUFS(FAST'26)"
+    ],
+    "NoDaP oracle baseline": [
+      "DOGI(FAST'26)"
+    ],
+    "hybrid heuristic+ML invalidation prediction": [
+      "DOGI(FAST'26)"
+    ],
+    "GC-written block lifetime estimation": [
+      "DOGI(FAST'26)"
+    ],
+    "dynamic group configuration": [
+      "DOGI(FAST'26)"
+    ],
+    "WAF upper-bound analysis": [
+      "DOGI(FAST'26)"
     ]
   },
   "tag_index": {
@@ -6249,6 +6321,7 @@
       "CoFS(FAST'26)",
       "Cylon(FAST'26)",
       "DMTree(FAST'26)",
+      "DOGI(FAST'26)",
       "DPAS(FAST'26)",
       "DisCoGC(FAST'26)",
       "GCR(FAST'26)",
@@ -6361,6 +6434,7 @@
       "MlsDisk(FAST'26)"
     ],
     "log-structured": [
+      "DOGI(FAST'26)",
       "MlsDisk(FAST'26)"
     ],
     "LSM-tree": [
@@ -6440,6 +6514,7 @@
       "DisCoGC(FAST'26)"
     ],
     "GC": [
+      "DOGI(FAST'26)",
       "DisCoGC(FAST'26)",
       "ZUFS(FAST'26)"
     ],
@@ -6462,6 +6537,7 @@
       "DisCoGC(FAST'26)"
     ],
     "SSD": [
+      "DOGI(FAST'26)",
       "DisCoGC(FAST'26)"
     ],
     "ByteDance": [
@@ -6511,6 +6587,21 @@
     ],
     "JEDEC": [
       "ZUFS(FAST'26)"
+    ],
+    "WAF": [
+      "DOGI(FAST'26)"
+    ],
+    "data placement": [
+      "DOGI(FAST'26)"
+    ],
+    "ML": [
+      "DOGI(FAST'26)"
+    ],
+    "oracle": [
+      "DOGI(FAST'26)"
+    ],
+    "heuristic": [
+      "DOGI(FAST'26)"
     ]
   }
 }
