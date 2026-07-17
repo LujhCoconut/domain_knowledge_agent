@@ -1,7 +1,7 @@
 {
   "$schema": "metadata.schema.json",
   "generated_at": "2026-07-17",
-  "total_papers": 180,
+  "total_papers": 181,
   "papers": [
     {
       "canonical_name": "PithTrain(arXiv'26)",
@@ -5909,6 +5909,60 @@
         "r3_relations": "",
         "r4_refute": "仅测试单 storage server；userspace FS 需应用适配；无大规模多租户验证"
       }
+    },
+    {
+      "canonical_name": "HARE(FAST'26)",
+      "title": "Cache-Centric Multi-Resource Allocation for Storage Services",
+      "authors": [
+        "Chenhao Ye",
+        "Shawn Zhong",
+        "Andrea C. Arpaci-Dusseau",
+        "Remzi H. Arpaci-Dusseau"
+      ],
+      "conference": "FAST",
+      "year": 2026,
+      "url": "https://www.usenix.org/system/files/fast26-ye.pdf",
+      "date_read": "2026-07-17",
+      "type": "论文-方法",
+      "tags": [
+        "cache",
+        "multi-resource",
+        "fairness",
+        "DRF",
+        "miss ratio curve",
+        "multi-tenant",
+        "Redis",
+        "FAST"
+      ],
+      "techniques": [
+        "two-phase harvest/redistribute",
+        "cache-resource demand correlation model",
+        "ghost cache MRC",
+        "HopperKV (Redis+DynamoDB)",
+        "BunnyFS (microkernel NVMe FS)"
+      ],
+      "builds_on": [
+        "DRF (Dominant Resource Fairness)",
+        "Memshare",
+        "Redis",
+        "DynamoDB"
+      ],
+      "contrasts_with": [
+        "DRF (fixed demand vectors)",
+        "Memshare (unfair cache-only)"
+      ],
+      "industrial_applicability": "medium",
+      "applicability_why": "HopperKV 基于 Redis+DynamoDB 可直接部署；ghost cache 和 MRC 技术成熟；需要集成到多租户资源调度器",
+      "prerequisites": "多租户存储服务 + ghost cache 基础设施",
+      "knowledge_locations": [
+        "performance/storage-filesystem/"
+      ],
+      "review_rounds": {
+        "r1_tldr": "Cache 大小改变其他资源需求 → 两阶段 harvest/redistribute + ghost MRC + 公平分配, HopperKV +1.9×, BunnyFS +1.4×",
+        "r2_insights": "Cache size→miss ratio→I/O/network demand 的传播链是根本但被忽视的维度；ghost cache 廉价构建 MRC；harvest 发现最有价值的资源类型来收割",
+        "r3_relations": "与 MOST(tiering+mirroring)互补：MOST 在设备层、HARE 在租户层——都利用部分复制(cache/mirror)改变资源分配效率",
+        "r4_refute": "Ghost cache 只模拟大小变化→不模拟替换策略变化；MRC 估计在非 LRU-like 策略下可能不准"
+      }
     }
   ],
   "technique_index": {
@@ -6220,6 +6274,21 @@
     ],
     "NVMe-over-RDMA bypass": [
       "CetoFS(FAST'26)"
+    ],
+    "two-phase harvest/redistribute": [
+      "HARE(FAST'26)"
+    ],
+    "cache-resource demand correlation model": [
+      "HARE(FAST'26)"
+    ],
+    "ghost cache MRC": [
+      "HARE(FAST'26)"
+    ],
+    "HopperKV (Redis+DynamoDB)": [
+      "HARE(FAST'26)"
+    ],
+    "BunnyFS (microkernel NVMe FS)": [
+      "HARE(FAST'26)"
     ]
   },
   "tag_index": {
@@ -6752,6 +6821,7 @@
       "DisCoGC(FAST'26)",
       "FS-PI(FAST'26)",
       "GCR(FAST'26)",
+      "HARE(FAST'26)",
       "HATS(FAST'26)",
       "LESS(FAST'26)",
       "Latte(FAST'26)",
@@ -7145,6 +7215,27 @@
     ],
     "remote storage": [
       "CetoFS(FAST'26)"
+    ],
+    "cache": [
+      "HARE(FAST'26)"
+    ],
+    "multi-resource": [
+      "HARE(FAST'26)"
+    ],
+    "fairness": [
+      "HARE(FAST'26)"
+    ],
+    "DRF": [
+      "HARE(FAST'26)"
+    ],
+    "miss ratio curve": [
+      "HARE(FAST'26)"
+    ],
+    "multi-tenant": [
+      "HARE(FAST'26)"
+    ],
+    "Redis": [
+      "HARE(FAST'26)"
     ]
   }
 }
