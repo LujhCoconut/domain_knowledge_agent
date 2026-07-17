@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Parse reading-log.md and generate history/metadata.json with all paper entries."""
+"""Parse reading-log.md and generate history/metadata.json with all paper entries.
+
+WARNING: bootstrap only — 只用于初次批量生成或灾难性重建。
+         日常新增论文由 Claude 解析时直接追加 JSON 条目，不经过此脚本。
+         三个硬编码 map (loc_map / keyword_map / guess_applicability) 不覆盖新领域，
+         新领域需手动编辑 metadata.json 或在此脚本中补齐映射。
+"""
 import json
 import re
 import sys
