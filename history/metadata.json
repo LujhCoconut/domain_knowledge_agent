@@ -1,7 +1,7 @@
 {
   "$schema": "metadata.schema.json",
   "generated_at": "2026-07-17",
-  "total_papers": 170,
+  "total_papers": 171,
   "papers": [
     {
       "canonical_name": "PithTrain(arXiv'26)",
@@ -5313,6 +5313,82 @@
         "r3_relations": "与 SkySync(FAST'26) 同一作者组双论文：SkySync 省 CPU（复用已有元数据）、ParaSync 用更多核加速（并行化剩余阶段），两者可叠加",
         "r4_refute": ""
       }
+    },
+    {
+      "canonical_name": "DisCoGC(FAST'26)",
+      "title": "Discard-Based Garbage Collection for Distributed Log-Structured Storage Systems in ByteDance",
+      "authors": [
+        "Runhua Bian",
+        "Liqiang Zhang",
+        "Jinxin Liu",
+        "Jiacheng Zhang",
+        "Jianong Zhong",
+        "Jiahao Gu",
+        "Hao Guo",
+        "Zhihong Guo",
+        "Yunhao Li",
+        "Fenghao Zhang",
+        "Jiangkun Zhao",
+        "Yangming Chen",
+        "Guojun Li",
+        "Ruwen Fan",
+        "Haijia Shen",
+        "Chengyu Dong",
+        "Yao Wang",
+        "Rui Shi",
+        "Jiwu Shu",
+        "Youyou Lu"
+      ],
+      "conference": "FAST",
+      "year": 2026,
+      "url": "https://www.usenix.org/system/files/fast26-bian.pdf",
+      "date_read": "2026-07-17",
+      "type": "论文-系统(工业)",
+      "tags": [
+        "append-only storage",
+        "GC",
+        "discard",
+        "compaction",
+        "write amplification",
+        "space amplification",
+        "TCO",
+        "EC stripe",
+        "SSD",
+        "ByteDance",
+        "production",
+        "FAST"
+      ],
+      "techniques": [
+        "discard-based GC (DisCoGC)",
+        "boundary extension for EC alignment",
+        "discard-friendly EC stripe alignment",
+        "discard batching and scheduling",
+        "compaction-discard coordinated scheduling",
+        "trim filter + merger",
+        "garbage ratio estimation with boundary loss",
+        "dual-mode compaction (GR-based vs LogFile-count-based)"
+      ],
+      "builds_on": [
+        "appendix-only log storage",
+        "compaction-based GC",
+        "SSD trim command"
+      ],
+      "contrasts_with": [
+        "compaction-only GC (WA-SA trade-off)",
+        "aggressive compaction (TCO not reduced)"
+      ],
+      "industrial_applicability": "high",
+      "applicability_why": "已在 ByteDance 生产集群部署（数千集群、EB 级数据），WA -25%、TCO -20%（每月节省数百万美元），对 AI/Spark/倒排索引等常见 workload 效果显著",
+      "prerequisites": "append-only 日志存储系统 + SSD trim 支持 + workload 有连续覆盖写特性",
+      "knowledge_locations": [
+        "performance/storage-filesystem/"
+      ],
+      "review_rounds": {
+        "r1_tldr": "在 ByteDance exabyte 级生产环境中用 discard+compaction 组合 GC 打破 WA-SA trade-off：WA -25%，TCO -20%（每月数百万美元），对连续覆盖写 workload 特别有效",
+        "r2_insights": "连续覆盖写使 discard 比 compaction 更高效；边界损失是多层存储栈 discard 的核心 waste；boundary extension + EC stripe alignment 消除 >50% 边界损失；discard + compaction 独立调度协同；trim filter 优先大范围回收",
+        "r3_relations": "与传统 LFS/HDFS append-only 系统不同：DisCoGC 在 compaction 和 discard 之间引入协同而非替代关系",
+        "r4_refute": "workload 依赖连续覆盖写特性（ByteDance 特有）；随机/碎片化 workload 仅 2-5% TCO improvement；只评估了 ByteStore 单一系统"
+      }
     }
   ],
   "technique_index": {
@@ -5462,6 +5538,30 @@
     ],
     "seqID-based out-of-order patching": [
       "ParaSync(FAST'26)"
+    ],
+    "discard-based GC (DisCoGC)": [
+      "DisCoGC(FAST'26)"
+    ],
+    "boundary extension for EC alignment": [
+      "DisCoGC(FAST'26)"
+    ],
+    "discard-friendly EC stripe alignment": [
+      "DisCoGC(FAST'26)"
+    ],
+    "discard batching and scheduling": [
+      "DisCoGC(FAST'26)"
+    ],
+    "compaction-discard coordinated scheduling": [
+      "DisCoGC(FAST'26)"
+    ],
+    "trim filter + merger": [
+      "DisCoGC(FAST'26)"
+    ],
+    "garbage ratio estimation with boundary loss": [
+      "DisCoGC(FAST'26)"
+    ],
+    "dual-mode compaction (GR-based vs LogFile-count-based)": [
+      "DisCoGC(FAST'26)"
     ]
   },
   "tag_index": {
@@ -5523,6 +5623,7 @@
     "production": [
       "ACOS(FAST'26)",
       "DiTing(OSDI'26)",
+      "DisCoGC(FAST'26)",
       "ECO(OSDI'26)",
       "LMetric(OSDI'26)",
       "OpGuard(OSDI'26)",
@@ -5983,6 +6084,7 @@
       "Cylon(FAST'26)",
       "DMTree(FAST'26)",
       "DPAS(FAST'26)",
+      "DisCoGC(FAST'26)",
       "GCR(FAST'26)",
       "HATS(FAST'26)",
       "Latte(FAST'26)",
@@ -6165,6 +6267,36 @@
     ],
     "pipeline": [
       "ParaSync(FAST'26)"
+    ],
+    "append-only storage": [
+      "DisCoGC(FAST'26)"
+    ],
+    "GC": [
+      "DisCoGC(FAST'26)"
+    ],
+    "discard": [
+      "DisCoGC(FAST'26)"
+    ],
+    "compaction": [
+      "DisCoGC(FAST'26)"
+    ],
+    "write amplification": [
+      "DisCoGC(FAST'26)"
+    ],
+    "space amplification": [
+      "DisCoGC(FAST'26)"
+    ],
+    "TCO": [
+      "DisCoGC(FAST'26)"
+    ],
+    "EC stripe": [
+      "DisCoGC(FAST'26)"
+    ],
+    "SSD": [
+      "DisCoGC(FAST'26)"
+    ],
+    "ByteDance": [
+      "DisCoGC(FAST'26)"
     ]
   }
 }

@@ -19,6 +19,7 @@
 | 容器镜像快速启动文件系统 | MPHF, FUSE, on-demand pulling, container cold start, metadata lookup, kernel-space caching, sparse files | CoFS(FAST'26) |
 | 文件同步 Delta 生成加速 | delta sync, storage-layer checksum reuse, CRC32C, checksum combining, rsync, dsync, Sky computing, collaborative delta generation | SkySync(FAST'26) |
 | 文件同步细粒度并行化 | CDC, parallel chunking, streaming chunk matching, pipelined delta reconstruction, CRC32C combination, relative offset elimination | ParaSync(FAST'26) |
+| 分布式日志存储 GC 优化 | append-only, discard, compaction, write amplification, space amplification, TCO, EC stripe alignment, boundary loss, trim optimization | DisCoGC(FAST'26) |
 | 云本地存储三代演进与混合架构 | SPDK user-space, ASIC DPU offloading, ASIC+SoC co-design, SR-IOV, context switch elimination, ML I/O dispatch, local-cloud hybrid, S3-FIFO caching | Latte(FAST'26) |
 | 磁带归档存储系统 | tape library, drive thrashing, asynchronous tape pool, batched erasure coding, dedicated drives, lifetime-based placement, bulk scheduling, wrap-aware read reordering | TapeOBS(FAST'26) |
 | 排序增强压缩只读文件系统 | sort-enhanced compression, data mixture, similarity graph, subgraph partitioning, METIS, hotness grouping, read-only FS compression, chunk deduplication | RubikFS(FAST'26) |
@@ -476,3 +477,32 @@ CDC-based 文件同步（dsync 等）的三阶段——File Chunking、Chunk Mat
 - **"绝对偏移 + seqID 解耦顺序语义是 pipeline 并行化的通用模式"**：任何"操作 B 的偏移依赖操作 A 的结果"的串行约束，都可以通过预先分配绝对坐标 + 乱序执行 + seqID 保证最终一致性来打破。适用场景：并行 log replay、并行 WAL apply、并行 delta application、并行 checkpoint restore。
 - **"动态分片处理偏斜工作负载——按 collision rate 而非 key space 分配"**：不按 key 范围分配（某些 key 对应极多 item）而按 item 总数均分，是处理 hash table 并行查找偏斜的轻量方案。适用于任何"key space 极度偏斜 + 需要并行处理"的场景。
 - **"SkySync 和 ParaSync 是互补的——前者省 CPU（复用已有元数据），后者用更多核加速（并行化剩余阶段）"**：一个做"少做工作"，一个做"多人同时做"。两者可以叠加——用 SkySync 的存储层 checksum 直接当 ParaSync 的 sub-chunk checksum 输入，省掉第一阶段 checksum 计算。这是同一个作者组在 FAST '26 上的双论文策略。
+
+---
+
+## 分布式日志存储 GC 优化 (DisCoGC)
+
+### 核心问题
+
+在生产 append-only 分布式存储系统（ByteDance ByteStore + ByteDrive，管理数千集群、EB 级数据）中，compaction 是唯一的 GC 手段——将有效数据从旧 LogFile 重写到新 LogFile，删除旧文件。但这产生了 write amplification (WA) 和 space amplification (SA) 之间的根本 trade-off：积极 compaction 降低 SA 但升高 WA（重写有效数据 + SSD 磨损 + 争抢前台 I/O），导致每月数百万美元的 TCO 浪费。更高效的做法不是优化 compaction 本身，而是在 compaction 之外引入 discard（直接在 LogFile 上标记无效范围为空洞，不移动有效数据）。但这引入四个跨层挑战：分配单元不对齐导致的边界损失、频繁 metadata 更新、LogFile 碎片化增加元数据开销、SSD trim IOPS 不足。
+
+### 关键洞察
+
+1. **"丢弃 (discard) 而非移动 (compaction)：对连续覆盖写场景，discard 的常数时间空间回收打破 WA-SA 互锁"**：ByteDance 的 AI 模型下载/推理、倒排索引构建、Spark 等 workload 中超过一半的写覆盖 ≥256 KiB 连续范围，且覆盖在秒级发生 → LogFile 上形成大量连续无效数据 → 一次 discard 请求即可回收该范围，无需 compaction 重写任何有效数据。
+
+2. **"边界损失 (boundary loss) 是 discard 在多层存储栈中面临的核心 waste"**：两层损失：(1) EC loss——discard 必须以完整 EC stripe 为单位（如 4+1 EC 的 64 KiB 倍数），但 BlockServer 发出的 discard 是任意大小的；(2) Cluster loss——UFS 的分配单元是 cluster（4×4064B），但 EC stripe packet 通常为 4 KiB 倍数而不对齐。累积边界损失可超 50%。DisCoGC 通过三种机制消除：**边界扩展**（当前 discard 范围与前一次相邻时向相邻方向扩展数个 MiB）、**EC stripe size 与 cluster size 对齐**（stripe unit = n×4×4064B）、**边界损失的 garbage ratio 修正**（GR 估算中加入 LPB = 半个 EC stripe 长度的边界损失）。
+
+3. **"Discard batching + 并行度控制 + 流量控制三件套解决 metadata 抖动"**：Per-LogFile batching（最高 64 ranges/request）—一次性修改 MetaPage；segment-level 并行度上限 P，每轮选 top-k 最大 discard 范围；IOPS 流量控制限速，防止突发 discard 争抢 SSD I/O。
+
+4. **"Compaction 和 discard 独立调度但协同决策"**：Compaction 处理 discard 无法回收的残留（边界损失累积、碎片化小 garbage、LogFile 数量膨胀导致元数据开销），在两种模式间切换：正常模式选 garbage ratio 最高的 top-k segment；元数据压力模式（LogFile count 超阈值）选 LogFile 最多的 top-k segment 合并。这使 compaction 的 WA 代价只花在"discard 无能为力"的残余碎片上。
+
+5. **"Trim filter + merger 解决 SSD trim IOPS 受限"**：trim filter 优先提交大范围（利用率高）、merger 合并小范围为大范围 → 在有限 trim IOPS 下最大化 SSD 物理空间回收效率。
+
+- 来源：DisCoGC(FAST'26)
+
+### 实践启发
+
+- **"Discard-in-place 替代 copy-and-delete 是日志存储 GC 的第四范式"**：传统日志 GC 三阶段——mark（标记无效）、copy（移动有效数据）、delete（删除旧文件）。DisCoGC 引入了第四种操作：discard（直接在原地标记空洞），将"移动数据"从 GC 路径中消除。适用场景：任何有大量连续覆盖写的 append-only 存储系统（Kafka、Pulsar、HDFS append、WAL-based DB）。
+- **"边界损失 (boundary loss) 是多层存储栈中任何 range-based 操作的通用挑战"**：不只是 discard——trim、deallocate、hole punch 等任何跨层的"范围回收"操作，如果不同层的分配单元不对齐，边界垃圾会系统性堆积。统一对齐不同层的分配单元（cluster=EC stripe unit）是一劳永逸的解决。
+- **"用 garbage ratio 修正公式处理不完美的回收"**：`GR = 1 - ValidData/(TotalData + LPB * Boundaries)`——不假装 discard 能完美回收所有空间，而是在垃圾比计算中显式建模"每次 discard 的期望边界损失"，使 GC 调度决策更准确。
+- **"SSD trim IOPS 是稀缺资源——优先 trim 大范围"**：trim filter 将有限 trim IOPS 集中在大范围上 → 最大的空间回收效率。这是"资源分配反映回报递减规律"的简单但关键的设计选择。
