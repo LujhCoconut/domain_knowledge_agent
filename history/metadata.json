@@ -1,7 +1,7 @@
 {
   "$schema": "metadata.schema.json",
   "generated_at": "2026-07-17",
-  "total_papers": 184,
+  "total_papers": 185,
   "papers": [
     {
       "canonical_name": "PithTrain(arXiv'26)",
@@ -6125,6 +6125,62 @@
         "r3_relations": "",
         "r4_refute": "仅测试 NVMe/CXL-SSD；未与 DPDK/SPDK 在最具可比性配置下全面对比"
       }
+    },
+    {
+      "canonical_name": "Unum(NSDI'26)",
+      "title": "Unum: A New Framework for Network Control",
+      "authors": [
+        "Jiayi Chen",
+        "Nihal Sharma",
+        "Debajit Chakraborty",
+        "Saurabh Agarwal",
+        "Jeffrey Zhou",
+        "Aditya Akella",
+        "Sanjay Shakkottai"
+      ],
+      "conference": "NSDI",
+      "year": 2026,
+      "url": "https://www.usenix.org/system/files/nsdi26-chen-jiayi.pdf",
+      "date_read": "2026-07-17",
+      "type": "论文-方法",
+      "tags": [
+        "network control",
+        "congestion control",
+        "ABR",
+        "Transformer",
+        "self-attention",
+        "state estimation",
+        "ML",
+        "NSDI"
+      ],
+      "techniques": [
+        "Transformer-based state embedder",
+        "unified network embedding",
+        "RTT-timescale state prediction",
+        "pre-trained embeddings"
+      ],
+      "builds_on": [
+        "BBR",
+        "PCC",
+        "MPC-based congestion control"
+      ],
+      "contrasts_with": [
+        "instantaneous/running-average metrics",
+        "heuristic-based CC",
+        "RL-based CC"
+      ],
+      "industrial_applicability": "medium",
+      "applicability_why": "需要预训练 Transformer + 集成到现有 CC/ABR 控制器；可增强现有网络控制算法",
+      "prerequisites": "网络信号 trace 训练数据, 低延迟推理环境",
+      "knowledge_locations": [
+        "network/os-networking/"
+      ],
+      "review_rounds": {
+        "r1_tldr": "Transformer self-attention 替代瞬时/滑动平均 metric 学习网络潜在状态嵌入，改善拥塞控制和 ABR 自适应",
+        "r2_insights": "延迟信号使瞬时 metric 只能近似当前状态；Transformer 可以从历史 RTT 级信号中恢复潜在因素（workload/path dynamics/cross-controller interaction）",
+        "r3_relations": "",
+        "r4_refute": "仅验证了 congestion control + ABR 两个任务；预训练数据覆盖范围决定泛化能力；推理延迟是否满足实时需求未充分讨论"
+      }
     }
   ],
   "technique_index": {
@@ -6487,6 +6543,18 @@
     ],
     "unified poll+interrupt completion": [
       "UnICom(FAST'26)"
+    ],
+    "Transformer-based state embedder": [
+      "Unum(NSDI'26)"
+    ],
+    "unified network embedding": [
+      "Unum(NSDI'26)"
+    ],
+    "RTT-timescale state prediction": [
+      "Unum(NSDI'26)"
+    ],
+    "pre-trained embeddings": [
+      "Unum(NSDI'26)"
     ]
   },
   "tag_index": {
@@ -7300,7 +7368,8 @@
       "DOGI(FAST'26)"
     ],
     "ML": [
-      "DOGI(FAST'26)"
+      "DOGI(FAST'26)",
+      "Unum(NSDI'26)"
     ],
     "oracle": [
       "DOGI(FAST'26)"
@@ -7492,6 +7561,27 @@
     ],
     "CXL-SSD": [
       "UnICom(FAST'26)"
+    ],
+    "network control": [
+      "Unum(NSDI'26)"
+    ],
+    "congestion control": [
+      "Unum(NSDI'26)"
+    ],
+    "ABR": [
+      "Unum(NSDI'26)"
+    ],
+    "Transformer": [
+      "Unum(NSDI'26)"
+    ],
+    "self-attention": [
+      "Unum(NSDI'26)"
+    ],
+    "state estimation": [
+      "Unum(NSDI'26)"
+    ],
+    "NSDI": [
+      "Unum(NSDI'26)"
     ]
   }
 }
