@@ -26,6 +26,7 @@
 | 存储分层镜像优化 | tiering, mirroring, load balancing, hot data replication, heterogeneous storage, bandwidth utilization, CacheLib | MOST(FAST'26) |
 | 缓冲 I/O 架构重构 | buffered I/O, page cache, scrap buffer, partial-page write, read-before-write, high-bandwidth SSD, write buffering | WSBuffer(FAST'26) |
 | MSR 编码降级读优化 | MSR, erasure coding, degraded read, partial-chunk reconstruction, coding layout, I/O amplification, storage cluster | DRBoost(FAST'26) |
+| 纠删码修复 I/O 效率 | erasure coding, sub-packetization, I/O seeks, repair bandwidth, RS codes, HDFS, extended sub-stripes | LESS(FAST'26) |
 | 云本地存储三代演进与混合架构 | SPDK user-space, ASIC DPU offloading, ASIC+SoC co-design, SR-IOV, context switch elimination, ML I/O dispatch, local-cloud hybrid, S3-FIFO caching | Latte(FAST'26) |
 | 磁带归档存储系统 | tape library, drive thrashing, asynchronous tape pool, batched erasure coding, dedicated drives, lifetime-based placement, bulk scheduling, wrap-aware read reordering | TapeOBS(FAST'26) |
 | 排序增强压缩只读文件系统 | sort-enhanced compression, data mixture, similarity graph, subgraph partitioning, METIS, hotness grouping, read-only FS compression, chunk deduplication | RubikFS(FAST'26) |
@@ -655,3 +656,26 @@ MSR (Minimum Storage Regenerating) codes 在理论上同时提供最优容错（
 
 - **"Partial reconstruction 是任何 block-level erasure coding 系统的通用优化"**：不限于 MSR——任何需要"读取 k 个 chunk 才能重建任何一个"的编码方案，都可以用 partial read + 矩阵子块缓存来减少 I/O。适用于 RS、LRC、Butterfly codes 等。
 - **"跨请求的数据复用是 erasure-coded 存储中未被充分利用的维度"**：传统系统将所有 I/O 都视为独立的随机请求→但 degraded reads 天然具有"从同一组节点的同一 stripe 中读取"的聚合特性→inter-stripe 和 intra-stripe 复用可以显著降低总修复带宽。
+
+---
+
+## 纠删码修复 I/O 效率 (LESS)
+
+### 核心问题
+
+纠删码修复中不仅要关注修复带宽（传输数据量），还要关注 I/O seek 次数——Cla
+
+y codes 等 I/O-optimal 编码以指数级 sub-packetization 为代价减少数据访问量，产生大量非连续 I/O 导致修复性能在 I/O 受限环境下反而退化。LRC 等方案虽 I/O 友好但增加存储冗余。核心挑战：在小 sub-packetization 下同时减少 data access 和 I/O seeks，且各 block 间平衡降低。
+
+### 关键洞察
+
+1. **"Layering extended sub-stripes——多层扩展子条带平铺在标准 RS stripe 之上"**：LESS 在每个 RS stripe 上叠加多个 extended sub-stripe（每个 sub-stripe 的 stripe 长度更长，即包含更多 block）。单 block 修复在一个 extended sub-stripe 内完成 → data access 和 I/O seek 同时降低。Sub-packetization 可做到仅为 2（vs Clay codes 的指数级）。
+
+2. **"Configurable sub-packetization 允许在 data access vs I/O seeks 之间 trade-off"**：更少 sub-stripe → 更少 I/O seeks 但更多 data access；更多 sub-stripe → 相反。系统可根据硬件特征（HDD vs SSD、网络带宽 vs IOPS）配置最优平衡点。
+
+- 来源：LESS(FAST'26)
+
+### 实践启发
+
+- **"Data access 和 I/O seeks 是两个独立维度——最优编码需要同时优化两者"**：传统编码理论只关注前者，但现代存储的 IOPS 瓶颈使后者同等甚至更重要。这适用于任何"理论最优但实践中 seek 恶化的"编码设计。
+- **"Layering 是可配置性的关键——调整子条带层数即可改变修复特征而不需要新的编码实现"**：同一套 RS 基础 → 不同层数 → 不同行为。这是"数学结构 + 配置化工程"的典范。

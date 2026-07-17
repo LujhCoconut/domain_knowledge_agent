@@ -1,7 +1,7 @@
 {
   "$schema": "metadata.schema.json",
   "generated_at": "2026-07-17",
-  "total_papers": 177,
+  "total_papers": 178,
   "papers": [
     {
       "canonical_name": "PithTrain(arXiv'26)",
@@ -5741,6 +5741,59 @@
         "r3_relations": "",
         "r4_refute": "依赖 DSB 缓存矩阵子块→需要额外的内存管理；只在 MSR codes 上验证，通用性待确认"
       }
+    },
+    {
+      "canonical_name": "LESS(FAST'26)",
+      "title": "LESS is More for I/O-Efficient Repairs in Erasure-Coded Storage",
+      "authors": [
+        "Keyun Cheng",
+        "Guodong Li",
+        "Xiaolu Li",
+        "Sihuang Hu",
+        "Patrick P. C. Lee"
+      ],
+      "conference": "FAST",
+      "year": 2026,
+      "url": "https://www.usenix.org/system/files/fast26-cheng.pdf",
+      "date_read": "2026-07-17",
+      "type": "论文-编码理论",
+      "tags": [
+        "erasure coding",
+        "repair",
+        "sub-packetization",
+        "RS codes",
+        "I/O seeks",
+        "HDFS",
+        "Clay codes",
+        "FAST"
+      ],
+      "techniques": [
+        "layered extended sub-stripes",
+        "configurable sub-packetization",
+        "RS-based construction",
+        "balanced data access + I/O seek reduction"
+      ],
+      "builds_on": [
+        "RS codes",
+        "Clay codes",
+        "LRC"
+      ],
+      "contrasts_with": [
+        "Clay codes (exponential sub-packetization, many seeks)",
+        "LRC (higher storage overhead)"
+      ],
+      "industrial_applicability": "medium",
+      "applicability_why": "基于 RS code→可集成到现有 HDFS/Ceph 部署；HDFS prototype 验证；需修改编码层",
+      "prerequisites": "RS-coded storage system, sub-stripe support",
+      "knowledge_locations": [
+        "performance/storage-filesystem/"
+      ],
+      "review_rounds": {
+        "r1_tldr": "Layered extended sub-stripes 同时降低修复 data access 和 I/O seeks，sub-packetization 仅需 2 vs Clay codes 指数级, HDFS 实测验证",
+        "r2_insights": "Data access和I/O seeks是两个独立维度需联合优化；layering提供可配置的trade-off；小sub-packetization使数学与工程同时可行",
+        "r3_relations": "与DRBoost互补：DRBoost优化degraded read的partial reconstruction、LESS优化repair的编码结构",
+        "r4_refute": "multi-block repair在某些情况下仍需fallback到全stripe重建"
+      }
     }
   ],
   "technique_index": {
@@ -6007,6 +6060,18 @@
     ],
     "fragmentation-free storage layout": [
       "DRBoost(FAST'26)"
+    ],
+    "layered extended sub-stripes": [
+      "LESS(FAST'26)"
+    ],
+    "configurable sub-packetization": [
+      "LESS(FAST'26)"
+    ],
+    "RS-based construction": [
+      "LESS(FAST'26)"
+    ],
+    "balanced data access + I/O seek reduction": [
+      "LESS(FAST'26)"
     ]
   },
   "tag_index": {
@@ -6537,6 +6602,7 @@
       "DisCoGC(FAST'26)",
       "GCR(FAST'26)",
       "HATS(FAST'26)",
+      "LESS(FAST'26)",
       "Latte(FAST'26)",
       "MOST(FAST'26)",
       "MlsDisk(FAST'26)",
@@ -6853,7 +6919,8 @@
       "DRBoost(FAST'26)"
     ],
     "erasure coding": [
-      "DRBoost(FAST'26)"
+      "DRBoost(FAST'26)",
+      "LESS(FAST'26)"
     ],
     "degraded read": [
       "DRBoost(FAST'26)"
@@ -6866,6 +6933,24 @@
     ],
     "storage cluster": [
       "DRBoost(FAST'26)"
+    ],
+    "repair": [
+      "LESS(FAST'26)"
+    ],
+    "sub-packetization": [
+      "LESS(FAST'26)"
+    ],
+    "RS codes": [
+      "LESS(FAST'26)"
+    ],
+    "I/O seeks": [
+      "LESS(FAST'26)"
+    ],
+    "HDFS": [
+      "LESS(FAST'26)"
+    ],
+    "Clay codes": [
+      "LESS(FAST'26)"
     ]
   }
 }
