@@ -1,7 +1,7 @@
 {
   "$schema": "metadata.schema.json",
   "generated_at": "2026-07-17",
-  "total_papers": 181,
+  "total_papers": 182,
   "papers": [
     {
       "canonical_name": "PithTrain(arXiv'26)",
@@ -5963,6 +5963,59 @@
         "r3_relations": "与 MOST(tiering+mirroring)互补：MOST 在设备层、HARE 在租户层——都利用部分复制(cache/mirror)改变资源分配效率",
         "r4_refute": "Ghost cache 只模拟大小变化→不模拟替换策略变化；MRC 估计在非 LRU-like 策略下可能不准"
       }
+    },
+    {
+      "canonical_name": "Lockify(FAST'26)",
+      "title": "Lockify: Understanding Linux Distributed Lock Management Overheads in Shared Storage",
+      "authors": [
+        "Taeyoung Park",
+        "Yunjae Jo",
+        "Daegyu Han",
+        "Beomseok Nam",
+        "Jaehyun Hwang"
+      ],
+      "conference": "FAST",
+      "year": 2026,
+      "url": "https://www.usenix.org/system/files/fast26-park.pdf",
+      "date_read": "2026-07-17",
+      "type": "论文-系统",
+      "tags": [
+        "DLM",
+        "shared-disk",
+        "GFS2",
+        "OCFS2",
+        "distributed lock",
+        "Linux kernel",
+        "scalability",
+        "FAST"
+      ],
+      "techniques": [
+        "self-owner notification",
+        "asynchronous ownership management",
+        "fast-path for single-client files"
+      ],
+      "builds_on": [
+        "Linux kernel DLM",
+        "O2CB",
+        "GFS2",
+        "OCFS2"
+      ],
+      "contrasts_with": [
+        "kernel DLM (sync ownership lookup)",
+        "O2CB"
+      ],
+      "industrial_applicability": "medium",
+      "applicability_why": "Linux 内核 DLM 改进，可直接集成到 GFS2/OCFS2；需要修改 DLM 子系统",
+      "prerequisites": "GFS2/OCFS2 或类似 shared-disk FS + Linux kernel DLM",
+      "knowledge_locations": [
+        "performance/storage-filesystem/"
+      ],
+      "review_rounds": {
+        "r1_tldr": "Self-owner notification + 异步 ownership 消除低竞争下 DLM 跨节点通信，GFS2/OCFS2 吞吐 +6.4× vs kernel DLM",
+        "r2_insights": "97% 文件仅单 client 访问→DLM 的 lock-owner 查找是浪费；self-grant 初始锁消除第一次 round-trip；异步 ownership 管理将关键路径降为本地操作",
+        "r3_relations": "",
+        "r4_refute": "仅测试 GFS2/OCFS2（两个 shared-disk FS）；高竞争场景下的性能未系统评估"
+      }
     }
   ],
   "technique_index": {
@@ -6289,6 +6342,15 @@
     ],
     "BunnyFS (microkernel NVMe FS)": [
       "HARE(FAST'26)"
+    ],
+    "self-owner notification": [
+      "Lockify(FAST'26)"
+    ],
+    "asynchronous ownership management": [
+      "Lockify(FAST'26)"
+    ],
+    "fast-path for single-client files": [
+      "Lockify(FAST'26)"
     ]
   },
   "tag_index": {
@@ -6825,6 +6887,7 @@
       "HATS(FAST'26)",
       "LESS(FAST'26)",
       "Latte(FAST'26)",
+      "Lockify(FAST'26)",
       "MOST(FAST'26)",
       "MlsDisk(FAST'26)",
       "OdinANN(FAST'26)",
@@ -7236,6 +7299,27 @@
     ],
     "Redis": [
       "HARE(FAST'26)"
+    ],
+    "DLM": [
+      "Lockify(FAST'26)"
+    ],
+    "shared-disk": [
+      "Lockify(FAST'26)"
+    ],
+    "GFS2": [
+      "Lockify(FAST'26)"
+    ],
+    "OCFS2": [
+      "Lockify(FAST'26)"
+    ],
+    "distributed lock": [
+      "Lockify(FAST'26)"
+    ],
+    "Linux kernel": [
+      "Lockify(FAST'26)"
+    ],
+    "scalability": [
+      "Lockify(FAST'26)"
     ]
   }
 }
