@@ -1,7 +1,7 @@
 {
   "$schema": "metadata.schema.json",
   "generated_at": "2026-07-17",
-  "total_papers": 171,
+  "total_papers": 172,
   "papers": [
     {
       "canonical_name": "PithTrain(arXiv'26)",
@@ -5389,6 +5389,71 @@
         "r3_relations": "与传统 LFS/HDFS append-only 系统不同：DisCoGC 在 compaction 和 discard 之间引入协同而非替代关系",
         "r4_refute": "workload 依赖连续覆盖写特性（ByteDance 特有）；随机/碎片化 workload 仅 2-5% TCO improvement；只评估了 ByteStore 单一系统"
       }
+    },
+    {
+      "canonical_name": "PolarStore(FAST'26)",
+      "title": "PolarStore: High-Performance Data Compression for Large-Scale Cloud-Native Databases",
+      "authors": [
+        "Qingda Hu",
+        "Xinjun Yang",
+        "Feifei Li",
+        "Junru Li",
+        "Ya Lin",
+        "Yuqi Zhou",
+        "Yicong Zhu",
+        "Junwei Zhang",
+        "Rongbiao Xie",
+        "Ling Zhou",
+        "Bin Wu",
+        "Wenchao Zhou"
+      ],
+      "conference": "FAST",
+      "year": 2026,
+      "url": "https://www.usenix.org/system/files/fast26-hu.pdf",
+      "date_read": "2026-07-17",
+      "type": "论文-系统(工业)",
+      "tags": [
+        "cloud-native database",
+        "compression",
+        "CSD",
+        "PolarDB",
+        "hardware-software co-design",
+        "FTL",
+        "redo log",
+        "Alibaba Cloud",
+        "production",
+        "FAST"
+      ],
+      "techniques": [
+        "dual-layer compression (software+CSD)",
+        "FTL byte-granularity indexing",
+        "4KB-aligned software output + CSD hardware compression",
+        "redo log direct compressed write",
+        "compression-aware cluster scheduling",
+        "PolarCSD hardware offload"
+      ],
+      "builds_on": [
+        "PolarDB",
+        "CSD (computational storage)",
+        "zstd",
+        "lz4"
+      ],
+      "contrasts_with": [
+        "software-only compression (B+-Tree page comp, LSM-Tree comp)",
+        "hardware-only compression (fixed 4KB + fixed algorithm)"
+      ],
+      "industrial_applicability": "high",
+      "applicability_why": "已在阿里 PolarDB 数千台服务器、100+ PB 生产部署，3.55× 压缩比，约 60% 存储成本降低，性能与未压缩集群持平",
+      "prerequisites": "PolarDB 或类似存储-计算分离架构 + PolarCSD 硬件",
+      "knowledge_locations": [
+        "performance/storage-filesystem/"
+      ],
+      "review_rounds": {
+        "r1_tldr": "双层压缩（软件灵活参数 + PolarCSD 硬件 FTL 字节索引）实现 3.55× 压缩比、60% 成本降低，阿里 PolarDB 千台服务器 100+ PB 生产部署",
+        "r2_insights": "FTL 已有 LBA→PBA 映射→字节级压缩索引几乎免费；软件 4KB-aligned 输出恰好匹配 NVMe CSD 约束；redo log 零额外 CPU 开销；compression-aware scheduling 均衡集群物理空间",
+        "r3_relations": "",
+        "r4_refute": "依赖自研 PolarCSD 硬件（非通用）；双层压缩对已压缩数据（图片/视频）收益有限；FSM 压缩比均衡的前提是 workload 混合度足够"
+      }
     }
   ],
   "technique_index": {
@@ -5562,6 +5627,24 @@
     ],
     "dual-mode compaction (GR-based vs LogFile-count-based)": [
       "DisCoGC(FAST'26)"
+    ],
+    "dual-layer compression (software+CSD)": [
+      "PolarStore(FAST'26)"
+    ],
+    "FTL byte-granularity indexing": [
+      "PolarStore(FAST'26)"
+    ],
+    "4KB-aligned software output + CSD hardware compression": [
+      "PolarStore(FAST'26)"
+    ],
+    "redo log direct compressed write": [
+      "PolarStore(FAST'26)"
+    ],
+    "compression-aware cluster scheduling": [
+      "PolarStore(FAST'26)"
+    ],
+    "PolarCSD hardware offload": [
+      "PolarStore(FAST'26)"
     ]
   },
   "tag_index": {
@@ -5629,6 +5712,7 @@
       "OpGuard(OSDI'26)",
       "PithTrain(arXiv'26)",
       "Pluto(OSDI'26)",
+      "PolarStore(FAST'26)",
       "Prism(OSDI'26)",
       "RosenBridge(FAST'26)",
       "SkySync(FAST'26)",
@@ -6092,6 +6176,7 @@
       "OdinANN(FAST'26)",
       "PPC+MAIO(FAST'26)",
       "ParaSync(FAST'26)",
+      "PolarStore(FAST'26)",
       "RASK(FAST'26)",
       "RosenBridge(FAST'26)",
       "RubikFS(FAST'26)",
@@ -6297,6 +6382,30 @@
     ],
     "ByteDance": [
       "DisCoGC(FAST'26)"
+    ],
+    "cloud-native database": [
+      "PolarStore(FAST'26)"
+    ],
+    "compression": [
+      "PolarStore(FAST'26)"
+    ],
+    "CSD": [
+      "PolarStore(FAST'26)"
+    ],
+    "PolarDB": [
+      "PolarStore(FAST'26)"
+    ],
+    "hardware-software co-design": [
+      "PolarStore(FAST'26)"
+    ],
+    "FTL": [
+      "PolarStore(FAST'26)"
+    ],
+    "redo log": [
+      "PolarStore(FAST'26)"
+    ],
+    "Alibaba Cloud": [
+      "PolarStore(FAST'26)"
     ]
   }
 }

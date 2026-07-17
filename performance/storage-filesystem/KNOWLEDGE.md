@@ -20,6 +20,7 @@
 | 文件同步 Delta 生成加速 | delta sync, storage-layer checksum reuse, CRC32C, checksum combining, rsync, dsync, Sky computing, collaborative delta generation | SkySync(FAST'26) |
 | 文件同步细粒度并行化 | CDC, parallel chunking, streaming chunk matching, pipelined delta reconstruction, CRC32C combination, relative offset elimination | ParaSync(FAST'26) |
 | 分布式日志存储 GC 优化 | append-only, discard, compaction, write amplification, space amplification, TCO, EC stripe alignment, boundary loss, trim optimization | DisCoGC(FAST'26) |
+| 云原生数据库压缩存储 | dual-layer compression, CSD, hardware-software co-design, FTL byte-indexing, PolarDB, redo log optimization, compression-aware scheduling | PolarStore(FAST'26) |
 | 云本地存储三代演进与混合架构 | SPDK user-space, ASIC DPU offloading, ASIC+SoC co-design, SR-IOV, context switch elimination, ML I/O dispatch, local-cloud hybrid, S3-FIFO caching | Latte(FAST'26) |
 | 磁带归档存储系统 | tape library, drive thrashing, asynchronous tape pool, batched erasure coding, dedicated drives, lifetime-based placement, bulk scheduling, wrap-aware read reordering | TapeOBS(FAST'26) |
 | 排序增强压缩只读文件系统 | sort-enhanced compression, data mixture, similarity graph, subgraph partitioning, METIS, hotness grouping, read-only FS compression, chunk deduplication | RubikFS(FAST'26) |
@@ -506,3 +507,30 @@ CDC-based 文件同步（dsync 等）的三阶段——File Chunking、Chunk Mat
 - **"边界损失 (boundary loss) 是多层存储栈中任何 range-based 操作的通用挑战"**：不只是 discard——trim、deallocate、hole punch 等任何跨层的"范围回收"操作，如果不同层的分配单元不对齐，边界垃圾会系统性堆积。统一对齐不同层的分配单元（cluster=EC stripe unit）是一劳永逸的解决。
 - **"用 garbage ratio 修正公式处理不完美的回收"**：`GR = 1 - ValidData/(TotalData + LPB * Boundaries)`——不假装 discard 能完美回收所有空间，而是在垃圾比计算中显式建模"每次 discard 的期望边界损失"，使 GC 调度决策更准确。
 - **"SSD trim IOPS 是稀缺资源——优先 trim 大范围"**：trim filter 将有限 trim IOPS 集中在大范围上 → 最大的空间回收效率。这是"资源分配反映回报递减规律"的简单但关键的设计选择。
+
+---
+
+## 云原生数据库压缩存储 (PolarStore)
+
+### 核心问题
+
+云原生 RDBMS（PolarDB、Aurora、Hyperscale）通过存储-计算分离实现了弹性计算资源，但存储成本仍然是用户最关心的开销。数据压缩是直观的解决方案，但现有两类方案在 RDBMS 场景中都有致命缺陷：**软件压缩**（B+-Tree page compression、LSM-Tree compaction 内压缩）面临 index granularity 与空间利用率的 trade-off——4KB 索引粒度浪费 80.5% 空间（vs byte-level），但细粒度索引引入复杂管理开销和 GC；**硬件压缩**（CSD 计算存储驱动器）受限于固定 4KB 输入和不可更改的压缩算法，无法针对不同 workload 调整压缩参数（complex algorithm + large input for cold data, simple + small for hot data）。
+
+### 关键洞察
+
+1. **"双层压缩 = 软件层灵活参数（4KB-aligned blocks）+ 硬件层 FTL byte-granularity indexing（零额外开销）"**：软件层先将 16KB DB page 压缩到 4KB-aligned blocks，提供灵活的压缩参数（可变 input size + 可选算法）；PolarCSD 硬件层利用已有的 flash translation layer (FTL) 实现 byte-level 索引——FTL 本身就要做 LBA→PBA 映射，将压缩后的变长数据自然地嵌入 FTL 管理，无需软件层额外维护字节级索引。这是**利用硬件已有基础设施消除软件开销**的经典设计。
+
+2. **"Redo log 写路径零额外 CPU 开销——直接写压缩 blocks"**：PolarDB 的 redo log 写是事务提交的关键路径。传统压缩方案需要 CPU 压缩→然后写入，PolarStore 的软件层产生 4KB-aligned 压缩 blocks 后直接写入，硬件层（PolarCSD）透明地进一步压缩，**不消耗 host CPU 周期**。读路径同理——PolarCSD 硬件解压在存储端完成，host 收到的是解压后的数据。
+
+3. **"CSD 的 4KB NVMe 兼容约束恰好映射到数据库的 4KB 块对齐需求"**：CSD 因 NVMe 标准只支持 4KB 对齐的 LBA → 软件层自然产生 4KB-aligned blocks → 硬件层的 byte-level FTL 索引在 block 内部管理变长压缩数据 → 两层压缩的边界恰好对齐，不需要额外的 block-level 索引开销。
+
+4. **"Compression-aware scheduling at cluster level——跨存储节点均衡压缩比"**：不同用户数据的压缩比差异大（文本 vs 图片 vs 已压缩数据）→ 如果按逻辑空间均匀分配，压缩比高的 node 物理空间利用率低、压缩比低的 node 过早满。PolarStore 在分配 chunk 时按压缩比加权，使各节点的物理空间利用率均衡，避免热点。
+
+- 来源：PolarStore(FAST'26)
+
+### 实践启发
+
+- **"利用已有硬件基础设施（FTL）消除软件层的索引开销"**：CSD 的 FTL 已经管理了 LBA→PBA 映射→如果变长压缩数据放在 FTL 管理域内，字节级索引几乎是免费的。这是一个通用原则：**找硬件已有能力→将软件瓶颈映射到硬件能力上**。
+- **"双层压缩中的边界对齐是设计关键"**：软件层输出 4KB-aligned blocks→硬件层正好以 4KB LBA 接收→FTL 在 block 内部管理变长→两层之间不需要额外映射层。这是"对齐幸运"的一个案例——NVMe 的 4KB 约束恰好匹配数据库的 page 粒度。
+- **"Compression-aware cluster scheduling 对其他多租户存储系统也适用"**：当不同租户/用户的压缩比差异大时，按逻辑空间均匀分配会导致物理利用率失衡。按压缩比加权分配是轻量解决方案。
+
