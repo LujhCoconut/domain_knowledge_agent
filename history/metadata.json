@@ -1,7 +1,7 @@
 {
   "$schema": "metadata.schema.json",
   "generated_at": "2026-07-17",
-  "total_papers": 163,
+  "total_papers": 164,
   "papers": [
     {
       "canonical_name": "PithTrain(arXiv'26)",
@@ -4856,9 +4856,105 @@
         "r3_relations": "",
         "r4_refute": ""
       }
+    },
+    {
+      "canonical_name": "ThinkAhead(FAST'26)",
+      "title": "How Soon is Now? Preloading Images for Virtual Disks with ThinkAhead",
+      "authors": [
+        "Xinqi Chen",
+        "Yu Zhang",
+        "Erci Xu",
+        "Changhong Wang",
+        "Jifei Yi",
+        "Qiuping Wang",
+        "Shizhuo Sun",
+        "Zhongyu Wang",
+        "Haonan Wu",
+        "Junping Wu",
+        "Hailin Peng",
+        "Rong Liu",
+        "Yinhu Wang",
+        "Jiaji Zhu",
+        "Jiesheng Wu",
+        "Guangtao Xue",
+        "Patrick P. C. Lee"
+      ],
+      "conference": "FAST",
+      "year": 2026,
+      "url": "https://www.usenix.org/system/files/fast26-chen.pdf",
+      "date_read": "2026-07-17",
+      "type": "论文-系统",
+      "tags": [
+        "EBS",
+        "image loading",
+        "preloading",
+        "lazy loading",
+        "genetic algorithm",
+        "zero-shot",
+        "cloud storage",
+        "block storage",
+        "FAST",
+        "production",
+        "Alibaba"
+      ],
+      "techniques": [
+        "PDF-based trace categorization",
+        "PCC clustering",
+        "score-based block selection",
+        "genetic algorithm parameter search",
+        "Jaccard Index similarity matching",
+        "three-tier zero-shot prediction",
+        "three-priority-queue preloading"
+      ],
+      "builds_on": [
+        "Leap",
+        "DADI",
+        "VMT"
+      ],
+      "contrasts_with": [
+        "lazy loading",
+        "caching-based approaches",
+        "peer-to-peer distribution",
+        "FlacIO"
+      ],
+      "industrial_applicability": "high",
+      "applicability_why": "已在阿里巴巴 EBS 生产环境部署，处理百万级日 VD 创建，1000 行 Python + 6000 行 C++，可复现的 trace 和代码已公开",
+      "prerequisites": "块存储系统需要 trace 收集基础设施（blockserver-level tracing）+ 分析系统",
+      "knowledge_locations": [
+        "performance/storage-filesystem/",
+        "operations/cloud-infrastructure/"
+      ],
+      "review_rounds": {
+        "r1_tldr": "数据驱动 EBS 镜像预加载：160K VD trace 分析发现 lazy loading 致 40% slow I/O，PDF+PCC+遗传算法预测访问序列，hit rate +7.27×，tail latency -98.7%，阿里生产部署",
+        "r2_insights": "PDF 自动聚类 + PCC 分组解决 I/O trace 变异，遗传算法 per-带宽-bin 搜索最优 (α,β) 参数，三级 Jaccard 过滤处理 zero-shot",
+        "r3_relations": "",
+        "r4_refute": ""
+      }
     }
   ],
-  "technique_index": {},
+  "technique_index": {
+    "PDF-based trace categorization": [
+      "ThinkAhead(FAST'26)"
+    ],
+    "PCC clustering": [
+      "ThinkAhead(FAST'26)"
+    ],
+    "score-based block selection": [
+      "ThinkAhead(FAST'26)"
+    ],
+    "genetic algorithm parameter search": [
+      "ThinkAhead(FAST'26)"
+    ],
+    "Jaccard Index similarity matching": [
+      "ThinkAhead(FAST'26)"
+    ],
+    "three-tier zero-shot prediction": [
+      "ThinkAhead(FAST'26)"
+    ],
+    "three-priority-queue preloading": [
+      "ThinkAhead(FAST'26)"
+    ]
+  },
   "tag_index": {
     "GPU": [
       "ADAngel(OSDI'26)",
@@ -4925,6 +5021,7 @@
       "Pluto(OSDI'26)",
       "Prism(OSDI'26)",
       "Strata(OSDI'26)",
+      "ThinkAhead(FAST'26)",
       "Umap(OSDI'26)"
     ],
     "ASPLOS": [
@@ -5384,8 +5481,36 @@
       "SolidAttention(FAST'26)",
       "SysSpec(FAST'26)",
       "TapeOBS(FAST'26)",
+      "ThinkAhead(FAST'26)",
       "WARP(FAST'26)",
       "Xerxes(FAST'26)"
+    ],
+    "EBS": [
+      "ThinkAhead(FAST'26)"
+    ],
+    "image loading": [
+      "ThinkAhead(FAST'26)"
+    ],
+    "preloading": [
+      "ThinkAhead(FAST'26)"
+    ],
+    "lazy loading": [
+      "ThinkAhead(FAST'26)"
+    ],
+    "genetic algorithm": [
+      "ThinkAhead(FAST'26)"
+    ],
+    "zero-shot": [
+      "ThinkAhead(FAST'26)"
+    ],
+    "cloud storage": [
+      "ThinkAhead(FAST'26)"
+    ],
+    "block storage": [
+      "ThinkAhead(FAST'26)"
+    ],
+    "Alibaba": [
+      "ThinkAhead(FAST'26)"
     ]
   }
 }

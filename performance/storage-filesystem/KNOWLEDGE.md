@@ -15,6 +15,7 @@
 | mmap-IO DFS 矩阵访问优化 | file-backed matrix, abstraction mismatch, page-granularity network I/O, DFS-agnostic runtime, lazy-expansion cache | Umap(OSDI'26) |
 | 聚类型 SSD ANNS 生产系统 | clustering-based ANNS, userspace storage stack, learned pruning, GPU-accelerated index, SSD bandwidth | Helmsman(OSDI'26) |
 | 宽条带矢量纠删码 | template-unfold structure, sub-packetization, vector codes, wide-stripe erasure coding, repair throughput | WiseCode(OSDI'26) |
+| EBS 镜像预加载与 I/O 预测 | lazy loading, slow I/O, preloading, genetic algorithm, score-based block selection, zero-shot prediction, Jaccard Index, Alibaba EBS | ThinkAhead(FAST'26) |
 | 云本地存储三代演进与混合架构 | SPDK user-space, ASIC DPU offloading, ASIC+SoC co-design, SR-IOV, context switch elimination, ML I/O dispatch, local-cloud hybrid, S3-FIFO caching | Latte(FAST'26) |
 | 磁带归档存储系统 | tape library, drive thrashing, asynchronous tape pool, batched erasure coding, dedicated drives, lifetime-based placement, bulk scheduling, wrap-aware read reordering | TapeOBS(FAST'26) |
 | 排序增强压缩只读文件系统 | sort-enhanced compression, data mixture, similarity graph, subgraph partitioning, METIS, hotness grouping, read-only FS compression, chunk deduplication | RubikFS(FAST'26) |
@@ -361,3 +362,34 @@ EBS-index 消耗 ~57% 节点内存，存储利用率受内存约束。I/O compac
 - **"Log-structured leaf = append + batch GC 的 leaf 级 LSM"**：同时受益于 append 的写入效率和 GC 的批量处理——不限于 range index。适用场景：任何有大量 overwrite/覆盖更新的 in-memory index
 - **"Two-stage GC = common case 极简 + complex case 完整"**：先统计 common case 占比→若高→用极简方案处理→仅剩余部分用完整方案。通用工程模式
 - **"User-provided MergeRange/DivideValue = 索引与 value 语义解耦"**：索引不知道 value 是否可合并/如何拆分→通过回调函数让上层定义 value 语义→索引保持通用性。这是"机制与策略分离"在索引设计中的应用
+
+---
+
+## EBS 镜像预加载与 I/O 预测 (ThinkAhead)
+
+### 核心问题
+
+云 EBS 服务中，虚拟机/容器的虚拟磁盘（VD）从远程 OSS 创建的 lazy loading 模式虽然将冷启动时间从分钟级降到亚秒级，但首次访问数据块时仍需从远程拉取，导致大量 slow I/O。在阿里巴巴 EBS 的生产 trace 分析中，lazy loading 贡献了超过 40% 的慢 I/O（端到端延迟 >1s），成为 SLO 违规的主导因素。现有方案各有局限：缓存受限于 VD 创建的时空动态性，P2P 受限于镜像热度，新镜像抽象（FlacIO）不兼容已有生产架构。
+
+### 关键洞察
+
+1. **"同一镜像的 VD 创建存在强 intra-image 访问模式相似性"**：84.8% 的公共镜像和 72.7% 的用户自定义镜像中，同一镜像创建的不同 VD 的 I/O 序列余弦相似度 >0.9。这是数据驱动预加载可行性的基础——可以从历史 trace 推断未来访问。
+
+2. **"PDF 峰值 + local minima 自动分类替代手工标注"**：不同 VD 创建的访问块数存在 PDF 多峰分布（如 40 GiB 镜像可访问 400 或 500 块，分别为 4% 和 2.5% 的 trace 序列）。ThinkAhead 用 PDF 的 local maxima→local minima 自动切分 category，再用 PCC 聚类进一步分组，无需人工标注，解决了 I/O 重排和丢失带来的 trace 变异问题。
+
+3. **"Score = α×access_count + β×time_factor + (1-α-β)×min_time — 但 α,β 必须对每个网络带宽 bin 单独用遗传算法搜索"**：手工硬编码参数无法跨镜像和带宽条件通用（Figure 24 证明了 this）。遗传算法在无监督场景下自动搜索最优 (α,β) 组合，使预加载序列适应动态网络条件。
+
+4. **"Zero-shot 的三级选择策略"**：对于无历史 trace 的镜像，先选同一 image family → 再选同一用户 → 再选元数据特征完全匹配的镜像，用 Jaccard Index 量化相似度。P50 JI 从同 family 不同用户的 0.08 跃升到同 metadata 的 0.87，说明分层过滤的必要性。
+
+5. **"Hit rate > Accuracy 的设计取舍"**：在磁盘预加载场景中所有 fetched 数据最终都会被用到（与 CPU 缓存不同），因此 ThinkAhead 优先最大化 hit rate 而非 accuracy。这解释了为什么 HB（全知策略）的 accuracy 高但 latency 反而更差——它忽略了 access count，在低带宽下排队严重。
+
+- 来源：ThinkAhead(FAST'26)
+
+### 实践启发
+
+- **"PDF 自动聚类是处理 noisy trace 序列的轻量方案"**：不需要 ML/深度学习，仅用统计分布 + PCC + 聚类即可有效从变异大的 trace 中提取稳定 pattern。适用于任何"同一任务多次执行的 trace 分析"场景（CI/CD pipeline profiling、数据库 query plan regression、分布式 job 性能分析）。
+- **"遗传算法 + 带宽 binning 是处理动态网络条件下参数搜索的通用模式"**：将连续带宽离散化→每个 bin 独立搜索参数→运行时按实时带宽查表→切换。适用场景：CDN routing、streaming ABR、adaptive prefetching。
+- **"Zero-shot 的层级相似度匹配可推广到任何 cold-start 问题"**：先 metadata 粗选→再 feature 精选→逐层放宽直到找到足够的训练数据。适用于推荐系统 cold-start、新 VM 类型 sizing、新容器镜像启动优化。
+- **"Preloading vs caching 的根本差异：所有数据最终都会被用到 → hit rate > accuracy"**：这一洞察可指导任何"确定性最终消费所有数据"的预加载场景（软件包下载、game asset streaming、ML 模型 artifact 加载）的设计决策。
+- **"Three priority queues 解耦 preload 和 on-demand"**：Missed block（高优）→ Preload（中优）→ Left block（低优）的优先级分离，确保预加载永远不会 block 正在等待的用户请求。这是一个通用的"speculation should never hurt correctness"的模式。
+
