@@ -18,6 +18,7 @@
 | EBS 镜像预加载与 I/O 预测 | lazy loading, slow I/O, preloading, genetic algorithm, score-based block selection, zero-shot prediction, Jaccard Index, Alibaba EBS | ThinkAhead(FAST'26) |
 | 容器镜像快速启动文件系统 | MPHF, FUSE, on-demand pulling, container cold start, metadata lookup, kernel-space caching, sparse files | CoFS(FAST'26) |
 | 文件同步 Delta 生成加速 | delta sync, storage-layer checksum reuse, CRC32C, checksum combining, rsync, dsync, Sky computing, collaborative delta generation | SkySync(FAST'26) |
+| 文件同步细粒度并行化 | CDC, parallel chunking, streaming chunk matching, pipelined delta reconstruction, CRC32C combination, relative offset elimination | ParaSync(FAST'26) |
 | 云本地存储三代演进与混合架构 | SPDK user-space, ASIC DPU offloading, ASIC+SoC co-design, SR-IOV, context switch elimination, ML I/O dispatch, local-cloud hybrid, S3-FIFO caching | Latte(FAST'26) |
 | 磁带归档存储系统 | tape library, drive thrashing, asynchronous tape pool, batched erasure coding, dedicated drives, lifetime-based placement, bulk scheduling, wrap-aware read reordering | TapeOBS(FAST'26) |
 | 排序增强压缩只读文件系统 | sort-enhanced compression, data mixture, similarity graph, subgraph partitioning, METIS, hotness grouping, read-only FS compression, chunk deduplication | RubikFS(FAST'26) |
@@ -449,3 +450,29 @@ EBS-index 消耗 ~57% 节点内存，存储利用率受内存约束。I/O compac
 - **"Cuckoo hashing 的 deterministic secondary bucket 是低冲突查找的轻量方案"**：不需要完整的多哈希函数——用同一 CRC32C 的 bit-flip 作为第二候选位置，既保证两个桶在不同半区，又消除额外哈希计算开销。适用于任何"一个 key、两个候选位置"的查找优化。
 - **"通信协议层的协商是跨异构系统复用的关键"**：SkySync 不讲"你必须用我的格式"——而是定义握手协议协商 chunk size 和 checksum type → 双方对齐到最低共同分母 → 各自用本地已有元数据高效提供所需 checksum。这是 "interoperability through negotiation" 的典范。
 
+---
+
+## 文件同步细粒度并行化 (ParaSync)
+
+### 核心问题
+
+CDC-based 文件同步（dsync 等）的三阶段——File Chunking、Chunk Matching、Delta Reconstruction——存在两个根本性的串行依赖，阻止了有效的并行化：(1) Chunking 阶段的串行瓶颈：checksum 只能在 chunk boundary 最终确定后才能计算，即使前人用多核并行搜索边界，checksum 计算仍被推迟到单线程顺序执行；(2) Matching 和 Reconstruction 之间的 All-or-Nothing Checksum Exchange：client 必须等待 server 返回**所有** weak-checksum 匹配结果才能开始 strong checksum 验证，且 delta reconstruction 的 patch commands 使用**相对偏移**（"在上一个 block 之后 copy 数据"）导致指令必须线性应用。结果：三个阶段的 CPU 计算、网络传输和磁盘 I/O 完全串行堆叠，无法 overlap。
+
+### 关键洞察
+
+1. **"用 CRC32C 线性组合替代重新计算——将 checksum computation 降级为 checksum combination"**：ParaSync 的两阶段并行 chunking 中，第一阶段多线程独立将文件切分为 sub-chunk 并用 SSE 加速计算 CRC32C；第二阶段单线程扫描 sub-chunk 队列合并为最终 chunk，用 CRC32C(A′) ⊕ CRC32C(B) 直接组合出合并 chunk 的 checksum——不需要重读文件数据。合并阶段只处理 16-byte 元组（offset, length, crc32c），不触碰文件内容，因此不会成为新瓶颈。
+
+2. **"流式 chunk matching 打破 All-or-Nothing 交换——按碰撞率动态分片 + streaming dispatch"**：naive 并行匹配策略（每个线程分配不同的 weak checksum）因 checksum 碰撞分布极端偏斜而失效（0.1-0.5% 的 CRC32C 映射到 >1000 个 chunk，个别 >120,000）。ParaSync 将高碰撞 checksum 对应的 chunk 列表切分为多个 segments，动态分配给线程，每个线程完成自己的 segment 后**立即**将匹配结果 stream 回 client——client 收到第一批结果就开始并行 strong checksum 验证，与 server 的后续处理 + 网络传输重叠。
+
+3. **"绝对偏移替代相对偏移使 delta reconstruction 可 pipeline"**：传统 patch commands 用相对偏移（"在上一个 block 后 copy"）→ 每个指令的落点依赖前一个指令的完成 → 必须线性应用。ParaSync 改用绝对文件偏移 + sequence ID 标注每条 patch command 的目标位置，使 dtransmitter 可以**乱序**将匹配 chunks 写入文件，同时用 seqID 保证最终正确性。匹配 chunks 的 disk read（patchers）与 delta 数据的网络接收（dtransmitter）完全 pipeline。
+
+4. **"三阶段全部流水线化：Chunker→Smatcher/Wmatcher→Dtransmitter/Patcher 形成连续 pipeline"**：客户端：多线程 chunking→weak checksum streaming 发送→同时开始 strong checksum 验证。服务端：接收 weak checksum→多线程匹配→streaming 返回结果→并行 reconstruct。LAN 场景下端到端 3.7× 加速。
+
+- 来源：ParaSync(FAST'26)
+
+### 实践启发
+
+- **"CRC32C 的线性组合特性在同一作者的两篇论文（SkySync + ParaSync）中扮演了核心角色——一次是跨 chunk size 的衍生，一次是 sub-chunk 的组合"**：这提示一个通用原则：选择有代数结构的哈希函数（CRC 族、XOR 友好的）而非纯分布均匀的哈希（MurmurHash、xxHash），因为你不知道未来是否需要跨粒度的 checksum 推导。这是一个"composability-first"的哈希选型标准。
+- **"绝对偏移 + seqID 解耦顺序语义是 pipeline 并行化的通用模式"**：任何"操作 B 的偏移依赖操作 A 的结果"的串行约束，都可以通过预先分配绝对坐标 + 乱序执行 + seqID 保证最终一致性来打破。适用场景：并行 log replay、并行 WAL apply、并行 delta application、并行 checkpoint restore。
+- **"动态分片处理偏斜工作负载——按 collision rate 而非 key space 分配"**：不按 key 范围分配（某些 key 对应极多 item）而按 item 总数均分，是处理 hash table 并行查找偏斜的轻量方案。适用于任何"key space 极度偏斜 + 需要并行处理"的场景。
+- **"SkySync 和 ParaSync 是互补的——前者省 CPU（复用已有元数据），后者用更多核加速（并行化剩余阶段）"**：一个做"少做工作"，一个做"多人同时做"。两者可以叠加——用 SkySync 的存储层 checksum 直接当 ParaSync 的 sub-chunk checksum 输入，省掉第一阶段 checksum 计算。这是同一个作者组在 FAST '26 上的双论文策略。

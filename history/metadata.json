@@ -1,7 +1,7 @@
 {
   "$schema": "metadata.schema.json",
   "generated_at": "2026-07-17",
-  "total_papers": 169,
+  "total_papers": 170,
   "papers": [
     {
       "canonical_name": "PithTrain(arXiv'26)",
@@ -5255,6 +5255,64 @@
         "r3_relations": "",
         "r4_refute": ""
       }
+    },
+    {
+      "canonical_name": "ParaSync(FAST'26)",
+      "title": "ParaSync: Exploiting Fine-Grained Parallelism for Efficient File Synchronization",
+      "authors": [
+        "Zhihao Zhang",
+        "Lu Tang",
+        "Huiba Li",
+        "Yue Yu",
+        "Guangtao Xue",
+        "Jiwu Shu",
+        "Yiming Zhang"
+      ],
+      "conference": "FAST",
+      "year": 2026,
+      "url": "https://www.usenix.org/system/files/fast26-zhang-zhihao-parasync.pdf",
+      "date_read": "2026-07-17",
+      "type": "论文-系统",
+      "tags": [
+        "file sync",
+        "CDC",
+        "parallelism",
+        "CRC32C",
+        "streaming",
+        "pipeline",
+        "delta sync",
+        "FAST"
+      ],
+      "techniques": [
+        "two-stage parallel chunking",
+        "CRC32C sub-chunk combination",
+        "streaming chunk matching",
+        "dynamic collision-aware workload distribution",
+        "absolute-offset pipelined delta reconstruction",
+        "seqID-based out-of-order patching"
+      ],
+      "builds_on": [
+        "dsync",
+        "CDC",
+        "CRC32C linearity",
+        "FastCDC"
+      ],
+      "contrasts_with": [
+        "sequential CDC sync (dsync)",
+        "parallel chunking with sequential checksum bottleneck"
+      ],
+      "industrial_applicability": "medium",
+      "applicability_why": "需要多核环境才能发挥优势；适合大文件、高带宽网络场景；基于 dsync 协议修改，~2900 LoC C++ 实现",
+      "prerequisites": "多核 CPU, CRC32C 或类似线性哈希函数支持",
+      "knowledge_locations": [
+        "performance/storage-filesystem/"
+      ],
+      "review_rounds": {
+        "r1_tldr": "打破 CDC 同步三阶段串行依赖：CRC32C 组合实现 sub-chunk 并行 + 流式匹配消除 all-or-nothing + 绝对偏移 pipeline 重构，chunking 7.6×、端到端 3.7×",
+        "r2_insights": "CRC32C 线性性使 checksum computation 降级为 combination；按碰撞率动态分片消除偏斜；绝对偏移 + seqID 解耦顺序语义；三阶段全流水线化",
+        "r3_relations": "与 SkySync(FAST'26) 同一作者组双论文：SkySync 省 CPU（复用已有元数据）、ParaSync 用更多核加速（并行化剩余阶段），两者可叠加",
+        "r4_refute": ""
+      }
     }
   ],
   "technique_index": {
@@ -5386,6 +5444,24 @@
     ],
     "fast checksum combining via XOR": [
       "SkySync(FAST'26)"
+    ],
+    "two-stage parallel chunking": [
+      "ParaSync(FAST'26)"
+    ],
+    "CRC32C sub-chunk combination": [
+      "ParaSync(FAST'26)"
+    ],
+    "streaming chunk matching": [
+      "ParaSync(FAST'26)"
+    ],
+    "dynamic collision-aware workload distribution": [
+      "ParaSync(FAST'26)"
+    ],
+    "absolute-offset pipelined delta reconstruction": [
+      "ParaSync(FAST'26)"
+    ],
+    "seqID-based out-of-order patching": [
+      "ParaSync(FAST'26)"
     ]
   },
   "tag_index": {
@@ -5913,6 +5989,7 @@
       "MlsDisk(FAST'26)",
       "OdinANN(FAST'26)",
       "PPC+MAIO(FAST'26)",
+      "ParaSync(FAST'26)",
       "RASK(FAST'26)",
       "RosenBridge(FAST'26)",
       "RubikFS(FAST'26)",
@@ -6053,21 +6130,25 @@
       "Jitskit(arXiv'26)"
     ],
     "file sync": [
+      "ParaSync(FAST'26)",
       "SkySync(FAST'26)"
     ],
     "delta sync": [
+      "ParaSync(FAST'26)",
       "SkySync(FAST'26)"
     ],
     "rsync": [
       "SkySync(FAST'26)"
     ],
     "CDC": [
+      "ParaSync(FAST'26)",
       "SkySync(FAST'26)"
     ],
     "checksum": [
       "SkySync(FAST'26)"
     ],
     "CRC32C": [
+      "ParaSync(FAST'26)",
       "SkySync(FAST'26)"
     ],
     "storage metadata reuse": [
@@ -6075,6 +6156,15 @@
     ],
     "Sky computing": [
       "SkySync(FAST'26)"
+    ],
+    "parallelism": [
+      "ParaSync(FAST'26)"
+    ],
+    "streaming": [
+      "ParaSync(FAST'26)"
+    ],
+    "pipeline": [
+      "ParaSync(FAST'26)"
     ]
   }
 }
