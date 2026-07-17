@@ -4,6 +4,7 @@
 
 | 日期 | 资料标题 | 类型 | 来源 | 解析 skill | 归档位置 | 备注 |
 |------|----------|------|------|------------|----------|------|
+| 2026-07-17 | PithTrain(arXiv'26) | 论文-系统 | arXiv:2605.31463, CMU/NVIDIA | knowledge-synthesis | architecture/agent-native-design/, performance/gpu-ai-performance/ | Agent-native 四原则 + ATE-Bench 反向基准 + 11K 行 Python 匹敌生产吞吐，Agent Turns -62%、Active GPU Time -64% |
 | 2026-07-13 | PACT(ASPLOS'26) | 论文-系统 | ASPLOS '26, PACT_ASPLOS.pdf | knowledge-synthesis | performance/system-tuning/, algorithms/ | 提出 PAC 指标量化每页 CPU stall 代价，替代 hotness 驱动 tiered memory 管理，最高 61% 性能提升 + 50× 迁移减少 |
 | 2026-07-13 | TMO(ASPLOS'22) | 论文-系统 | ASPLOS '22, tmo_asplos22.pdf | knowledge-synthesis | performance/system-tuning/ | Meta 透明内存 offloading，PSI + Senpai 实现 fleet-wide 20-32% 内存节省，已上游化 Linux 内核 |
 | 2026-07-13 | M5(ASPLOS'25) | 论文-系统 | ASPLOS '25, DOI:10.1145/3676641.3711999 | knowledge-synthesis | performance/system-tuning/ | CXL 控制器集成 HPT/HWT 硬件追踪器，发现稀疏热页问题，47% 更热页面识别 + 14% 更高性能 |

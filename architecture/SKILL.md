@@ -14,6 +14,7 @@
 | `microarchitecture/` | CPU/GPU 微架构 | 流水线、分支预测、乱序执行、缓存、TLB、虚拟化、安全硬件 | 
 | `memory-storage-hierarchy/` | 内存层次 | CXL、分离式内存、缓存一致性、内存池化 |
 | `accelerators/` | 加速器架构 | GPU、TPU、NPU、FPGA、领域专用加速器（DSA） |
+| `agent-native-design/` | Agent-Native 软件设计 | AI coding agent 友好的框架/系统设计方法论，ATE 度量，反向基准设计 |
 
 ## 新增 skill 建议
 
