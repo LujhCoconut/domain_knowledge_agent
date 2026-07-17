@@ -16,6 +16,7 @@
 | 聚类型 SSD ANNS 生产系统 | clustering-based ANNS, userspace storage stack, learned pruning, GPU-accelerated index, SSD bandwidth | Helmsman(OSDI'26) |
 | 宽条带矢量纠删码 | template-unfold structure, sub-packetization, vector codes, wide-stripe erasure coding, repair throughput | WiseCode(OSDI'26) |
 | EBS 镜像预加载与 I/O 预测 | lazy loading, slow I/O, preloading, genetic algorithm, score-based block selection, zero-shot prediction, Jaccard Index, Alibaba EBS | ThinkAhead(FAST'26) |
+| 容器镜像快速启动文件系统 | MPHF, FUSE, on-demand pulling, container cold start, metadata lookup, kernel-space caching, sparse files | CoFS(FAST'26) |
 | 云本地存储三代演进与混合架构 | SPDK user-space, ASIC DPU offloading, ASIC+SoC co-design, SR-IOV, context switch elimination, ML I/O dispatch, local-cloud hybrid, S3-FIFO caching | Latte(FAST'26) |
 | 磁带归档存储系统 | tape library, drive thrashing, asynchronous tape pool, batched erasure coding, dedicated drives, lifetime-based placement, bulk scheduling, wrap-aware read reordering | TapeOBS(FAST'26) |
 | 排序增强压缩只读文件系统 | sort-enhanced compression, data mixture, similarity graph, subgraph partitioning, METIS, hotness grouping, read-only FS compression, chunk deduplication | RubikFS(FAST'26) |
@@ -393,3 +394,29 @@ EBS-index 消耗 ~57% 节点内存，存储利用率受内存约束。I/O compac
 - **"Preloading vs caching 的根本差异：所有数据最终都会被用到 → hit rate > accuracy"**：这一洞察可指导任何"确定性最终消费所有数据"的预加载场景（软件包下载、game asset streaming、ML 模型 artifact 加载）的设计决策。
 - **"Three priority queues 解耦 preload 和 on-demand"**：Missed block（高优）→ Preload（中优）→ Left block（低优）的优先级分离，确保预加载永远不会 block 正在等待的用户请求。这是一个通用的"speculation should never hurt correctness"的模式。
 
+---
+
+## 容器镜像快速启动文件系统 (CoFS)
+
+### 核心问题
+
+容器冷启动中，image pulling 占 76% 的启动时间，但仅 6.4% 的数据被实际读取。现有 on-demand pulling 方案（Nydus-fuse、eStargz）基于 FUSE 实现，但 FUSE 的固有设计导致每次 LOOKUP 和 READ 都需要 context switch 到 userspace daemon，带来显著的元数据查找延迟和数据拷贝开销。Nydus-erofs 试图通过内核态 erofs+fscache 绕过 FUSE，但首次访问的调用链（erofs→fscache→userspace daemon→同步写盘→通知→返回）反而比 Nydus-fuse 更慢，且 fscache 增加了维护复杂度。
+
+### 关键洞察
+
+1. **"容器镜像只构建一次，文件系统树是固定只读的——这是 MPHF 的理想应用场景"**：MPHF（Minimal Perfect Hash Function）是零冲突、空间最优的哈希函数，但需要固定的 key 集合。容器镜像的文件集合在 build 时固定不变，恰好满足 MPHF 的前提。CoFS 在 build 时构建 MPHF（以 parent inode + filename 为 key），将文件元数据按哈希值密集排列存储，lookup 时仅需计算哈希值 + 一次 I/O 即可定位目标 inode，完全绕过 FUSE userspace round-trip。
+
+2. **"少于一次 I/O 的元数据查找"**：若目标磁盘块已在 page cache 中，则 0 次 I/O；否则仅需 1 次。对比传统本地文件系统（ext4）的 inode 查找需要遍历目录项，I/O 次数依赖目录大小和深度。这一差距在深层目录结构和大目录中尤为显著。
+
+3. **"双 MPHF 实现并行路径解析"**：MPHF 算法允许任意指定目标哈希值后逆向构造哈希函数。CoFS 构造两个 MPHF——一个用 (parent inode + filename) 映射，另一个用 (full path) 映射到相同的哈希值。通过 kprobe 拦截 do_filp_open，当检测到深度 >3 的 CoFS 路径时，workqueue 内核线程自底向上并行解析各层 inode（底层的 inode 已在内存中→其祖先也必然已在内存中），与 VFS 自顶向下的顺序路径解析并发执行。
+
+4. **"kernel-space 直接访问缓存数据消除 FUSE read 开销"**：CoFS 在 host 文件系统上维护稀疏文件（sparse file）镜像远程文件。首次读取时走 FUSE 慢路径（cofs-driver→cofs-snapshotter→下载→返回），同时 cofs-snapshotter 异步将数据写入稀疏文件对应偏移。后续读取时，cofs-driver 通过 vfs_lseek(SEEK_HOLE) 判断数据是否已缓存，若是则直接调用 vfs_read 从 host 文件系统读取——零 context switch、零数据拷贝。此外，利用文件系统 inode 锁保证 write 和 lseek 互斥，确保并发安全。
+
+- 来源：CoFS(FAST'26)
+
+### 实践启发
+
+- **"MPHF 适用于任何'固定 key 集合 + 频繁查找'的场景"**：不限于容器镜像——包管理器索引、静态网站的 file routing、firmware 文件系统、read-only database 索引都可受益。MPHF 零冲突 + O(1) 查找 + 空间最优（~2.46 bits/key）的特性在这些场景中是对传统哈希表或 B-tree 索引的降维打击。
+- **"双哈希函数（不同 key→相同 value）+ 并行解析"是可推广的加速模式**：任何需要"从不同入口定位同一资源"的场景都可以用多个 MPHF 共享 value array，然后并行查询。例如：文件系统同时按 inode number 和 full path 查找、DNS 同时按域名和 IP 查找。
+- **"kernel-space cache + sparse file + SEEK_HOLE 是零开销 FUSE 缓存的通用方案"**：利用 host 文件系统的 sparse file 特性，不需要维护独立的缓存元数据——vfs_lseek(SEEK_HOLE) 本身就是缓存命中判断。适用于任何 FUSE-based 读缓存场景。
+- **"异步写回 + inode lock 的并发控制"**：cofs-snapshotter 异步写数据到镜像文件，cofs-driver 通过 host FS 的 inode lock 保证与 lseek 互斥——不引入额外锁机制，直接利用 VFS 已有的并发控制。这是一个"不要重新发明锁"的工程范例。

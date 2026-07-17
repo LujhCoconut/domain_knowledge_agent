@@ -6,6 +6,7 @@
 |------|----------|------|------|------------|----------|------|
 | 2026-07-17 | PithTrain(arXiv'26) | 论文-系统 | arXiv:2605.31463, CMU/NVIDIA | knowledge-synthesis | architecture/agent-native-design/, performance/gpu-ai-performance/ | Agent-native 四原则 + ATE-Bench 反向基准 + 11K 行 Python 匹敌生产吞吐，Agent Turns -62%、Active GPU Time -64% |
 | 2026-07-17 | ThinkAhead(FAST'26) | 论文-系统 | FAST '26, usenix.org/system/files/fast26-chen.pdf, SJTU/Alibaba/CUHK | knowledge-synthesis | performance/storage-filesystem/, operations/cloud-infrastructure/ | 数据驱动 EBS VD 镜像预加载，160K VD trace 分析，lazy loading 致 40% slow I/O，hit rate +7.27×，tail latency -98.7%，阿里生产部署 |
+| 2026-07-17 | CoFS(FAST'26) | 论文-系统 | FAST '26, usenix.org/system/files/fast26-wang-li.pdf, KylinSoft | knowledge-synthesis | performance/storage-filesystem/, operations/cloud-infrastructure/ | MPHF 加速 FUSE 容器镜像元数据查找 + kernel-space 缓存数据访问，lookup 性能 +86%，优于 Nydus-fuse/erofs/eStargz |
 | 2026-07-13 | PACT(ASPLOS'26) | 论文-系统 | ASPLOS '26, PACT_ASPLOS.pdf | knowledge-synthesis | performance/system-tuning/, algorithms/ | 提出 PAC 指标量化每页 CPU stall 代价，替代 hotness 驱动 tiered memory 管理，最高 61% 性能提升 + 50× 迁移减少 |
 | 2026-07-13 | TMO(ASPLOS'22) | 论文-系统 | ASPLOS '22, tmo_asplos22.pdf | knowledge-synthesis | performance/system-tuning/ | Meta 透明内存 offloading，PSI + Senpai 实现 fleet-wide 20-32% 内存节省，已上游化 Linux 内核 |
 | 2026-07-13 | M5(ASPLOS'25) | 论文-系统 | ASPLOS '25, DOI:10.1145/3676641.3711999 | knowledge-synthesis | performance/system-tuning/ | CXL 控制器集成 HPT/HWT 硬件追踪器，发现稀疏热页问题，47% 更热页面识别 + 14% 更高性能 |

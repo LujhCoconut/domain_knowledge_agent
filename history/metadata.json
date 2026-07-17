@@ -1,7 +1,7 @@
 {
   "$schema": "metadata.schema.json",
   "generated_at": "2026-07-17",
-  "total_papers": 164,
+  "total_papers": 165,
   "papers": [
     {
       "canonical_name": "PithTrain(arXiv'26)",
@@ -4930,6 +4930,67 @@
         "r3_relations": "",
         "r4_refute": ""
       }
+    },
+    {
+      "canonical_name": "CoFS(FAST'26)",
+      "title": "CoFS: A Filesystem for Fast Container Startup",
+      "authors": [
+        "Li Wang",
+        "Jinxiu Du",
+        "Yang Yang",
+        "Qingbo Wu",
+        "Tao Liu",
+        "Haoze Wu"
+      ],
+      "conference": "FAST",
+      "year": 2026,
+      "url": "https://www.usenix.org/system/files/fast26-wang-li.pdf",
+      "date_read": "2026-07-17",
+      "type": "论文-系统",
+      "tags": [
+        "container",
+        "filesystem",
+        "FUSE",
+        "MPHF",
+        "on-demand pulling",
+        "cold start",
+        "kernel",
+        "metadata lookup",
+        "FAST"
+      ],
+      "techniques": [
+        "MPHF metadata indexing",
+        "dual MPHF parallel path resolution",
+        "kernel-space sparse file caching",
+        "kprobe path interception",
+        "SEEK_HOLE cache hit detection",
+        "asynchronous write-back with VFS inode lock"
+      ],
+      "builds_on": [
+        "eStargz",
+        "FUSE",
+        "ExtFUSE",
+        "MPHF algorithm (Czech 1992)"
+      ],
+      "contrasts_with": [
+        "Nydus-fuse",
+        "Nydus-erofs",
+        "eStargz",
+        "Overlaybd"
+      ],
+      "industrial_applicability": "medium",
+      "applicability_why": "基于 Linux 6.9.1 实现，cofs-driver 内核模块可直接加载，但需要 Linux 内核模块编译/加载权限，非特权容器环境无法部署",
+      "prerequisites": "Linux 6.x 内核，可加载内核模块，containerd snapshotter plugin 机制",
+      "knowledge_locations": [
+        "performance/storage-filesystem/",
+        "operations/cloud-infrastructure/"
+      ],
+      "review_rounds": {
+        "r1_tldr": "用 MPHF 加速 FUSE 容器镜像文件系统的元数据查找 + kernel-space 稀疏文件缓存数据访问，lookup +73-86%，cold start 优于 Nydus-fuse/erofs/eStargz",
+        "r2_insights": "容器镜像文件树是只读且固定的→MPHF 零冲突、O(1) 查找的理想场景；双 MPHF 实现自底向上并行路径解析；vfs_lseek(SEEK_HOLE) 替代独立缓存元数据",
+        "r3_relations": "",
+        "r4_refute": ""
+      }
     }
   ],
   "technique_index": {
@@ -4953,6 +5014,24 @@
     ],
     "three-priority-queue preloading": [
       "ThinkAhead(FAST'26)"
+    ],
+    "MPHF metadata indexing": [
+      "CoFS(FAST'26)"
+    ],
+    "dual MPHF parallel path resolution": [
+      "CoFS(FAST'26)"
+    ],
+    "kernel-space sparse file caching": [
+      "CoFS(FAST'26)"
+    ],
+    "kprobe path interception": [
+      "CoFS(FAST'26)"
+    ],
+    "SEEK_HOLE cache hit detection": [
+      "CoFS(FAST'26)"
+    ],
+    "asynchronous write-back with VFS inode lock": [
+      "CoFS(FAST'26)"
     ]
   },
   "tag_index": {
@@ -5052,6 +5131,7 @@
       "PACT(ASPLOS'26)"
     ],
     "kernel": [
+      "CoFS(FAST'26)",
       "MAC(OSDI'26)",
       "Rakaia(OSDI'26)",
       "TMO(ASPLOS'22)",
@@ -5347,6 +5427,7 @@
       "gigiprofiler(OSDI'26)"
     ],
     "filesystem": [
+      "CoFS(FAST'26)",
       "try/semisolates(OSDI'26)"
     ],
     "networking": [
@@ -5466,6 +5547,7 @@
       "Bidaw(FAST'26)",
       "CacheSlide(FAST'26)",
       "CloudTS(FAST'26)",
+      "CoFS(FAST'26)",
       "Cylon(FAST'26)",
       "DMTree(FAST'26)",
       "DPAS(FAST'26)",
@@ -5511,6 +5593,24 @@
     ],
     "Alibaba": [
       "ThinkAhead(FAST'26)"
+    ],
+    "container": [
+      "CoFS(FAST'26)"
+    ],
+    "FUSE": [
+      "CoFS(FAST'26)"
+    ],
+    "MPHF": [
+      "CoFS(FAST'26)"
+    ],
+    "on-demand pulling": [
+      "CoFS(FAST'26)"
+    ],
+    "cold start": [
+      "CoFS(FAST'26)"
+    ],
+    "metadata lookup": [
+      "CoFS(FAST'26)"
     ]
   }
 }
