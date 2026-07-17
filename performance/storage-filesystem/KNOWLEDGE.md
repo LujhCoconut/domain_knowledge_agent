@@ -31,6 +31,7 @@
 | 分离式存储文件系统 | disaggregated SSD, NVMe-oF, RDMA, userspace-kernel collaboration, offloading, CetoFS, remote storage | CetoFS(FAST'26) |
 | 存储多资源分配 | cache-centric, multi-tenant, DRF, miss ratio curve, resource allocation, fairness, Redis, DynamoDB | HARE(FAST'26) |
 | 共享存储分布式锁管理 | DLM, shared-disk FS, GFS2, OCFS2, lock management, self-owner notification, filesystem scalability | Lockify(FAST'26) |
+| Unikernel IO 缓存 | unikernel, libOS, mmap, userspace cache, OS-level cache, NVMe, uVFS, application-specific caching | uCache(FAST'26) |
 | 云本地存储三代演进与混合架构 | SPDK user-space, ASIC DPU offloading, ASIC+SoC co-design, SR-IOV, context switch elimination, ML I/O dispatch, local-cloud hybrid, S3-FIFO caching | Latte(FAST'26) |
 | 磁带归档存储系统 | tape library, drive thrashing, asynchronous tape pool, batched erasure coding, dedicated drives, lifetime-based placement, bulk scheduling, wrap-aware read reordering | TapeOBS(FAST'26) |
 | 排序增强压缩只读文件系统 | sort-enhanced compression, data mixture, similarity graph, subgraph partitioning, METIS, hotness grouping, read-only FS compression, chunk deduplication | RubikFS(FAST'26) |
@@ -768,4 +769,24 @@ Shared-disk 文件系统（GFS2、OCFS2）的 DLM 在低竞争场景下仍然表
 ### 实践启发
 
 - **"低竞争并不等于低开销——DLM 的 lock-owner 查找即使无竞争也需要跨节点通信"**：当系统设计假设"锁总是需要协调"时，即使 97% 的文件只有单 client 访问也会支付协调代价。让常见 case（单 client 操作）走 fast path（self-grant）、罕见 case（真多 client 竞争）走 slow path 是分布式锁的正确设计。
+
+---
+
+## Unikernel IO 缓存 (uCache)
+
+### 核心问题
+
+数据密集型云应用面临 IO 缓存的二选一：OS-level page cache（简单但慢——内核栈开销、缺乏 page-level 控制、不支持对象存储等非 FS 后端）vs userspace cache（高性能高灵活但复杂——需要接管存储设备、无法复用内核 FS 实现）。现有改进或优化 page cache 性能或注入 application-defined logic，但都达不到 userspace cache 的灵活性+性能。
+
+### 关键洞察
+
+1. **"Unikernel libOS 作 IO cache：应用与 OS 共享地址空间 → 消除 context switch + 直接嵌入应用语义到缓存决策"**：uCache 以 unikernel 形式与应用链接，应用通过 mmap-like 内存面访问缓存数据，同时保留 explicit API 的细粒度控制。应用可以将 domain knowledge（如"这个 page 属于未提交事务，不应被 evict"）直接传递给缓存——这在传统 OS 的 POSIX 语义下无法实现。
+
+2. **"uVFS 抽象解耦缓存与 IO backend：支持 NVMe/cloud block/object store 多种后端且保留 FS 兼容性"**：uVFS 是一个轻量 VFS 层，允许为不同存储后端注册不同的 IO handler，同时向上层（应用 + 缓存）暴露统一的 mmap-like 接口。
+
+- 来源：uCache(FAST'26)
+
+### 实践启发
+
+- **"Unikernel 正在从 niche 被重新评估：当应用和 OS 需要深度共享知识（如缓存策略）时，shared address space 比 userspace-kernel 边界更高效"**：这不仅是性能问题——POSIX 的通用语义是灵活性的根本瓶颈。当你想告诉 page cache"不要 evict 这个 page，它是未提交事务的一部分"时，你没有 API。uCache 的 unikernel 架构使这种跨层通信成为可能。
 

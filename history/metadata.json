@@ -1,7 +1,7 @@
 {
   "$schema": "metadata.schema.json",
   "generated_at": "2026-07-17",
-  "total_papers": 182,
+  "total_papers": 183,
   "papers": [
     {
       "canonical_name": "PithTrain(arXiv'26)",
@@ -6016,6 +6016,59 @@
         "r3_relations": "",
         "r4_refute": "仅测试 GFS2/OCFS2（两个 shared-disk FS）；高竞争场景下的性能未系统评估"
       }
+    },
+    {
+      "canonical_name": "uCache(FAST'26)",
+      "title": "uCache: A Customizable Unikernel-based IO Cache",
+      "authors": [
+        "Ilya Meignan--Masson",
+        "Masanori Misono",
+        "Viktor Leis",
+        "Pramod Bhatotia"
+      ],
+      "conference": "FAST",
+      "year": 2026,
+      "url": "https://www.usenix.org/system/files/fast26-meignan-masson.pdf",
+      "date_read": "2026-07-17",
+      "type": "论文-系统",
+      "tags": [
+        "IO cache",
+        "unikernel",
+        "libOS",
+        "mmap",
+        "NVMe",
+        "cloud storage",
+        "uVFS",
+        "FAST"
+      ],
+      "techniques": [
+        "unikernel libOS IO cache",
+        "mmap-like memory surface + explicit API",
+        "uVFS abstraction",
+        "application-specific cache semantics",
+        "kernel-bypass IO path"
+      ],
+      "builds_on": [
+        "Linux page cache",
+        "userspace caches",
+        "unikernel (Unikraft)"
+      ],
+      "contrasts_with": [
+        "OS page cache (POSIX-limited, slow)",
+        "userspace caches (complex, device-exclusive)"
+      ],
+      "industrial_applicability": "medium",
+      "applicability_why": "Unikernel 模型需要应用链接到 uCache libOS；适合 DB/KV store 等性能敏感的云应用；非传统部署模型",
+      "prerequisites": "应用可适配 unikernel/libOS 模型，unikernel 运行环境",
+      "knowledge_locations": [
+        "performance/storage-filesystem/"
+      ],
+      "review_rounds": {
+        "r1_tldr": "Unikernel libOS IO cache 融合 OS cache 简洁性和 userspace cache 性能：mmap-like surface + uVFS 支持多种后端 + 应用语义可嵌入缓存决策",
+        "r2_insights": "POSIX 通用语义是 OS cache 灵活性的根本瓶颈；shared address space 消除 context switch + 使跨层通信可能；uVFS 解耦缓存与 IO backend",
+        "r3_relations": "",
+        "r4_refute": "仅单地址空间 unikernel 模型验证；多应用共享缓存的场景未探索；需要应用适配 unikernel"
+      }
     }
   ],
   "technique_index": {
@@ -6351,6 +6404,21 @@
     ],
     "fast-path for single-client files": [
       "Lockify(FAST'26)"
+    ],
+    "unikernel libOS IO cache": [
+      "uCache(FAST'26)"
+    ],
+    "mmap-like memory surface + explicit API": [
+      "uCache(FAST'26)"
+    ],
+    "uVFS abstraction": [
+      "uCache(FAST'26)"
+    ],
+    "application-specific cache semantics": [
+      "uCache(FAST'26)"
+    ],
+    "kernel-bypass IO path": [
+      "uCache(FAST'26)"
     ]
   },
   "tag_index": {
@@ -6907,7 +6975,8 @@
       "WARP(FAST'26)",
       "WSBuffer(FAST'26)",
       "Xerxes(FAST'26)",
-      "ZUFS(FAST'26)"
+      "ZUFS(FAST'26)",
+      "uCache(FAST'26)"
     ],
     "EBS": [
       "ThinkAhead(FAST'26)"
@@ -6928,7 +6997,8 @@
       "ThinkAhead(FAST'26)"
     ],
     "cloud storage": [
-      "ThinkAhead(FAST'26)"
+      "ThinkAhead(FAST'26)",
+      "uCache(FAST'26)"
     ],
     "block storage": [
       "ThinkAhead(FAST'26)"
@@ -7320,6 +7390,24 @@
     ],
     "scalability": [
       "Lockify(FAST'26)"
+    ],
+    "IO cache": [
+      "uCache(FAST'26)"
+    ],
+    "unikernel": [
+      "uCache(FAST'26)"
+    ],
+    "libOS": [
+      "uCache(FAST'26)"
+    ],
+    "mmap": [
+      "uCache(FAST'26)"
+    ],
+    "NVMe": [
+      "uCache(FAST'26)"
+    ],
+    "uVFS": [
+      "uCache(FAST'26)"
     ]
   }
 }
