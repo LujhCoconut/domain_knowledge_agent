@@ -54,6 +54,23 @@
 **输入**：PDF / 网页 / 标题+摘要
 **输出**：JSON metadata 条目初稿 + 一句话 TL;DR + R2 决策
 
+**R1 流程（已整合 DBLP 自动补全）**：
+
+1. 从 PDF/网页提取论文标题（pdftotext 前 2 页，取前 15 行的首条全大写或标题格式行）。
+2. ⚠️ **DBLP 自动补全元数据（新增）**：用提取的标题查询 DBLP 获取权威元数据：
+   ```bash
+   cd ~/.claude/skills/domain-knowledge && python3 -c "
+   import sys; sys.path.insert(0, 'common/knowledge-synthesis')
+   from dblp_lookup import fuzzy_title_search
+   import json
+   r = fuzzy_title_search('<extracted_title>', threshold=0.6, max_results=3)
+   print(json.dumps(r, indent=2, ensure_ascii=False))
+   "
+   ```
+   - 如果 DBLP 返回结果（score ≥ 0.6）：使用 top result 的 `title`, `authors`, `venue`, `year`, `doi`, `dblp_key` 填充 metadata。**优先使用 DBLP 的正式标题**（比 PDF 提取的更准确）。
+   - 如果 DBLP 无结果或网络不可达：降级到手动从 PDF 提取，metadata 中注明"DBLP 不可用"。
+3. 按 §0 命名规范构造 `canonical_name`。
+
 **产物格式**：
 ```markdown
 # R1 Quick Note: <方案名(会议'年份)>

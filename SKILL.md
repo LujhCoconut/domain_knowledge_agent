@@ -51,6 +51,9 @@ cd ~/.claude/skills/domain-knowledge && git pull --rebase
 | **论文评价/了解方向/最新进展** | 用户要求”评价一下这篇论文””xxx 方向有什么最新进展””了解一下 xxx””有哪些方案””梳理一下””对比一下” | 先查 `history/metadata.json` 过滤候选论文 → 读相关 KNOWLEDGE.md → 综合回答。**自由探索/跨领域综合/vibe 查询归入此类** |
 | **工业可用性查询** | 用户问”哪些论文能直接用到生产环境””快速判断有没有能用在工业代码上的” | 查 `history/metadata.json` 中 `industrial_applicability: “high”` 或 `”medium”` 的条目，按 tags 过滤 |
 | **技术倒排查** | 用户问”哪些论文用了 DualPipe””KV cache offloading 有哪些方案” | 查 `history/metadata.json` 的 `technique_index` 或 `tag_index` |
+| **我读过...吗** | 用户问”我读过 X 吗””X 这篇论文读过吗” | `history/` + DBLP fuzzy match |
+| **BibTeX 收集/导出** | “collect-bibtex””export-bibtex””导出引用” | `history/bibtex-buffer.json` |
+| **阅读队列** | “添加到阅读队列””查看阅读队列””处理下一篇” | `history/reading-queue.json` |
 
 **特殊规则**：
 - **写作润色**请求**不触发知识库写入**——不更新 KNOWLEDGE.md、不修改 reading-log.md、不 commit
@@ -148,6 +151,17 @@ cd ~/.claude/skills/domain-knowledge && git pull --rebase
 - 论文/资料的启发没有被现有 skill 覆盖 → 新建 skill 子目录。
 - 现有 skill 目录结构不清晰 → 参考当前文件和各一级 `SKILL.md` 的目录说明重新设计。
 
+## 特殊命令
+
+| 命令 | 行为 |
+|------|------|
+| `/domain-knowledge collect-bibtex <dblp_key> --citation-key <key>` | 查询 DBLP 获取 BibTeX，改写 citation key 后缓存到 `history/bibtex-buffer.json` |
+| `/domain-knowledge export-bibtex [output_path]` | 导出所有缓存的 BibTeX 到 .bib 文件（默认 `~/papers.bib`），清空缓存 |
+| `/domain-knowledge 添加到阅读队列 <URL> [--priority high\|medium\|low]` | 将论文 URL 追加到 `history/reading-queue.json` |
+| `/domain-knowledge 查看阅读队列` | 列出队列中所有待读论文，按优先级排序 |
+| `/domain-knowledge 处理阅读队列的下一篇` | 从队列取出下一篇（优先级最高的 pending），启动 R1 解析 |
+| `/domain-knowledge backfill-metadata [--dry-run]` | 批量回溯修复 metadata.json 中空的 title/authors 字段（通过 DBLP 模糊搜索） |
+
 ## 目录索引
 
 - `operations/SKILL.md` — 运维与 SRE
@@ -179,9 +193,10 @@ cd ~/.claude/skills/domain-knowledge && git add -A && git diff --cached --stat &
 
 详细配置见 `config.md`。
 
-**⚠️ 每次 commit 前须更新 `README.md` 和 `history/metadata.json`**：
-- 从 `history/reading-log.md` 统计总篇数、会议分布和领域分布，写入 README.md
-- 在 `history/metadata.json` 中追加新条目并运行 `python3 history/rebuild_index.py` 重建倒排索引
+**⚠️ 每次 commit 前须更新统计和索引**：
+1. `python3 history/rebuild_index.py` — 重建技术/标签倒排索引
+2. `python3 scripts/generate_readme_stats.py` — 自动生成 README.md 统计区域
+3. 如为新增论文：在 `history/metadata.json` 追加条目后运行上述两个脚本
 
 ```markdown
 - **总计**: 13 篇

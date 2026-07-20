@@ -35,28 +35,28 @@ domain-knowledge/
 <!-- 以下区域由 /domain-knowledge 后置操作自动更新，请勿手动编辑本节 -->
 
 - **总计**: 187 篇
-- **会议分布**: ASPLOS 4 篇（'22–'26），arXiv 2 篇（'26），FAST 43 篇（'26），OSDI 133 篇, NSDI 3 篇（'26），SOSP 2 篇（'25）
+- **会议分布**: OSDI 133 篇（'26），FAST 43 篇（'26），ASPLOS 4 篇（'22–'26），NSDI 3 篇（'26），arXiv 2 篇（'26），SOSP 2 篇（'25）
 - **领域分布**:
-  - CXL/内存系统/stall 回收: 10 篇
-  - 存储层次/体系结构: 8 篇（..., Cylon, Xerxes） — 见 `architecture/memory-storage-hierarchy/KNOWLEDGE.md`
-  - 云基础设施/虚拟化: 12 篇（mwait-sched, Xkernel, Janus, Nested SEV, PowerSight, M3U, Quark, DVLA, PIMS, ASI-Heterogeneity, Svalinn, RosenBridge） — 见 `operations/cloud-infrastructure/KNOWLEDGE.md`
-  - 云原生/解耦式服务: 8 篇（DGC, OpenTela, Arca, Spice, libDSE, Latte, TapeOBS, ACOS） — 见 `architecture/cloud-native/KNOWLEDGE.md`
-  - LLM 推理/GPU-AI/训练: 42 篇（含 ..., Seneca, PithTrain） — 见 `performance/gpu-ai-performance/KNOWLEDGE.md`
-  - Agent-Native 软件设计: 2 篇（PithTrain, Jitskit） — 见 `architecture/agent-native-design/KNOWLEDGE.md`
-  - OS 安全/隐私/程序分析: 18 篇（含 μFork SASOS, MlsDisk） — 见 `security/os-security/KNOWLEDGE.md`
-  - 软件测试/DBMS/云服务: 3 篇（ValScope, S3 MBT, SysSpec） — 见 `operations/os-testing/KNOWLEDGE.md`
-  - OS 内核/调优: 3 篇（kSTEP, ECO, PPC+MAIO） — 见 `operations/os-performance-tuning/KNOWLEDGE.md`
-  - 监控/可观测性: 9 篇 — 见 `operations/monitoring-observability/KNOWLEDGE.md`
-  - 存储/文件系统: 27 篇（..., DRBoost, LESS, FS-PI, CetoFS） — 见 `performance/storage-filesystem/KNOWLEDGE.md`
-  - 程序分析与动态优化: 5 篇（hS, Incr, UCSan, Aletheia, RT） — 见 `operations/program-analysis/KNOWLEDGE.md`
-  - 并发数据结构: 2 篇（Arctic, FARLock） — 见 `algorithms/concurrent-data-structures/KNOWLEDGE.md`
-  - 资源调度与供给: 2 篇（SPADE, Quota Marketplace） — 见 `algorithms/resource-scheduling/KNOWLEDGE.md`
-  - 分布式共识: 6 篇（Bodega, Pompē-SRO, Jetpack, Ambulance, LogDrive, WriteGuards） — 见 `algorithms/distributed-consensus/KNOWLEDGE.md`
-  - 图处理: 2 篇（Pluto, OdinANN） — 见 `algorithms/graph-processing/KNOWLEDGE.md`
-  - 缓存算法: 2 篇（Merlin, S4-FIFO） — 见 `algorithms/cache-algorithms/KNOWLEDGE.md`
-  - 加速器架构与编译: 3 篇（TileLoom, μShell, qTPU） — 见 `architecture/accelerators/KNOWLEDGE.md`
-  - 网络系统: 8 篇（SBB, Rakaia, UEP, UCCL-Tran, BALBOA, DPA-Store, Sepia, PolicyCache） — 见 `network/os-networking/KNOWLEDGE.md`
-- **🚀 新增功能**: JSON 结构化元数据 (`history/metadata.json`) + 技术倒排索引 + 四轮递进阅读 (R1-R4) + 工业可用性评分
+  - LLM 推理/GPU-AI/训练: 44 篇（Strata(OSDI'26)、ECHO(OSDI'26)、DirectKV(OSDI'26)…） — 见 `performance/gpu-ai-performance/KNOWLEDGE.md`
+  - 存储/文件系统: 34 篇（ByteDance DataPipeline(OSDI'26)、DeLFS(OSDI'26)、Espresso(OSDI'26)…） — 见 `performance/storage-filesystem/KNOWLEDGE.md`
+  - OS 安全/隐私/程序分析: 18 篇（USEC(OSDI'26)、Mohabi(OSDI'26)、Ichnaea(OSDI'26)…） — 见 `security/os-security/KNOWLEDGE.md`
+  - CXL/内存系统/stall 回收: 15 篇（PACT(ASPLOS'26)、TMO(ASPLOS'22)、M5(ASPLOS'25)…） — 见 `performance/system-tuning/KNOWLEDGE.md`
+  - 云基础设施/虚拟化: 12 篇（mwait-sched(OSDI'26)、Janus(OSDI'26)、Nested SEV(OSDI'26)…） — 见 `operations/cloud-infrastructure/KNOWLEDGE.md`
+  - 网络系统: 10 篇（PolicyCache(NSDI'26)、SBB(OSDI'26)、Rakaia(OSDI'26)…） — 见 `network/os-networking/KNOWLEDGE.md`
+  - 监控/可观测性: 9 篇（CoreSec(OSDI'26)、StriaTrace(OSDI'26)、gigiprofiler(OSDI'26)…） — 见 `operations/monitoring-observability/KNOWLEDGE.md`
+  - 存储层次/体系结构: 8 篇（Soul/GCP(OSDI'26)、Duhu(OSDI'26)、Blowfish(OSDI'26)…） — 见 `architecture/memory-storage-hierarchy/KNOWLEDGE.md`
+  - 云原生/解耦式服务: 7 篇（RamRyder(OSDI'26)、DGC(OSDI'26)、OpenTela(OSDI'26)…） — 见 `architecture/cloud-native/KNOWLEDGE.md`
+  - 分布式共识: 6 篇（Bodega(OSDI'26)、Pompē-SRO(OSDI'26)、Jetpack(OSDI'26)…） — 见 `algorithms/distributed-consensus/KNOWLEDGE.md`
+  - 程序分析与动态优化: 5 篇（hS(OSDI'26)、Incr(OSDI'26)、UCSan(OSDI'26)…） — 见 `operations/program-analysis/KNOWLEDGE.md`
+  - 软件测试/DBMS/云服务: 4 篇（kSTEP(OSDI'26)、S3 MBT(OSDI'26)、Mimesys(OSDI'26)…） — 见 `operations/os-testing/KNOWLEDGE.md`
+  - 加速器架构与编译: 3 篇（TileLoom(OSDI'26)、μShell(OSDI'26)、qTPU(OSDI'26)） — 见 `architecture/accelerators/KNOWLEDGE.md`
+  - Agent-Native 软件设计: 2 篇（PithTrain(arXiv'26)、Jitskit(arXiv'26)） — 见 `architecture/agent-native-design/KNOWLEDGE.md`
+  - OS 内核/调优: 2 篇（Xkernel(OSDI'26)、ECO(OSDI'26)） — 见 `operations/os-performance-tuning/KNOWLEDGE.md`
+  - 并发数据结构: 2 篇（Arctic(OSDI'26)、FARLock(OSDI'26)） — 见 `algorithms/concurrent-data-structures/KNOWLEDGE.md`
+  - 资源调度与供给: 2 篇（SPADE(OSDI'26)、Quota Marketplace(OSDI'26)） — 见 `algorithms/resource-scheduling/KNOWLEDGE.md`
+  - 缓存算法: 2 篇（Merlin(OSDI'26)、S4-FIFO/LAH(OSDI'26)） — 见 `algorithms/cache-algorithms/KNOWLEDGE.md`
+  - 图处理: 1 篇（Pluto(OSDI'26)） — 见 `algorithms/graph-processing/KNOWLEDGE.md`
+- **🚀 新增功能**: JSON 结构化元数据 (`history/metadata.json`) + 技术倒排索引 + 四轮递进阅读 (R1-R4) + 工业可用性评分 + DBLP 自动元数据补全 + BibTeX 收集导出
 - **最后更新**: 2026-07-20
 
 <!-- 自动更新区域结束 -->
