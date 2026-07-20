@@ -6333,7 +6333,10 @@
         "Linux kernel",
         "swap",
         "user-space delegation",
-        "hyperscaler"
+        "hyperscaler",
+        "page reclamation",
+        "per-page weight",
+        "madvise batching"
       ],
       "techniques": [
         "eBPF-based policy delegation",
@@ -6341,7 +6344,11 @@
         "tracepoint-driven page event tracking",
         "4B per-page eBPF state",
         "madvise enforcement from user space",
-        "region-aware policy specialization"
+        "region-aware policy specialization",
+        "per-page weight reclamation model",
+        "region-aware policy dispatch",
+        "madvise batching (64 pages/batch)",
+        "asynchronous prefetch enforcement"
       ],
       "builds_on": [
         "g-swap",
@@ -6360,11 +6367,12 @@
       "prerequisites": "Linux 5.10+, eBPF support, writeable tracepoints",
       "knowledge_locations": [
         "performance/system-tuning/",
-        "architecture/memory-storage-hierarchy/"
+        "architecture/memory-storage-hierarchy/",
+        "performance/system-tuning/"
       ],
       "review_rounds": {
         "r1_tldr": "用eBPF把Linux页面回收/预取策略从内核委托到用户空间，<1%性能开销，支持LFU/Hyperbolic/Leap等策略灵活替换，KV store场景多回收36%内存",
-        "r2_insights": "",
+        "r2_insights": "1. 只委托非性能关键决策(策略)= 内核保留swap机制和fault处理= 兼容已有部署。2. 4B per-page eBPF state仅0.1%内存开销，但足以实现LFU/Hyperbolic/LRU等策略的per-page weight。3. 策略接口极简: UpdateWeight(state,accessBit) for reclaim + PredictTrend(page,isHit) for prefetch。Hyperbolic caching仅17行。4. madvise批量执行(64页/batch)将syscall开销摊销到可忽略水平。5. RegionPolicy支持同一进程不同VMA使用不同策略，IPC agent可动态切换。6. PageFlex LRU vs g-swap kernel LRU: <1%差异(Redis)，而userfaultfd模拟(+4µs/fault)额外慢13.3%——说明低开销路径是关键。",
         "r3_relations": "",
         "r4_refute": ""
       }
@@ -6786,6 +6794,15 @@
       "PageFlex(ATC'25)"
     ],
     "region-aware policy specialization": [
+      "PageFlex(ATC'25)"
+    ],
+    "region-aware policy dispatch": [
+      "PageFlex(ATC'25)"
+    ],
+    "madvise batching (64 pages/batch)": [
+      "PageFlex(ATC'25)"
+    ],
+    "asynchronous prefetch enforcement": [
       "PageFlex(ATC'25)"
     ]
   },
@@ -7859,6 +7876,12 @@
       "PageFlex(ATC'25)"
     ],
     "hyperscaler": [
+      "PageFlex(ATC'25)"
+    ],
+    "per-page weight": [
+      "PageFlex(ATC'25)"
+    ],
+    "madvise batching": [
       "PageFlex(ATC'25)"
     ]
   }
