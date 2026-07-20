@@ -11,6 +11,26 @@
 | Mooncake | `mooncake/` | `store/`、`transfer-engine/`、`ep/`、`integration/`、`p2p-store/` |
 | gem5 | `gem5/` | （待补充） |
 
+## 子主题总表
+
+| 项目 | 子模块 | 主题 | 关键词 | 技术点 | 来源 |
+|------|--------|------|--------|--------|------|
+| vLLM | scheduler | 三队列模型 | scheduler, continuous batching, KV cache | three-queue scheduling, break-vs-continue guard, num_computed_tokens guard re-trigger | `scheduler.py:64-856` |
+| vLLM | scheduler | Step 生命周期 | engine, forward pass, GPU | busy loop stepping, non_block execute_model | `core.py:439-468` |
+| vLLM | kv_connector | Scheduler/Worker 角色分离 | KV connector, MooncakeStore, ZMQ | role separation, ZMQ REQ/REP IPC, get_finished deferred enqueue | `mixin.py:78-103`, `worker.py:1390-1451` |
+| vLLM | kv_connector | exists→get 时间窗口 | scheduler, KV connector, async loading | guard re-trigger on allocate failure, compute-transfer overlap | `scheduler.py:596-766` |
+| vLLM | worker | GPU forward + KV connector 集成 | worker, GPU, forward pass | context manager KV lifecycle, background transfer threads | `gpu_model_runner.py:4034-4070` |
+| vLLM | worker | MooncakeStore 后台线程 | MooncakeStore, background thread | batch_get_into_multi_buffers, send/recv thread model | `worker.py:437-858` |
+| Mooncake | store | Lease 三层保护 | lease, eviction, memory management, DRAM | GrantLease(hard_ms,soft_ms) dual timeline, ExistKey also grants lease | `master_service.cpp:175-177,3306-3308` |
+| Mooncake | store | Eviction 判定链 | soft pin, hard pin, BatchEvict | IsHardPinned/IsLeaseExpired/IsSoftPinned guard chain, multi-thread parallel collection | `master_service.cpp:6708-7110` |
+| Mooncake | store | Replica refcnt | refcnt, promotion, offload | refcnt pin on source LOCAL_DISK, orthogonal to lease | `replica.h:329-332`, `master_service.cpp:4037` |
+| Mooncake | store | Promotion-on-Hit | promotion, SSD offload, Count-Min Sketch, heartbeat | TryPushPromotionQueue admission gating, PROCESSING MEMORY replica staging | `master_service.cpp:5538-5930` |
+| Mooncake | transfer-engine | 声明式架构 | TENT, declarative API, NIXL | tent_submit declarative intent API, Unified Segment abstraction | [TENT #1](https://renfeng.org/zh/posts/tent-internal-arch/) |
+| Mooncake | transfer-engine | 晚期绑定 + 路径合成 | late binding, path synthesis, orchestrator | late binding path resolution, Tier-aware affinity sorting, autonomous multi-hop pipeline | [TENT #1,#2](https://renfeng.org/zh/posts/tent-internal-orchestrator-part-1/) |
+| Mooncake | transfer-engine | Transport 插件 | plugin backend, NVLink, RDMA, GDS, io_uring, SHM/CXL | plugin-based Transport backend, Capabilities matrix, transport_attrs encapsulation | [TENT #2](https://renfeng.org/zh/posts/tent-internal-orchestrator-part-1/) |
+| Mooncake | transfer-engine | Slice Spraying | slice spraying, EWMA, RDMA, multi-rail | EWMA single-parameter bandwidth estimation, proportional allocation by predicted_time | [TENT #3](https://renfeng.org/zh/posts/tent-internal-slice-spraying-and-qos/) |
+| Mooncake | transfer-engine | QoS 机制 | QoS, priority scheduling | strict priority + anti-starvation timeout, cross-process time-slot coordination (2ms × 3) | [TENT #3](https://renfeng.org/zh/posts/tent-internal-slice-spraying-and-qos/) |
+
 ## 检索与回答流程
 
 ### 索引检索（优先）
