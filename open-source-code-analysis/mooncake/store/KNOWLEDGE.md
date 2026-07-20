@@ -267,13 +267,45 @@ std::atomic<uint64_t> refcnt_{0};
 [[nodiscard]] bool is_busy() const { return refcnt_.load() > 0; }
 ```
 
-`refcnt > 0` 阻止 eviction（`is_evictable_memory_replica` 要求 `get_refcnt() == 0`）。两层保护正交：
+### refcnt 阻止 eviction 的机制
 
-| 维度 | lease | refcnt |
-|------|-------|--------|
-| 作用对象 | `ObjectMetadata` 整体（所有 replica 共享） | 单个 `Replica` |
-| 语义 | "这个 key 正被客户端使用，lease 期内不要 evict" | "这个特定 replica 正参与操作（promotion/offload），不要动它" |
-| 生命周期 | 毫秒级（5s），续约可刷新 | 操作完成后立即释放 |
+`refcnt > 0` 的 replica **根本不会进入 evictable 候选集合**——`is_evictable_memory_replica` 最先就把它排除了：
+
+```cpp
+auto is_evictable_memory_replica = [](const Replica& replica) {
+    return replica.is_memory_replica()
+        && replica.is_completed()
+        && replica.get_refcnt() == 0;     // ★ refcnt > 0 → 直接判 false
+};
+
+auto can_evict_replicas = [&](const ObjectMetadata& metadata) {
+    return metadata.HasReplica(is_evictable_memory_replica);
+};
+```
+
+`can_evict_replicas` 在 Phase 1 候选收集阶段就被调用——`refcnt > 0` 的 replica **连进候选列表的机会都没有**。对比四道防线的生效方式：
+
+| 防线 | 第一遍 evict | 第二遍 evict | 可被时间改变？ | 可被配置覆盖？ |
+|------|-------------|-------------|---------------|---------------|
+| **hard pin** | 跳过（永久） | 跳过 | ❌ | ❌ |
+| **hard lease** | `IsLeaseExpired?No` → 跳过 | 跳过 | ✅ 到期后失效 | ❌ |
+| **soft pin** | `IsSoftPinned?Yes` → 跳过 | **可 evict**（`allow_evict_soft_pinned_objects_`） | ✅ 到期后失效 | ✅ 可被配置覆盖 |
+| **refcnt > 0** | `can_evict_replicas?No` → **跳过，不进候选** | 同上（仍然不进候选） | ✅ 操作完成后释放 | ❌ |
+
+**结论**：`refcnt` 的防护等级 = hard pin——**绝对的、无条件的、不进入候选队列**。区别只在于生命周期：hard pin 是永久的，refcnt 是操作级临时的。
+
+### refcnt pin 的到底是什么
+
+`inc_refcnt()` **不是 pin "请求"，而是 pin "正在被异步操作读取的那个源 replica"**。具体 pin 的是谁取决于数据流向：
+
+| 操作 | 数据流向 | 被 pin 的 replica | 原因 |
+|------|----------|------------------|------|
+| **promotion**（`TryPushPromotionQueue`, L4037） | LOCAL_DISK(SSD) → MEMORY(DRAM) | **LOCAL_DISK 源** | promotion 期间需要从 SSD 读数据，如果 source 被并发 evict / remove 就无数据可读 |
+| **offload**（`PushOffloadingQueue`, L3286） | MEMORY(DRAM) → LOCAL_DISK(SSD) | **MEMORY 源** | offload 排队期间需要从 DRAM 读数据写入 SSD，如果 MEMORY 被并发 evict 数据就丢了 |
+
+**共同逻辑**：异步数据搬迁操作拿着 **source replica 的 refcnt**，等操作完成（`NotifyPromotionSuccess` / `NotifyPromotionFailure` / Reaper 超时 / Cleanup）才 `dec_refcnt()` 释放。在这期间 `is_evictable_memory_replica` 不通过 → eviction 线程不会碰这个 replica。
+
+**目标端不在 refcnt 的保护范围**：promotion 中新分配的 PROCESSING MEMORY replica 靠的是 `!is_completed()` → `is_evictable_memory_replica` 直接拒绝（只有 COMPLETE 状态才可 evict），而不是 refcnt。
 
 ### refcnt 递增/递减
 
@@ -329,27 +361,16 @@ while (eviction_running_) {
 
 ## 完整保护矩阵
 
-对于一个 MEMORY replica，阻止 eviction 的四道防线（按 `BatchEvict` 判定顺序）：
+对于一个 MEMORY replica，阻止 eviction 的四道防线，按防护强度从高到低：
 
-```
-IsHardPinned()?          → 永久（hard_pin 在创建时设置，永不过期）
-       │
-      No
-       ▼
-IsLeaseExpired()==false? → hard lease 有效期内（ExistKey / GetReplicaList 授予）
-       │
-      Yes
-       ▼
-IsSoftPinned()?          → 软保护期内（soft_pin_timeout 在 PutEnd/GrantLease 时设置）
-       │                 allow_evict_soft_pinned_objects_=true 时可强制突破
-      No
-       ▼
-refcnt > 0?              → 并发操作 pin 住（promotion / offload 执行中）
-       │
-      No
-       ▼
-   可被 evict ✅
-```
+| 防线 | 防护方式 | 第一遍 evict | 第二遍 evict | 可被时间改变？ | 可被配置覆盖？ | 生命周期 |
+|------|----------|-------------|-------------|---------------|---------------|----------|
+| **hard pin** | `IsHardPinned()` → 跳过 | 跳过 | 跳过 | ❌ 永久 | ❌ | 对象创建时设置，永不过期 |
+| **refcnt > 0** | `can_evict_replicas?No` → 跳过，不进候选 | 跳过 | 跳过 | ✅ 操作完成后释放 | ❌ | 操作级临时（promotion / offload 执行期间） |
+| **hard lease** | `IsLeaseExpired?No` → 跳过 | 跳过 | 跳过 | ✅ 到期后失效 | ❌ | `default_kv_lease_ttl_`（默认 5000ms），续约可刷新 |
+| **soft pin** | `IsSoftPinned?Yes` → 跳过 | 跳过 | **可 evict** | ✅ 到期后失效 | ✅ `allow_evict_soft_pinned_objects_` | `PutEnd` 时设置，`GrantLease` 调用时续约 |
+
+**注意**：`BatchEvict` 判定顺序和上表不完全一致——Phase 1 中是 `IsHardPinned → IsLeaseExpired → IsSoftPinned → can_evict_replicas(refcnt)`。但 Phase 2 中 `try_evict_group_or_object` 的四道防线检查顺序是 `IsHardPinned → IsLeaseExpired → IsSoftPinned → can_evict_replicas`——refcnt 总是在最后被检查（因为 `can_evict_replicas` 包含了 refcnt 判定）。
 
 ---
 
