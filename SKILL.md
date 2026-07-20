@@ -45,6 +45,7 @@ cd ~/.claude/skills/domain-knowledge && git pull --rebase
 | **OS 安全与程序分析** | 涉及访问控制、内存沙箱、动态追踪/插桩、策略提取、二进制分析、移动端安全 | `security/` |
 | **网络系统问题** | 涉及用户态网络 runtime、内核网络栈、TCP/RPC 调度、去中心化网络架构 | `network/` |
 | **程序分析 / 运行时优化** | 涉及推测性执行、动态插桩、effect tracing、shell 脚本优化、syscall 拦截 | `operations/program-analysis/` |
+| **开源项目源码分析** | 涉及 vLLM / SGLang / Mooncake / gem5 等开源项目的内部机制、架构设计、关键路径分析 | `open-source-code-analysis/` |
 | **通用工具 / 检查清单 / 诊断手册** | 涉及脚本、常用命令、上线检查、排错流程 | `common/` |
 | **知识库组织问题** | 用户问”这个应该放哪””如何归档””skill 目录怎么设计” | 当前文件 + 各一级 `SKILL.md` |
 | **写作润色** | 用户要求”润色一下””润色这段话””polish 一下””帮我改改表达” | `common/writing-polish/` |
@@ -74,6 +75,7 @@ cd ~/.claude/skills/domain-knowledge && git pull --rebase
    - 算法：读取 `algorithms/SKILL.md`
    - 安全：读取 `security/SKILL.md`
    - 网络：读取 `network/SKILL.md`
+   - 开源项目：读取 `open-source-code-analysis/SKILL.md`
    - 通用：读取 `common/SKILL.md`
 
 2. **根据具体主题，深入二级子目录**
@@ -170,6 +172,7 @@ cd ~/.claude/skills/domain-knowledge && git pull --rebase
 - `algorithms/SKILL.md` — 算法
 - `security/SKILL.md` — OS 安全与程序分析
 - `network/SKILL.md` — 网络系统
+- `open-source-code-analysis/SKILL.md` — 开源项目源码分析（vLLM、SGLang、Mooncake、gem5）
 - `common/SKILL.md` — 通用工具、检查清单、诊断手册、知识整合方法论
 - `common/writing-polish/SKILL.md` — 写作润色，学术中英文短语库
 - `history/SKILL.md` — 阅读与解析记录说明
