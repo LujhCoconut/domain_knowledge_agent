@@ -205,6 +205,11 @@
         "https://renfeng.org/zh/posts/tent-internal-arch/",
         "https://renfeng.org/zh/posts/tent-internal-orchestrator-part-1/",
         "https://renfeng.org/zh/posts/tent-internal-slice-spraying-and-qos/"
+      ],
+      "source_files": [
+        "https://renfeng.org/zh/posts/tent-internal-arch/",
+        "https://renfeng.org/zh/posts/tent-internal-orchestrator-part-1/",
+        "https://renfeng.org/zh/posts/tent-internal-slice-spraying-and-qos/"
       ]
     },
     {
@@ -227,6 +232,9 @@
         "Transport capability intersection"
       ],
       "source_urls": [
+        "https://renfeng.org/zh/posts/tent-internal-orchestrator-part-1/"
+      ],
+      "source_files": [
         "https://renfeng.org/zh/posts/tent-internal-orchestrator-part-1/"
       ]
     },
@@ -252,6 +260,9 @@
         "mice/elephant flow differentiation"
       ],
       "source_urls": [
+        "https://renfeng.org/zh/posts/tent-internal-slice-spraying-and-qos/"
+      ],
+      "source_files": [
         "https://renfeng.org/zh/posts/tent-internal-slice-spraying-and-qos/"
       ]
     }

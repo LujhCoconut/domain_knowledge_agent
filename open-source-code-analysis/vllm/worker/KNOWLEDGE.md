@@ -2,10 +2,16 @@
 
 GPU worker 侧的执行流程：model runner 的 forward pass、KV connector 集成、batch_get 数据加载。
 
-> 源码路径：
-> - `vllm/v1/worker/gpu_model_runner.py`（7529 行）
-> - `vllm/v1/worker/kv_connector_model_runner_mixin.py`
-> - 远程开发机：`/home/ljh/vllm/`
+> 源码路径：`vllm/v1/worker/gpu_model_runner.py`（7529 行）、`vllm/v1/worker/kv_connector_model_runner_mixin.py`
+
+## 子主题
+
+| 主题 | 关键词 | 技术点 | 关键源码 |
+|------|--------|--------|----------|
+| execute_model 流程 | worker, GPU, model runner | context manager KV lifecycle | `gpu_model_runner.py:4034-4070` |
+| KV connector + forward 时序 | KV connector, forward pass | context manager KV lifecycle, compute-transfer overlap | `mixin.py:78-103` |
+| Scheduler 回到 update_from_output | scheduler, engine | update_from_output state machine | `scheduler.py:1313-1336` |
+| MooncakeStore 后台线程 | MooncakeStore, background thread | background transfer threads (send/recv), batch_get_into_multi_buffers | `worker.py:437-660`, `worker.py:713-858` |
 
 ---
 

@@ -4,6 +4,18 @@ TENT 是 Mooncake 的新一代 Transfer Engine，从 Mooncake TE v1 的命令式
 
 > 资料来源：Feng Ren 的 TENT Internal 系列博客（2026年4-5月，renfeng.org），【确信】— 作者是 Mooncake 核心开发者。
 
+## 子主题
+
+| 主题 | 关键词 | 技术点 | 来源 |
+|------|--------|--------|------|
+| 声明式架构 | TENT, declarative API, NIXL | declarative intent API (tent_submit), Unified Segment abstraction | [TENT #1](https://renfeng.org/zh/posts/tent-internal-arch/) |
+| 统一 Segment 表示 | Unified Segment, heterogeneous interconnect, NVLink, RDMA, Ascend | transport_attrs unified encapsulation, three-dimensional Segment (Buffers/Topology/Devices) | [TENT #1](https://renfeng.org/zh/posts/tent-internal-arch/) |
+| 晚期绑定 | late binding, path synthesis, orchestrator, topology | late binding path resolution, Tier-aware affinity sorting | [TENT #2](https://renfeng.org/zh/posts/tent-internal-orchestrator-part-1/) |
+| 自主路径合成 | path synthesis, multi-hop | autonomous path synthesis (staging buffer pipeline), Transport capability intersection | [TENT #2](https://renfeng.org/zh/posts/tent-internal-orchestrator-part-1/) |
+| Transport 插件 | plugin backend, NVLink, RDMA, GDS, io_uring, SHM/CXL | plugin-based Transport backend, Capabilities matrix | [TENT #2](https://renfeng.org/zh/posts/tent-internal-orchestrator-part-1/) |
+| Slice Spraying | slice spraying, EWMA, RDMA, multi-rail | EWMA bandwidth estimation (single-parameter), proportional allocation by predicted_time | [TENT #3](https://renfeng.org/zh/posts/tent-internal-slice-spraying-and-qos/) |
+| QoS 机制 | QoS, priority scheduling | strict priority + anti-starvation timeout promotion, cross-process time-slot coordination (2ms x 3 slots), mice/elephant flow differentiation | [TENT #3](https://renfeng.org/zh/posts/tent-internal-slice-spraying-and-qos/) |
+
 ---
 
 ## TENT #1：架构设计概览

@@ -2,11 +2,16 @@
 
 KV connector 框架是 vLLM 与外部 KV store（Mooncake、NIXL、LMCache 等）的接口层，负责将外部存储的 KV cache 集成到 vLLM 的调度和加载流程中。
 
-> 源码路径：
-> - 框架基类：`vllm/distributed/kv_transfer/kv_connector/v1/base.py`
-> - MooncakeStore 实现：`vllm/distributed/kv_transfer/kv_connector/v1/mooncake/store/`
-> - Worker 侧 mixin：`vllm/v1/worker/kv_connector_model_runner_mixin.py`
-> - 远程开发机：`/home/ljh/vllm/`
+> 源码路径：`vllm/distributed/kv_transfer/kv_connector/v1/`、`vllm/v1/worker/kv_connector_model_runner_mixin.py`、MooncakeStore 实现于 `.../mooncake/store/`
+
+## 子主题
+
+| 主题 | 关键词 | 技术点 | 关键源码 |
+|------|--------|--------|----------|
+| 角色分离 | KV connector, scheduler, worker | role separation (SCHEDULER/WORKER), ZMQ REQ/REP IPC | `scheduler.py:117-127` |
+| Scheduler 侧 exists 调用链 | MooncakeStore, lookup | ZMQ lookup, batch_is_exist, cross-TP-rank consistency | `mooncake/store/worker.py:1390-1451` |
+| Worker 侧异步加载 | async loading, background thread | get_finished deferred enqueue, compute-transfer overlap | `kv_connector_model_runner_mixin.py:78-103` |
+| exists→get 窗口 | scheduler, KV connector | guard re-trigger, full_sequence_must_fit, allocate_slots break | `scheduler.py:596-615`, `scheduler.py:741-766` |
 
 ---
 

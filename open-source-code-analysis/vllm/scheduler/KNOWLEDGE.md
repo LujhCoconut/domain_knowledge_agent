@@ -4,6 +4,15 @@ Continuous batching 调度器，控制哪些 request 参与每步 GPU forward、
 
 > 源码路径：`vllm/v1/core/sched/scheduler.py`（2366 行），远程开发机 `/home/ljh/vllm/`
 
+## 子主题
+
+| 主题 | 关键词 | 技术点 | 关键源码 |
+|------|--------|--------|----------|
+| 三队列模型 | scheduler, continuous batching, KV cache | three-queue scheduling, break-vs-continue guard, num_computed_tokens guard re-trigger | `scheduler.py:64-167` `__init__` |
+| schedule() 退出路径 | prefill, block allocation | allocate_slots preemption, WAITING_FOR_REMOTE_KVS blocked state | `scheduler.py:335-856` `schedule()` |
+| Step 生命周期 | engine, forward pass, GPU | busy loop stepping, non_block execute_model, update_from_output state machine | `core.py:439-468` `step()` |
+| exists→get 时间窗口 | scheduler, KV connector, cache hit | guard re-trigger on allocate failure, full_sequence_must_fit | `scheduler.py:596-615`, `scheduler.py:741-766` |
+
 ---
 
 ## 三队列模型

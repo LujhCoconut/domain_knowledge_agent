@@ -2,8 +2,18 @@
 
 Mooncake Store 的 Master 端核心机制：lease 生命周期、eviction 判定、refcnt 并发保护。
 
-> 源码来源：`kvcache-ai/Mooncake` main 分支，
-> 核心文件：`mooncake-store/src/master_service.cpp`（9277 行）、`mooncake-store/include/replica.h`（688 行）
+> 源码来源：`kvcache-ai/Mooncake` main 分支，核心文件：`mooncake-store/src/master_service.cpp`（9277 行）、`mooncake-store/include/replica.h`（688 行）
+
+## 子主题
+
+| 主题 | 关键词 | 技术点 | 关键源码行号 |
+|------|--------|--------|-------------|
+| Lease 三层保护 | lease, eviction, memory management, DRAM | GrantLease(hard_ms, soft_ms) dual timeline | `master_service.cpp:175-177`, `3306-3308` |
+| Eviction 判定链 | soft pin, hard pin, BatchEvict | IsHardPinned/IsLeaseExpired/IsSoftPinned eviction guard chain | `master_service.cpp:6708-7110` |
+| BatchEvict 两阶段淘汰 | parallel collection, nth_element | multi-thread candidate collection, nth_element lease_timeout sorting | `master_service.cpp:6895-7110` |
+| Grouped Key Lease | tenant, group routing | grouped key lease refresh, NeedsLeaseRefresh | `master_service.cpp:1849-1888` |
+| Replica refcnt | refcnt, promotion, offload | refcnt pin on source LOCAL_DISK | `replica.h:329-332`, `master_service.cpp:4037` |
+| Promotion-on-Hit | promotion, SSD offload, Count-Min Sketch, heartbeat | TryPushPromotionQueue admission gating, PROCESSING MEMORY replica staging | `master_service.cpp:5538-5930` |
 
 ---
 
