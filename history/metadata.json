@@ -1,7 +1,7 @@
 {
   "$schema": "metadata.schema.json",
-  "generated_at": "2026-07-17",
-  "total_papers": 186,
+  "generated_at": "2026-07-20",
+  "total_papers": 187,
   "papers": [
     {
       "canonical_name": "PithTrain(arXiv'26)",
@@ -31,6 +31,67 @@
       "review_rounds": {
         "r1_tldr": "Agent-native 四原则 + ATE-Bench 反向基准 + 11K 行 Python 匹敌生产吞吐，Agent Turns -62%、Active GPU Time -64%",
         "r2_insights": "",
+        "r3_relations": "",
+        "r4_refute": ""
+      }
+    },
+    {
+      "canonical_name": "PolicyCache(NSDI'26)",
+      "title": "PolicyCache: Intra-flow Learning in Congestion Control",
+      "authors": [
+        "Han Tian",
+        "Han Wang",
+        "Wenbo Li",
+        "Xudong Liao",
+        "Decang Sun",
+        "Wenxue Li",
+        "Donghui Chen",
+        "Bin Huang",
+        "Senbo Fu",
+        "Junxue Zhang",
+        "Dian Shen",
+        "Kai Chen"
+      ],
+      "conference": "NSDI",
+      "year": 2026,
+      "url": "https://www.usenix.org/system/files/nsdi26-tian.pdf",
+      "date_read": "2026-07-20",
+      "type": "论文-系统",
+      "tags": [
+        "NSDI",
+        "congestion control",
+        "online learning",
+        "intra-flow learning",
+        "networking",
+        "TCP"
+      ],
+      "techniques": [
+        "intra-flow learning",
+        "Hoeffding Adaptive Tree",
+        "online exploration",
+        "dynamic model switching",
+        "non-parametric streaming model",
+        "state-action alignment"
+      ],
+      "builds_on": [
+        "Vivace(NSDI'18)",
+        "Astraea(EuroSys'24)",
+        "Spine(CoNEXT'22)"
+      ],
+      "contrasts_with": [
+        "Aurora(ICML'19)",
+        "Orca(SIGCOMM'20)",
+        "BBR"
+      ],
+      "industrial_applicability": "medium",
+      "applicability_why": "核心思想可复用但需适配——Linux内核模块+用户态agent架构可移植到其他传输协议，HAT替代DNN降低在线学习门槛",
+      "prerequisites": "Linux kernel module, Netlink, scikit-multiflow",
+      "knowledge_locations": [
+        "network/os-networking/"
+      ],
+      "review_rounds": {
+        "r1_tldr": "首个intra-flow learning CC：每条流自训练轻量非参树模型(HAT)用于自身，避免跨环境泛化问题，同时保持高响应低开销",
+        "r2_insights": "Intra-flow learning范式消除跨环境泛化假设；非参HAT数RTT收敛(vs DNN数千步)；双模探索/执行+性能分数保证下界；微探索统一样本收集；state-action因果对齐机制；utility单调性驱动去中心化公平收敛",
         "r3_relations": "",
         "r4_refute": ""
       }
@@ -6247,6 +6308,24 @@
     }
   ],
   "technique_index": {
+    "intra-flow learning": [
+      "PolicyCache(NSDI'26)"
+    ],
+    "Hoeffding Adaptive Tree": [
+      "PolicyCache(NSDI'26)"
+    ],
+    "online exploration": [
+      "PolicyCache(NSDI'26)"
+    ],
+    "dynamic model switching": [
+      "PolicyCache(NSDI'26)"
+    ],
+    "non-parametric streaming model": [
+      "PolicyCache(NSDI'26)"
+    ],
+    "state-action alignment": [
+      "PolicyCache(NSDI'26)"
+    ],
     "PDF-based trace categorization": [
       "ThinkAhead(FAST'26)"
     ],
@@ -6703,6 +6782,35 @@
       "Umap(OSDI'26)",
       "ZUFS(FAST'26)"
     ],
+    "NSDI": [
+      "BURST(NSDI'26)",
+      "PolicyCache(NSDI'26)",
+      "Unum(NSDI'26)"
+    ],
+    "congestion control": [
+      "PolicyCache(NSDI'26)",
+      "Unum(NSDI'26)"
+    ],
+    "online learning": [
+      "PolicyCache(NSDI'26)"
+    ],
+    "intra-flow learning": [
+      "PolicyCache(NSDI'26)"
+    ],
+    "networking": [
+      "AITurbo(FAST'26)",
+      "BALBOA(OSDI'26)",
+      "DPA-Store(OSDI'26)",
+      "PolicyCache(NSDI'26)",
+      "Rakaia(OSDI'26)",
+      "SBB(OSDI'26)",
+      "Sepia(OSDI'26)",
+      "UCCL-Tran(OSDI'26)",
+      "UEP(OSDI'26)"
+    ],
+    "TCP": [
+      "PolicyCache(NSDI'26)"
+    ],
     "ASPLOS": [
       "CAMP(ASPLOS'26)",
       "M5(ASPLOS'25)",
@@ -7032,16 +7140,6 @@
     "filesystem": [
       "CoFS(FAST'26)",
       "try/semisolates(OSDI'26)"
-    ],
-    "networking": [
-      "AITurbo(FAST'26)",
-      "BALBOA(OSDI'26)",
-      "DPA-Store(OSDI'26)",
-      "Rakaia(OSDI'26)",
-      "SBB(OSDI'26)",
-      "Sepia(OSDI'26)",
-      "UCCL-Tran(OSDI'26)",
-      "UEP(OSDI'26)"
     ],
     "testing": [
       "Mimesys(OSDI'26)",
@@ -7640,9 +7738,6 @@
     "network control": [
       "Unum(NSDI'26)"
     ],
-    "congestion control": [
-      "Unum(NSDI'26)"
-    ],
     "ABR": [
       "Unum(NSDI'26)"
     ],
@@ -7653,10 +7748,6 @@
       "Unum(NSDI'26)"
     ],
     "state estimation": [
-      "Unum(NSDI'26)"
-    ],
-    "NSDI": [
-      "BURST(NSDI'26)",
       "Unum(NSDI'26)"
     ],
     "Soft-RDMA": [

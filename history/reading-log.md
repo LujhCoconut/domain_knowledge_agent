@@ -4,6 +4,7 @@
 
 | 日期 | 资料标题 | 类型 | 来源 | 解析 skill | 归档位置 | 备注 |
 |------|----------|------|------|------------|----------|------|
+| 2026-07-20 | PolicyCache(NSDI'26) | 论文-系统 | NSDI '26, usenix.org/system/files/nsdi26-tian.pdf, USTC/HKUST/Huawei/Southeast University | knowledge-synthesis | network/os-networking/ | 首个intra-flow learning CC：每条流用HAT非参树模型自训练用于自身，消除跨环境泛化问题，inter-continental 1186.9Mbps (2.6× Vivace, 5× Orca) |
 | 2026-07-17 | PithTrain(arXiv'26) | 论文-系统 | arXiv:2605.31463, CMU/NVIDIA | knowledge-synthesis | architecture/agent-native-design/, performance/gpu-ai-performance/ | Agent-native 四原则 + ATE-Bench 反向基准 + 11K 行 Python 匹敌生产吞吐，Agent Turns -62%、Active GPU Time -64% |
 | 2026-07-17 | ThinkAhead(FAST'26) | 论文-系统 | FAST '26, usenix.org/system/files/fast26-chen.pdf, SJTU/Alibaba/CUHK | knowledge-synthesis | performance/storage-filesystem/, operations/cloud-infrastructure/ | 数据驱动 EBS VD 镜像预加载，160K VD trace 分析，lazy loading 致 40% slow I/O，hit rate +7.27×，tail latency -98.7%，阿里生产部署 |
 | 2026-07-17 | CoFS(FAST'26) | 论文-系统 | FAST '26, usenix.org/system/files/fast26-wang-li.pdf, KylinSoft | knowledge-synthesis | performance/storage-filesystem/, operations/cloud-infrastructure/ | MPHF 加速 FUSE 容器镜像元数据查找 + kernel-space 缓存数据访问，lookup 性能 +86%，优于 Nydus-fuse/erofs/eStargz |
