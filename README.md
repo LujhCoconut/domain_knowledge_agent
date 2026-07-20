@@ -34,13 +34,13 @@ domain-knowledge/
 
 <!-- 以下区域由 /domain-knowledge 后置操作自动更新，请勿手动编辑本节 -->
 
-- **总计**: 187 篇
-- **会议分布**: OSDI 133 篇（'26），FAST 43 篇（'26），ASPLOS 4 篇（'22–'26），NSDI 3 篇（'26），arXiv 2 篇（'26），SOSP 2 篇（'25）
+- **总计**: 188 篇
+- **会议分布**: OSDI 133 篇（'26），FAST 43 篇（'26），ASPLOS 4 篇（'22–'26），NSDI 3 篇（'26），arXiv 2 篇（'26），SOSP 2 篇（'25），ATC 1 篇（'25）
 - **领域分布**:
   - LLM 推理/GPU-AI/训练: 44 篇（Strata(OSDI'26)、ECHO(OSDI'26)、DirectKV(OSDI'26)…） — 见 `performance/gpu-ai-performance/KNOWLEDGE.md`
   - 存储/文件系统: 34 篇（ByteDance DataPipeline(OSDI'26)、DeLFS(OSDI'26)、Espresso(OSDI'26)…） — 见 `performance/storage-filesystem/KNOWLEDGE.md`
   - OS 安全/隐私/程序分析: 18 篇（USEC(OSDI'26)、Mohabi(OSDI'26)、Ichnaea(OSDI'26)…） — 见 `security/os-security/KNOWLEDGE.md`
-  - CXL/内存系统/stall 回收: 15 篇（PACT(ASPLOS'26)、TMO(ASPLOS'22)、M5(ASPLOS'25)…） — 见 `performance/system-tuning/KNOWLEDGE.md`
+  - CXL/内存系统/stall 回收: 16 篇（PACT(ASPLOS'26)、TMO(ASPLOS'22)、M5(ASPLOS'25)…） — 见 `performance/system-tuning/KNOWLEDGE.md`
   - 云基础设施/虚拟化: 12 篇（mwait-sched(OSDI'26)、Janus(OSDI'26)、Nested SEV(OSDI'26)…） — 见 `operations/cloud-infrastructure/KNOWLEDGE.md`
   - 网络系统: 10 篇（PolicyCache(NSDI'26)、SBB(OSDI'26)、Rakaia(OSDI'26)…） — 见 `network/os-networking/KNOWLEDGE.md`
   - 监控/可观测性: 9 篇（CoreSec(OSDI'26)、StriaTrace(OSDI'26)、gigiprofiler(OSDI'26)…） — 见 `operations/monitoring-observability/KNOWLEDGE.md`

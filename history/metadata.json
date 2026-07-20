@@ -1,7 +1,7 @@
 {
   "$schema": "metadata.schema.json",
   "generated_at": "2026-07-20",
-  "total_papers": 187,
+  "total_papers": 188,
   "papers": [
     {
       "canonical_name": "PithTrain(arXiv'26)",
@@ -6305,6 +6305,69 @@
         "r3_relations": "",
         "r4_refute": ""
       }
+    },
+    {
+      "canonical_name": "PageFlex(ATC'25)",
+      "title": "PageFlex: Flexible and Efficient User-space Delegation of Linux Paging Policies with eBPF",
+      "authors": [
+        "Anil Yelam",
+        "Kan Wu",
+        "Zhiyuan Guo",
+        "Suli Yang",
+        "Rajath Shashidhara",
+        "Wei Xu",
+        "Stanko Novakovic",
+        "Alex C. Snoeren",
+        "Kimberly Keeton"
+      ],
+      "conference": "ATC",
+      "year": 2025,
+      "url": "https://www.usenix.org/conference/atc25/presentation/yelam",
+      "date_read": "2026-07-20",
+      "type": "论文-系统",
+      "tags": [
+        "memory tiering",
+        "eBPF",
+        "page reclamation",
+        "prefetching",
+        "Linux kernel",
+        "swap",
+        "user-space delegation",
+        "hyperscaler"
+      ],
+      "techniques": [
+        "eBPF-based policy delegation",
+        "per-page weight reclamation model",
+        "tracepoint-driven page event tracking",
+        "4B per-page eBPF state",
+        "madvise enforcement from user space",
+        "region-aware policy specialization"
+      ],
+      "builds_on": [
+        "g-swap",
+        "TMO",
+        "MGLRU",
+        "Hyperbolic caching",
+        "Leap prefetching"
+      ],
+      "contrasts_with": [
+        "userfaultfd",
+        "AIFM",
+        "DiLOS"
+      ],
+      "industrial_applicability": "high",
+      "applicability_why": "Google内部系统，608行内核改动+2900行C++ agent即可部署，已兼容g-swap/TMO等生产系统。对Mooncake/Memif等用户态内存管理也有借鉴意义",
+      "prerequisites": "Linux 5.10+, eBPF support, writeable tracepoints",
+      "knowledge_locations": [
+        "performance/system-tuning/",
+        "architecture/memory-storage-hierarchy/"
+      ],
+      "review_rounds": {
+        "r1_tldr": "用eBPF把Linux页面回收/预取策略从内核委托到用户空间，<1%性能开销，支持LFU/Hyperbolic/Leap等策略灵活替换，KV store场景多回收36%内存",
+        "r2_insights": "",
+        "r3_relations": "",
+        "r4_refute": ""
+      }
     }
   ],
   "technique_index": {
@@ -6706,6 +6769,24 @@
     ],
     "kernel-bypass RDMA emulation": [
       "BURST(NSDI'26)"
+    ],
+    "eBPF-based policy delegation": [
+      "PageFlex(ATC'25)"
+    ],
+    "per-page weight reclamation model": [
+      "PageFlex(ATC'25)"
+    ],
+    "tracepoint-driven page event tracking": [
+      "PageFlex(ATC'25)"
+    ],
+    "4B per-page eBPF state": [
+      "PageFlex(ATC'25)"
+    ],
+    "madvise enforcement from user space": [
+      "PageFlex(ATC'25)"
+    ],
+    "region-aware policy specialization": [
+      "PageFlex(ATC'25)"
     ]
   },
   "tag_index": {
@@ -6828,6 +6909,7 @@
       "NEMO(OSDI'26)",
       "OBASE(OSDI'26)",
       "PACT(ASPLOS'26)",
+      "PageFlex(ATC'25)",
       "PeeR(OSDI'26)",
       "RamRyder(OSDI'26)",
       "ScaleSwap(FAST'26)",
@@ -7232,6 +7314,7 @@
     ],
     "swap": [
       "Nixie(OSDI'26)",
+      "PageFlex(ATC'25)",
       "ScaleSwap(FAST'26)"
     ],
     "caching": [
@@ -7699,7 +7782,8 @@
       "Lockify(FAST'26)"
     ],
     "Linux kernel": [
-      "Lockify(FAST'26)"
+      "Lockify(FAST'26)",
+      "PageFlex(ATC'25)"
     ],
     "scalability": [
       "Lockify(FAST'26)"
@@ -7761,6 +7845,21 @@
     ],
     "heterogeneous NIC": [
       "BURST(NSDI'26)"
+    ],
+    "eBPF": [
+      "PageFlex(ATC'25)"
+    ],
+    "page reclamation": [
+      "PageFlex(ATC'25)"
+    ],
+    "prefetching": [
+      "PageFlex(ATC'25)"
+    ],
+    "user-space delegation": [
+      "PageFlex(ATC'25)"
+    ],
+    "hyperscaler": [
+      "PageFlex(ATC'25)"
     ]
   }
 }

@@ -192,3 +192,4 @@
 | 2026-07-17 | ScaleSwap(FAST'26) | 论文-系统 | FAST '26, fast26-ahn.pdf | knowledge-synthesis | performance/system-tuning/ | 全闪 swap 阵列去中心化 swap, one-to-one 模型+core-affinity LRU, 吞吐 3.4× Linux swap |
 | 2026-07-17 | DPAS(FAST'26) | 论文-系统 | FAST '26, fast26-seo.pdf | knowledge-synthesis | performance/storage-filesystem/ | I/O completion 自适应, per-I/O sleep+PAS+DPAS 动态切换, CPU -21pp, YCSB +9% |
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
+| 2026-07-20 | PageFlex: Flexible and Efficient User-space Delegation of Linux Paging Policies with eBPF | PageFlex(ATC'25) | 论文-系统 | ATC'25 | memory tiering, eBPF, page reclamation, user-space delegation | performance/system-tuning/, architecture/memory-storage-hierarchy/ | R1 done |
