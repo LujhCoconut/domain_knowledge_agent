@@ -1,0 +1,548 @@
+{
+  "entries": [
+    {
+      "name": "vLLM Continuous Batching Scheduler",
+      "project": "vllm",
+      "submodule": "scheduler",
+      "known_for": "三队列模型 (waiting/skipped_waiting/running)、break vs continue 退出路径、exists → get 时间窗口根因分析",
+      "tags": [
+        "scheduler",
+        "continuous batching",
+        "prefill",
+        "decode",
+        "KV cache",
+        "block allocation"
+      ],
+      "techniques": [
+        "three-queue scheduling",
+        "break-vs-continue guard",
+        "allocate_slots preemption",
+        "WAITING_FOR_REMOTE_KVS blocked state",
+        "num_computed_tokens guard re-trigger"
+      ],
+      "source_files": [
+        "vllm/v1/core/sched/scheduler.py"
+      ],
+      "source_lines": {
+        "__init__": "64-167",
+        "schedule()": "335-856",
+        "exists call site": "596-615",
+        "allocate_slots break": "741-766",
+        "_preempt_request": "954-968"
+      }
+    },
+    {
+      "name": "vLLM Step Lifecycle",
+      "project": "vllm",
+      "submodule": "scheduler",
+      "known_for": "schedule → execute_model → update_from_output 完整循环、forward 在 context manager yield 块中执行",
+      "tags": [
+        "scheduler",
+        "engine",
+        "forward pass",
+        "GPU"
+      ],
+      "techniques": [
+        "busy loop stepping",
+        "non_block execute_model",
+        "update_from_output state machine"
+      ],
+      "source_files": [
+        "vllm/v1/engine/core.py",
+        "vllm/v1/core/sched/scheduler.py"
+      ],
+      "source_lines": {
+        "step()": "core.py:439-468",
+        "_update_after_schedule": "scheduler.py:970-986"
+      }
+    },
+    {
+      "name": "vLLM KV Connector Framework",
+      "project": "vllm",
+      "submodule": "kv_connector",
+      "known_for": "Scheduler/Worker 双角色分离、ZMQ IPC lookup、异步加载两阶段设计 (get_finished 在 finally 中入队)",
+      "tags": [
+        "KV connector",
+        "scheduler",
+        "worker",
+        "ZMQ",
+        "async loading",
+        "MooncakeStore"
+      ],
+      "techniques": [
+        "role separation (SCHEDULER/WORKER)",
+        "ZMQ REQ/REP IPC",
+        "get_finished deferred enqueue",
+        "compute-transfer overlap"
+      ],
+      "source_files": [
+        "vllm/v1/worker/kv_connector_model_runner_mixin.py",
+        ".../mooncake/store/scheduler.py",
+        ".../mooncake/store/worker.py"
+      ],
+      "source_lines": {
+        "_get_kv_connector_output": "mixin.py:78-103",
+        "lookup": "worker.py:1390-1451",
+        "LookupKeyServer": "worker.py:1490-1530"
+      }
+    },
+    {
+      "name": "vLLM Worker / GPU Model Runner",
+      "project": "vllm",
+      "submodule": "worker",
+      "known_for": "execute_model 入口、KV connector output context manager 嵌套、background save/load threads",
+      "tags": [
+        "worker",
+        "GPU",
+        "forward pass",
+        "model runner",
+        "MooncakeStore",
+        "background thread"
+      ],
+      "techniques": [
+        "context manager KV lifecycle",
+        "background transfer threads (send/recv)",
+        "batch_get_into_multi_buffers"
+      ],
+      "source_files": [
+        "vllm/v1/worker/gpu_model_runner.py",
+        ".../mooncake/store/worker.py"
+      ],
+      "source_lines": {
+        "execute_model": "gpu_model_runner.py:4034-4070",
+        "KVCacheStoreSendingThread": "worker.py:437-660",
+        "KVCacheStoreRecvingThread": "worker.py:713-858"
+      }
+    },
+    {
+      "name": "Mooncake Store Lease & Eviction",
+      "project": "mooncake",
+      "submodule": "store",
+      "known_for": "三层保护 (hard_pin/hard lease(lease_timeout)/soft_pin(soft_pin_timeout)) + refcnt 并发保护、BatchEvict 两阶段并行淘汰",
+      "tags": [
+        "lease",
+        "eviction",
+        "memory management",
+        "DRAM",
+        "refcnt",
+        "soft pin",
+        "hard pin",
+        "BatchEvict"
+      ],
+      "techniques": [
+        "GrantLease(hard_ms, soft_ms) dual timeline",
+        "IsHardPinned/IsLeaseExpired/IsSoftPinned eviction guard chain",
+        "nth_element lease_timeout sorting",
+        "multi-thread candidate collection",
+        "grouped key lease refresh",
+        "ExistKey also grants lease"
+      ],
+      "source_files": [
+        "mooncake-store/src/master_service.cpp",
+        "mooncake-store/include/replica.h"
+      ],
+      "source_lines": {
+        "default_kv_lease_ttl init": "175-177",
+        "EvictionThreadFunc": "406, 5983",
+        "GrantLeaseForGroup": "1849-1888",
+        "ExistKey": "2074-2095",
+        "GetReplicaList": "2515-2585",
+        "PutEnd GrantLease(0)": "3306-3308",
+        "BatchEvict": "6708-7110",
+        "is_evictable_memory_replica": "6719"
+      }
+    },
+    {
+      "name": "Mooncake Promotion-on-Hit",
+      "project": "mooncake",
+      "submodule": "store",
+      "known_for": "GetReplicaList → TryPushPromotionQueue 准入控制 (Count-Min Sketch + watermark + cap) → heartbeat → PromotionAllocStart → PromotionWrite → NotifyPromotionSuccess",
+      "tags": [
+        "promotion",
+        "SSD offload",
+        "DRAM",
+        "heartbeat",
+        "Count-Min Sketch",
+        "LOCAL_DISK"
+      ],
+      "techniques": [
+        "TryPushPromotionQueue admission gating",
+        "PROCESSING MEMORY replica staging",
+        "PromotionAllocStart memory allocation",
+        "refcnt pin on source LOCAL_DISK"
+      ],
+      "source_files": [
+        "mooncake-store/src/master_service.cpp"
+      ],
+      "source_lines": {
+        "TryPushPromotionQueue": "5538-5670",
+        "NotifyPromotionSuccess": "5821-5930"
+      }
+    },
+    {
+      "name": "Mooncake TENT Transfer Engine Architecture",
+      "project": "mooncake",
+      "submodule": "transfer-engine",
+      "known_for": "命令式→声明式演进、四层架构、Unified Segment (Buffers/Topology/Devices)、tent_submit 异构批量提交",
+      "tags": [
+        "TENT",
+        "transfer engine",
+        "declarative API",
+        "Unified Segment",
+        "heterogeneous interconnect",
+        "NVLink",
+        "RDMA",
+        "Ascend",
+        "NIXL"
+      ],
+      "techniques": [
+        "declarative intent API (tent_submit)",
+        "Unified Segment abstraction",
+        "transport_attrs unified encapsulation",
+        "plugin-based Transport backend"
+      ],
+      "source_urls": [
+        "https://renfeng.org/zh/posts/tent-internal-arch/",
+        "https://renfeng.org/zh/posts/tent-internal-orchestrator-part-1/",
+        "https://renfeng.org/zh/posts/tent-internal-slice-spraying-and-qos/"
+      ]
+    },
+    {
+      "name": "Mooncake TENT Late Binding & Path Synthesis",
+      "project": "mooncake",
+      "submodule": "transfer-engine",
+      "known_for": "晚期绑定 (传输请求提交瞬间解析路径)、自主路径合成 (无直连时自动合成 D2H→H2H→H2D 多跳 pipeline)",
+      "tags": [
+        "TENT",
+        "late binding",
+        "path synthesis",
+        "orchestrator",
+        "topology",
+        "multi-hop"
+      ],
+      "techniques": [
+        "late binding path resolution",
+        "Tier-aware affinity sorting",
+        "autonomous path synthesis (staging buffer pipeline)",
+        "Transport capability intersection"
+      ],
+      "source_urls": [
+        "https://renfeng.org/zh/posts/tent-internal-orchestrator-part-1/"
+      ]
+    },
+    {
+      "name": "Mooncake TENT Slice Spraying & QoS",
+      "project": "mooncake",
+      "submodule": "transfer-engine",
+      "known_for": "Round-Robin → 双参数模型 → EWMA 单参数模型三阶段演进、严格优先级 + 防饥饿超时提升 + 跨进程时隙协调",
+      "tags": [
+        "TENT",
+        "QoS",
+        "slice spraying",
+        "EWMA",
+        "RDMA",
+        "multi-rail",
+        "priority scheduling"
+      ],
+      "techniques": [
+        "EWMA bandwidth estimation (single-parameter)",
+        "proportional allocation by predicted_time",
+        "strict priority + anti-starvation timeout promotion",
+        "cross-process time-slot coordination (2ms x 3 slots)",
+        "mice/elephant flow differentiation"
+      ],
+      "source_urls": [
+        "https://renfeng.org/zh/posts/tent-internal-slice-spraying-and-qos/"
+      ]
+    }
+  ],
+  "generated_at": "2026-07-20",
+  "total_entries": 9,
+  "technique_index": {
+    "three-queue scheduling": [
+      "vLLM Continuous Batching Scheduler"
+    ],
+    "break-vs-continue guard": [
+      "vLLM Continuous Batching Scheduler"
+    ],
+    "allocate_slots preemption": [
+      "vLLM Continuous Batching Scheduler"
+    ],
+    "WAITING_FOR_REMOTE_KVS blocked state": [
+      "vLLM Continuous Batching Scheduler"
+    ],
+    "num_computed_tokens guard re-trigger": [
+      "vLLM Continuous Batching Scheduler"
+    ],
+    "busy loop stepping": [
+      "vLLM Step Lifecycle"
+    ],
+    "non_block execute_model": [
+      "vLLM Step Lifecycle"
+    ],
+    "update_from_output state machine": [
+      "vLLM Step Lifecycle"
+    ],
+    "role separation (SCHEDULER/WORKER)": [
+      "vLLM KV Connector Framework"
+    ],
+    "ZMQ REQ/REP IPC": [
+      "vLLM KV Connector Framework"
+    ],
+    "get_finished deferred enqueue": [
+      "vLLM KV Connector Framework"
+    ],
+    "compute-transfer overlap": [
+      "vLLM KV Connector Framework"
+    ],
+    "context manager KV lifecycle": [
+      "vLLM Worker / GPU Model Runner"
+    ],
+    "background transfer threads (send/recv)": [
+      "vLLM Worker / GPU Model Runner"
+    ],
+    "batch_get_into_multi_buffers": [
+      "vLLM Worker / GPU Model Runner"
+    ],
+    "GrantLease(hard_ms, soft_ms) dual timeline": [
+      "Mooncake Store Lease & Eviction"
+    ],
+    "IsHardPinned/IsLeaseExpired/IsSoftPinned eviction guard chain": [
+      "Mooncake Store Lease & Eviction"
+    ],
+    "nth_element lease_timeout sorting": [
+      "Mooncake Store Lease & Eviction"
+    ],
+    "multi-thread candidate collection": [
+      "Mooncake Store Lease & Eviction"
+    ],
+    "grouped key lease refresh": [
+      "Mooncake Store Lease & Eviction"
+    ],
+    "ExistKey also grants lease": [
+      "Mooncake Store Lease & Eviction"
+    ],
+    "TryPushPromotionQueue admission gating": [
+      "Mooncake Promotion-on-Hit"
+    ],
+    "PROCESSING MEMORY replica staging": [
+      "Mooncake Promotion-on-Hit"
+    ],
+    "PromotionAllocStart memory allocation": [
+      "Mooncake Promotion-on-Hit"
+    ],
+    "refcnt pin on source LOCAL_DISK": [
+      "Mooncake Promotion-on-Hit"
+    ],
+    "declarative intent API (tent_submit)": [
+      "Mooncake TENT Transfer Engine Architecture"
+    ],
+    "Unified Segment abstraction": [
+      "Mooncake TENT Transfer Engine Architecture"
+    ],
+    "transport_attrs unified encapsulation": [
+      "Mooncake TENT Transfer Engine Architecture"
+    ],
+    "plugin-based Transport backend": [
+      "Mooncake TENT Transfer Engine Architecture"
+    ],
+    "late binding path resolution": [
+      "Mooncake TENT Late Binding & Path Synthesis"
+    ],
+    "Tier-aware affinity sorting": [
+      "Mooncake TENT Late Binding & Path Synthesis"
+    ],
+    "autonomous path synthesis (staging buffer pipeline)": [
+      "Mooncake TENT Late Binding & Path Synthesis"
+    ],
+    "Transport capability intersection": [
+      "Mooncake TENT Late Binding & Path Synthesis"
+    ],
+    "EWMA bandwidth estimation (single-parameter)": [
+      "Mooncake TENT Slice Spraying & QoS"
+    ],
+    "proportional allocation by predicted_time": [
+      "Mooncake TENT Slice Spraying & QoS"
+    ],
+    "strict priority + anti-starvation timeout promotion": [
+      "Mooncake TENT Slice Spraying & QoS"
+    ],
+    "cross-process time-slot coordination (2ms x 3 slots)": [
+      "Mooncake TENT Slice Spraying & QoS"
+    ],
+    "mice/elephant flow differentiation": [
+      "Mooncake TENT Slice Spraying & QoS"
+    ]
+  },
+  "tag_index": {
+    "scheduler": [
+      "vLLM Continuous Batching Scheduler",
+      "vLLM KV Connector Framework",
+      "vLLM Step Lifecycle"
+    ],
+    "continuous batching": [
+      "vLLM Continuous Batching Scheduler"
+    ],
+    "prefill": [
+      "vLLM Continuous Batching Scheduler"
+    ],
+    "decode": [
+      "vLLM Continuous Batching Scheduler"
+    ],
+    "KV cache": [
+      "vLLM Continuous Batching Scheduler"
+    ],
+    "block allocation": [
+      "vLLM Continuous Batching Scheduler"
+    ],
+    "engine": [
+      "vLLM Step Lifecycle"
+    ],
+    "forward pass": [
+      "vLLM Step Lifecycle",
+      "vLLM Worker / GPU Model Runner"
+    ],
+    "GPU": [
+      "vLLM Step Lifecycle",
+      "vLLM Worker / GPU Model Runner"
+    ],
+    "KV connector": [
+      "vLLM KV Connector Framework"
+    ],
+    "worker": [
+      "vLLM KV Connector Framework",
+      "vLLM Worker / GPU Model Runner"
+    ],
+    "ZMQ": [
+      "vLLM KV Connector Framework"
+    ],
+    "async loading": [
+      "vLLM KV Connector Framework"
+    ],
+    "MooncakeStore": [
+      "vLLM KV Connector Framework",
+      "vLLM Worker / GPU Model Runner"
+    ],
+    "model runner": [
+      "vLLM Worker / GPU Model Runner"
+    ],
+    "background thread": [
+      "vLLM Worker / GPU Model Runner"
+    ],
+    "lease": [
+      "Mooncake Store Lease & Eviction"
+    ],
+    "eviction": [
+      "Mooncake Store Lease & Eviction"
+    ],
+    "memory management": [
+      "Mooncake Store Lease & Eviction"
+    ],
+    "DRAM": [
+      "Mooncake Promotion-on-Hit",
+      "Mooncake Store Lease & Eviction"
+    ],
+    "refcnt": [
+      "Mooncake Store Lease & Eviction"
+    ],
+    "soft pin": [
+      "Mooncake Store Lease & Eviction"
+    ],
+    "hard pin": [
+      "Mooncake Store Lease & Eviction"
+    ],
+    "BatchEvict": [
+      "Mooncake Store Lease & Eviction"
+    ],
+    "promotion": [
+      "Mooncake Promotion-on-Hit"
+    ],
+    "SSD offload": [
+      "Mooncake Promotion-on-Hit"
+    ],
+    "heartbeat": [
+      "Mooncake Promotion-on-Hit"
+    ],
+    "Count-Min Sketch": [
+      "Mooncake Promotion-on-Hit"
+    ],
+    "LOCAL_DISK": [
+      "Mooncake Promotion-on-Hit"
+    ],
+    "TENT": [
+      "Mooncake TENT Late Binding & Path Synthesis",
+      "Mooncake TENT Slice Spraying & QoS",
+      "Mooncake TENT Transfer Engine Architecture"
+    ],
+    "transfer engine": [
+      "Mooncake TENT Transfer Engine Architecture"
+    ],
+    "declarative API": [
+      "Mooncake TENT Transfer Engine Architecture"
+    ],
+    "Unified Segment": [
+      "Mooncake TENT Transfer Engine Architecture"
+    ],
+    "heterogeneous interconnect": [
+      "Mooncake TENT Transfer Engine Architecture"
+    ],
+    "NVLink": [
+      "Mooncake TENT Transfer Engine Architecture"
+    ],
+    "RDMA": [
+      "Mooncake TENT Slice Spraying & QoS",
+      "Mooncake TENT Transfer Engine Architecture"
+    ],
+    "Ascend": [
+      "Mooncake TENT Transfer Engine Architecture"
+    ],
+    "NIXL": [
+      "Mooncake TENT Transfer Engine Architecture"
+    ],
+    "late binding": [
+      "Mooncake TENT Late Binding & Path Synthesis"
+    ],
+    "path synthesis": [
+      "Mooncake TENT Late Binding & Path Synthesis"
+    ],
+    "orchestrator": [
+      "Mooncake TENT Late Binding & Path Synthesis"
+    ],
+    "topology": [
+      "Mooncake TENT Late Binding & Path Synthesis"
+    ],
+    "multi-hop": [
+      "Mooncake TENT Late Binding & Path Synthesis"
+    ],
+    "QoS": [
+      "Mooncake TENT Slice Spraying & QoS"
+    ],
+    "slice spraying": [
+      "Mooncake TENT Slice Spraying & QoS"
+    ],
+    "EWMA": [
+      "Mooncake TENT Slice Spraying & QoS"
+    ],
+    "multi-rail": [
+      "Mooncake TENT Slice Spraying & QoS"
+    ],
+    "priority scheduling": [
+      "Mooncake TENT Slice Spraying & QoS"
+    ]
+  },
+  "project_index": {
+    "vllm": [
+      "vLLM Continuous Batching Scheduler",
+      "vLLM KV Connector Framework",
+      "vLLM Step Lifecycle",
+      "vLLM Worker / GPU Model Runner"
+    ],
+    "mooncake": [
+      "Mooncake Promotion-on-Hit",
+      "Mooncake Store Lease & Eviction",
+      "Mooncake TENT Late Binding & Path Synthesis",
+      "Mooncake TENT Slice Spraying & QoS",
+      "Mooncake TENT Transfer Engine Architecture"
+    ]
+  }
+}
