@@ -118,7 +118,7 @@
       "name": "Mooncake Store Lease & Eviction",
       "project": "mooncake",
       "submodule": "store",
-      "known_for": "三层保护 (hard_pin/hard lease(lease_timeout)/soft_pin(soft_pin_timeout)) + refcnt 并发保护、BatchEvict 两阶段并行淘汰",
+      "known_for": "三层保护 (hard_pin/hard lease/soft_pin) + refcnt 并发保护 + Grouped Key 生命周期绑定 (all-or-nothing eviction)",
       "tags": [
         "lease",
         "eviction",
@@ -127,7 +127,10 @@
         "refcnt",
         "soft pin",
         "hard pin",
-        "BatchEvict"
+        "BatchEvict",
+        "grouped key",
+        "group routing",
+        "eviction atomicity"
       ],
       "techniques": [
         "GrantLease(hard_ms, soft_ms) dual timeline",
@@ -135,7 +138,11 @@
         "nth_element lease_timeout sorting",
         "multi-thread candidate collection",
         "grouped key lease refresh",
-        "ExistKey also grants lease"
+        "ExistKey also grants lease",
+        "same-shard routing by group_id",
+        "GrantLeaseForGroup all-member refresh",
+        "try_evict_group_or_object all-expired gate",
+        "RegisterGroupMember dual mapping"
       ],
       "source_files": [
         "mooncake-store/src/master_service.cpp",
@@ -149,7 +156,10 @@
         "GetReplicaList": "2515-2585",
         "PutEnd GrantLease(0)": "3306-3308",
         "BatchEvict": "6708-7110",
-        "is_evictable_memory_replica": "6719"
+        "is_evictable_memory_replica": "6719",
+        "RegisterGroupMember": "1592-1601",
+        "RebuildGroupRoutingIndex": "1823-1844",
+        "try_evict_group_or_object": "6585-6625"
       }
     },
     {
@@ -333,6 +343,18 @@
     "ExistKey also grants lease": [
       "Mooncake Store Lease & Eviction"
     ],
+    "same-shard routing by group_id": [
+      "Mooncake Store Lease & Eviction"
+    ],
+    "GrantLeaseForGroup all-member refresh": [
+      "Mooncake Store Lease & Eviction"
+    ],
+    "try_evict_group_or_object all-expired gate": [
+      "Mooncake Store Lease & Eviction"
+    ],
+    "RegisterGroupMember dual mapping": [
+      "Mooncake Store Lease & Eviction"
+    ],
     "TryPushPromotionQueue admission gating": [
       "Mooncake Promotion-on-Hit"
     ],
@@ -463,6 +485,15 @@
       "Mooncake Store Lease & Eviction"
     ],
     "BatchEvict": [
+      "Mooncake Store Lease & Eviction"
+    ],
+    "grouped key": [
+      "Mooncake Store Lease & Eviction"
+    ],
+    "group routing": [
+      "Mooncake Store Lease & Eviction"
+    ],
+    "eviction atomicity": [
       "Mooncake Store Lease & Eviction"
     ],
     "promotion": [

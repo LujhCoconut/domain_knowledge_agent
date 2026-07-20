@@ -11,7 +11,7 @@ Mooncake Store 的 Master 端核心机制：lease 生命周期、eviction 判定
 | Lease 三层保护 | lease, eviction, memory management, DRAM | GrantLease(hard_ms, soft_ms) dual timeline | `master_service.cpp:175-177`, `3306-3308` |
 | Eviction 判定链 | soft pin, hard pin, BatchEvict | IsHardPinned/IsLeaseExpired/IsSoftPinned eviction guard chain | `master_service.cpp:6708-7110` |
 | BatchEvict 两阶段淘汰 | parallel collection, nth_element | multi-thread candidate collection, nth_element lease_timeout sorting | `master_service.cpp:6895-7110` |
-| Grouped Key Lease | tenant, group routing | grouped key lease refresh, NeedsLeaseRefresh | `master_service.cpp:1849-1888` |
+| Grouped Key 生命周期绑定 | group routing, lease refresh, eviction atomicity | same-shard routing by group_id, GrantLeaseForGroup all-member refresh, try_evict_group_or_object all-expired gate | `master_service.cpp:1592-1844`, `6585-6625` |
 | Replica refcnt | refcnt, promotion, offload | refcnt pin on source LOCAL_DISK | `replica.h:329-332`, `master_service.cpp:4037` |
 | Promotion-on-Hit | promotion, SSD offload, Count-Min Sketch, heartbeat | TryPushPromotionQueue admission gating, PROCESSING MEMORY replica staging | `master_service.cpp:5538-5930` |
 
@@ -120,30 +120,140 @@ allow_evict_soft_pinned_objects_(config.allow_evict_soft_pinned_objects),
 
 `hard_pin` 通过 `ReplicateConfig::with_hard_pin` 在创建对象时设置，永不过期。`soft_pin` 通过 `ReplicateConfig::with_soft_pin` 控制——如果为 true，`PutEnd` 时 `soft_pin_timeout` 被 `emplace()`，后续 `GrantLease` 调用会续约它。
 
-### Lease 续约与 Grouped Key
+## Grouped Key：多个 key 的生命周期绑定
+
+**背景**：vLLM 的 prefix caching 把一个 request 的 KV cache 沿 `block_size` 边界切成多个 block，每个 block 按 hash 存为 Mooncake 的一个独立 key。这些 key 形成一条前缀链——如果其中某几个 block 被 evict 了，剩下的即使还在 DRAM 里也无法命中（chain broken）。Grouped Key 就是把它们绑在一起——同生共死。
+
+### 创建：PutStart 时分配 group_id
+
+`master_service.cpp:3093-3098`（`PutStart`）：
+
+```cpp
+auto group_id_result = GetGroupIdForKey(config, 1, 0);
+// 从 ReplicateConfig.group_ids 取出当前 key 的 group_id
+const std::string group_id = group_id_result.value();
+```
+
+`ReplicateConfig`（`replica.h:90-98`）：
+
+```cpp
+// Optional per-key routing group IDs. Empty string keeps that key
+// ungrouped. Grouped keys share metadata routing, coalesced lease refresh,
+// and memory eviction behavior.
+std::optional<std::vector<std::string>> group_ids{};
+```
+
+调用方传入 `group_ids` 向量，第 i 个 key 对应第 i 个元素。同一个 `group_id` 的多个 key 组成一个 group（如 vLLM 里用 `request_id + block_prefix` 作为 group_id）。
+
+`ObjectMetadata` 上持久化 `group_id` 字段。`IsGrouped()` 检查 `group_id` 是否非空。
+
+### 路由：同 group 的 key 落在同一 shard
+
+`master_service.cpp:960-963`（`ExistKey` 中的 shard 路由）：
+
+```cpp
+auto route_it = object_group_ids_.find(MakeTenantScopedKey(tenant, key));
+if (route_it == object_group_ids_.end()) {
+    return getShardIndex(tenant, key);     // ungrouped：按 key hash
+}
+return getShardIndex(route_it->second);    // grouped：按 group_id hash
+```
+
+同 group 的所有 key 落在同一个 metadata shard——lease 刷新和 eviction 判定不需要跨 shard 协调。
+
+### 注册：RegisterGroupMember
+
+`master_service.cpp:1592-1601`（`RegisterGroupMember`）：
+
+```cpp
+object_group_ids_[MakeTenantScopedKey(tenant, key)] = group_id;
+tenant_state.group_members[group_id].insert(key);
+```
+
+建立两组映射：
+- `object_group_ids_`：`tenant+key → group_id`（路由用，全局，带 `group_routing_mutex_` 保护）
+- `tenant_state.group_members`：`group_id → {key1, key2, ...}`（lease/eviction 用，per-tenant）
+
+Master 重启后通过 `RebuildGroupRoutingIndex`（`master_service.cpp:1823-1844`）从每个 `ObjectMetadata.group_id` 重建这两组映射。
+
+### Lease 联动：碰一个全刷
 
 `GrantLeaseForGroup`（`master_service.cpp:1849-1888`）：
 
 ```cpp
-void GrantLeaseForGroup(const TenantState& ts,
-                        const std::string& key,
-                        const ObjectMetadata& metadata) const {
-    if (!metadata.IsGrouped()) {
-        metadata.GrantLease(default_kv_lease_ttl_, default_kv_soft_pin_ttl_);
-        return;
-    }
-    // NeedsLeaseRefresh 检查 lease 是否值得刷新 → 避免不必要的续约
-    bool needs_refresh = metadata.NeedsLeaseRefresh(...);
-    if (!needs_refresh) return;
-    // 遍历 group 内所有 member key，逐个续约
-    auto group_it = tenant_state.group_members.find(metadata.group_id);
-    for (const auto& member_key : group_it->second) {
+if (!metadata.IsGrouped()) {
+    metadata.GrantLease(default_kv_lease_ttl_, default_kv_soft_pin_ttl_);
+    return;
+}
+
+// 遍历 group 内所有 member key，逐个续约
+auto group_it = tenant_state.group_members.find(metadata.group_id);
+for (const auto& member_key : group_it->second) {
+    auto mit = tenant_state.metadata.find(member_key);
+    if (mit != tenant_state.metadata.end()) {
         mit->second.GrantLease(default_kv_lease_ttl_, default_kv_soft_pin_ttl_);
     }
 }
 ```
 
-Grouped key 的 lease 是联动刷新的——触碰 group 内任一 member → 整个 group 续约。
+**任一 member 被 `ExistKey` / `BatchExistKey` / `GetReplicaList` 查询 → 整个 group 的所有 member 的 lease 被同步刷新到 `now+5000ms`。** 只要 vLLM 持续访问这个 request 的任何 block，所有 block 都不会被 evict。
+
+### Eviction 原子性：全员过期才淘汰
+
+`master_service.cpp:6585-6625`（`try_evict_group_or_object`）：
+
+```cpp
+if (!metadata.IsGrouped()) {
+    return try_evict_or_offload(key, metadata, ...);   // ungrouped：直接 evict
+}
+
+// ── Group 级 gate ──
+auto group_it = tenant_state.group_members.find(metadata.group_id);
+for (const auto& member_key : group_it->second) {
+    auto member_it = tenant_state.metadata.find(member_key);
+    if (member_it != tenant_state.metadata.end() &&
+        !member_it->second.IsLeaseExpired(now)) {
+        return {};  // ★ 任一 member lease 未过期 → 整个 group 跳过，返回 0
+    }
+}
+
+// ── Per-member 判定 ──
+for (const auto& member_key : group_it->second) {
+    auto& member_metadata = member_it->second;
+    if (member_metadata.IsHardPinned() ||
+        !member_metadata.IsLeaseExpired(now) ||
+        (!allow_soft_pinned && member_metadata.IsSoftPinned(now)) ||
+        !can_evict_replicas(member_metadata)) {
+        continue;  // 每个 member 单独过四道防线
+    }
+    try_evict_or_offload(member_key, member_metadata, ...);
+}
+```
+
+**两层判定**：
+1. **Group 级 gate**：遍历 group 所有 member，**任一** lease 未过期 → 返回 0，整个 group 不 evict
+2. **Per-member 单独过**：全过期后，每个 member 还要单独过 `hard_pin` / `IsLeaseExpired` / `IsSoftPinned` / `can_evict_replicas(refcnt)` 四道防线
+
+**注意**：`BatchEvict` Phase 1 的候选收集是 per-key 的（不感知 group）。一个 grouped key 可能因自身 lease 过期被加入候选列表，但在 Phase 2 调用 `try_evict_group_or_object` 时被 group 级 gate 拦截。这是因为 GrantLeaseForGroup 保证同 group 所有 member lease 基本同时过期，实践中误加入候选的概率很低。
+
+### 总结
+
+```
+                    ┌─ key_a (block hash 0xAAAA)
+group_id = "req_001" ├─ key_b (block hash 0xBBBB)
+                    └─ key_c (block hash 0xCCCC)
+
+ExistKey(key_a) → GrantLeaseForGroup → key_a, key_b, key_c 的 lease 全部刷新到 now+5s
+
+BatchEvict:
+  Phase 1: key_b 自身 lease 过期 → 进入 candidates
+  Phase 2: try_evict_group_or_object(key_b)
+           → 检查 group 所有 member lease
+           → key_a.IsLeaseExpired()? No (刚被 ExistKey 续过)
+           → return {}  ← 整个 group 不淘汰
+```
+
+**不分组的话**：key_a 有 lease 保护但 key_b、key_c 可能已被 evict → 后续 get 只能命中前缀的一部分，其余 block 必须从 SSD 读或重算。
 
 ---
 
