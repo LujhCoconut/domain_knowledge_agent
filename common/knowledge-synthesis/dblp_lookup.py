@@ -40,9 +40,9 @@ _SSL_CTX.verify_mode = ssl.CERT_NONE
 
 DBLP_SEARCH_URL = "https://dblp.org/search/publ/api"
 DBLP_BIBTEX_BASE = "https://dblp.org/rec"
-REQUEST_TIMEOUT = 30  # seconds
+REQUEST_TIMEOUT = 45  # seconds
 RATE_LIMIT_SEC = 2.5   # minimum seconds between requests
-MAX_RETRIES = 1        # keep low — 503 means busy, retrying rarely helps
+MAX_RETRIES = 0        # no retries on server errors — DBLP is fragile
 
 HEADERS = {
     "User-Agent": "domain-knowledge-skill/1.0",
@@ -159,25 +159,45 @@ def search(query: str, max_results: int = 10) -> list[dict[str, Any]]:
     return _parse_hits(_api_get(f"{DBLP_SEARCH_URL}?{params}"))
 
 
-def fuzzy_title_search(title: str, threshold: float = 0.6, max_results: int = 10) -> list[dict[str, Any]]:
+def fuzzy_title_search(title: str, threshold: float = 0.25, max_results: int = 10) -> list[dict[str, Any]]:
+    """Fuzzy-match DBLP titles. Uses whole-word overlap scoring.
+
+    DBLP titles are much longer than scheme-name queries, so raw difflib
+    ratios are misleadingly low (e.g. 0.28 for "PithTrain 2026" vs a 58-char
+    title).  Instead we use a whole-word-overlap score: each word from the
+    query that appears as a whole word in the title contributes ~0.25.
+    """
     if not title or not title.strip():
         return []
     title_clean = title.strip()
-    candidates = search(f"title:{title_clean}", max_results * 3)
-    seen = {c["title"] for c in candidates}
-    for c in search(title_clean, max_results * 2):
-        if c["title"] not in seen:
-            candidates.append(c)
-            seen.add(c["title"])
+    query_lower = title_clean.lower()
+    # Split into words, keeping only meaningful tokens (len >= 2)
+    query_words = [w.strip(".,:;!?()[]") for w in query_lower.split() if len(w) > 1]
+
+    candidates = search(title_clean, max_results * 3)
 
     scored = []
     for pub in candidates:
         pub_title = pub.get("title", "")
         if not pub_title:
             continue
-        ratio = difflib.SequenceMatcher(None, title_clean.lower(), pub_title.lower()).ratio()
-        if ratio >= threshold:
-            pub["_similarity"] = round(ratio, 4)
+        pub_lower = pub_title.lower()
+
+        # Count query words found as WHOLE words in the title
+        found = 0
+        for qw in query_words:
+            # Check as whole-word boundary match
+            import re as _re
+            if _re.search(r'\b' + _re.escape(qw) + r'\b', pub_lower):
+                found += 1
+
+        if len(query_words) > 0:
+            score = found / len(query_words)
+        else:
+            score = 0.0
+
+        if score >= threshold:
+            pub["_similarity"] = round(score, 4)
             scored.append(pub)
 
     scored.sort(key=lambda x: x["_similarity"], reverse=True)  # type: ignore[arg-type,return-value]

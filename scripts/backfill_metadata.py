@@ -30,8 +30,8 @@ METADATA_PATH = _REPO / "history" / "metadata.json"
 PROGRESS_PATH = _REPO / "history" / "_backfill_progress.json"
 BATCH_SIZE = 5          # save every N entries
 BATCH_PAUSE = 10.0      # seconds pause between batches
-REQUEST_GAP = 5.0       # seconds between individual DBLP requests
-MAX_RETRIES_BACKFILL = 1  # fewer retries — 503 just means DBLP is busy
+REQUEST_GAP = 4.0       # seconds between individual DBLP requests
+MAX_RETRIES_BACKFILL = 0  # no retries — 500/503 just means skip that paper
 
 # Override dblp_lookup settings for backfill mode
 dblp_lookup.RATE_LIMIT_SEC = REQUEST_GAP
@@ -98,11 +98,7 @@ def main() -> None:
         scheme_name, acronym = extract_search_query(cn)
 
         query = f"{scheme_name} {year}" if year else scheme_name
-        results = dblp_lookup.fuzzy_title_search(query, threshold=0.5, max_results=5)
-
-        if not results and acronym and acronym != scheme_name:
-            time.sleep(REQUEST_GAP)  # gap between tries
-            results = dblp_lookup.fuzzy_title_search(acronym, threshold=0.5, max_results=5)
+        results = dblp_lookup.fuzzy_title_search(query, threshold=0.3, max_results=3)
 
         if results:
             best = results[0]
