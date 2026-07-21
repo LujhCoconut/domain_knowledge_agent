@@ -1,7 +1,7 @@
 {
   "$schema": "metadata.schema.json",
   "generated_at": "2026-07-21",
-  "total_papers": 190,
+  "total_papers": 191,
   "papers": [
     {
       "canonical_name": "PithTrain(arXiv'26)",
@@ -6493,6 +6493,72 @@
         "r3_relations": "",
         "r4_refute": "ENST公式假设高优先级job都依次降级到当前优先级→可能保守。α=300ms的选择可能workload-sensitive。无真实生产trace验证(Poisson+ShareGPT)。未与disaggregated serving(Splitwise/DistServe)对比。整体可信度: high——设计优雅、消融完整、工程扎实"
       }
+    },
+    {
+      "canonical_name": "CXL-M2NDP(MICRO'24)",
+      "title": "Low-overhead General-purpose Near-Data Processing in CXL Memory Expanders",
+      "authors": [
+        "Hyungkyu Ham",
+        "Jeongmin Hong",
+        "Geonwoo Park",
+        "Yunseon Shin",
+        "Okkyun Woo",
+        "Wonhyuk Yang",
+        "Jinhoon Bae",
+        "Eunhyeok Park",
+        "Hyojin Sung",
+        "Euicheol Lim",
+        "Gwangsun Kim"
+      ],
+      "conference": "MICRO",
+      "year": 2024,
+      "url": "https://arxiv.org/pdf/2404.19381v1",
+      "date_read": "2026-07-21",
+      "type": "论文-系统",
+      "tags": [
+        "CXL",
+        "near-data processing",
+        "NDP",
+        "memory expander",
+        "CXL.mem",
+        "RISC-V",
+        "vector ISA",
+        "FGMT",
+        "micthreading",
+        "general-purpose",
+        "memory-bound"
+      ],
+      "techniques": [
+        "M2func (memory-mapped function)",
+        "M2uthr (memory-mapped μthreading)",
+        "packet filter CXL.mem repurposing",
+        "FGMT-based NDP unit",
+        "RISC-V vector extension NDP",
+        "memory-mapped thread addressing",
+        "per-kernel register provisioning",
+        "fine-grained μthread creation"
+      ],
+      "builds_on": [],
+      "contrasts_with": [
+        "application-specific NDP in CXL",
+        "CXL.io-based offloading",
+        "GPU-NDP (SM-based NDP)",
+        "CPU-core-based NDP",
+        "DRAM-PIM"
+      ],
+      "industrial_applicability": "medium",
+      "applicability_why": "设计兼容标准CXL.mem协议，无需修改host CPU。Packet filter仅18KB支持1024进程。但需要CXL controller厂商支持定制NDP unit硬件。M2func和M2uthr的编程模型和RISC-V工具链尚未成熟",
+      "prerequisites": "CXL memory expander with NDP controller, RISC-V + vector extension toolchain, host with CXL.mem + clflush support",
+      "knowledge_locations": [
+        "architecture/memory-storage-hierarchy/",
+        "architecture/accelerators/"
+      ],
+      "review_rounds": {
+        "r1_tldr": "CXL内存扩展器通用NDP: M2func用CXL.mem做低延迟细粒度卸载(替代CXL.io)，M2uthr用memory-mapped轻量线程(替代GPU SIMT)高效执行memory-bound kernel，最高128×加速、80.1%节能",
+        "r2_insights": "1. M2func无需修改CXL.mem标准——packet filter在CXL输入口拦截特定地址的CXL.mem请求→ re-purpose标准读/写为NDP管理命令→延迟从4.5-13.9µs降到35ns(offload部分)。2. M2uthr用memory-mapped直接关联消除GPU SIMT冗余地址计算(~30%动态指令)。3. 按kernel实际用量分配寄存器而非全量ISA寄存器集→同样寄存器文件面积可容更多并发线程。4. μthread细粒度创建(单个而非threadblock)→完成立即释放资源→利用率0.5-1.0→持续~1.0。5. RISC-V+SISD+SIMD比SIMT-only更适合NDP:标量操作避免地址计算冗余,向量操作利用DRAM BW",
+        "r3_relations": "",
+        "r4_refute": "模拟器验证无RTL/FPGA/ASIC原型。面积1.5mm²@7nm为估计未report完整synthesis。未与UPMEM等DRAM-PIM深度对比。无multi-CXL-memory P2P实验。编程模型易用性未评估(手写RISC-V汇编?)。工业可用性:medium——需CXL controller厂商采纳"
+      }
     }
   ],
   "technique_index": {
@@ -6957,6 +7023,30 @@
     ],
     "pipeline parallelism scheduling": [
       "FastServe(NSDI'26)"
+    ],
+    "M2func (memory-mapped function)": [
+      "CXL-M2NDP(MICRO'24)"
+    ],
+    "M2uthr (memory-mapped μthreading)": [
+      "CXL-M2NDP(MICRO'24)"
+    ],
+    "packet filter CXL.mem repurposing": [
+      "CXL-M2NDP(MICRO'24)"
+    ],
+    "FGMT-based NDP unit": [
+      "CXL-M2NDP(MICRO'24)"
+    ],
+    "RISC-V vector extension NDP": [
+      "CXL-M2NDP(MICRO'24)"
+    ],
+    "memory-mapped thread addressing": [
+      "CXL-M2NDP(MICRO'24)"
+    ],
+    "per-kernel register provisioning": [
+      "CXL-M2NDP(MICRO'24)"
+    ],
+    "fine-grained μthread creation": [
+      "CXL-M2NDP(MICRO'24)"
     ]
   },
   "tag_index": {
@@ -7590,10 +7680,12 @@
       "RosenBridge(FAST'26)"
     ],
     "NDP": [
+      "CXL-M2NDP(MICRO'24)",
       "RosenBridge(FAST'26)"
     ],
     "near-data processing": [
       "BeaconGNN(HPCA'24)",
+      "CXL-M2NDP(MICRO'24)",
       "RosenBridge(FAST'26)"
     ],
     "virtio": [
@@ -8074,6 +8166,33 @@
     ],
     "head-of-line blocking": [
       "FastServe(NSDI'26)"
+    ],
+    "CXL": [
+      "CXL-M2NDP(MICRO'24)"
+    ],
+    "memory expander": [
+      "CXL-M2NDP(MICRO'24)"
+    ],
+    "CXL.mem": [
+      "CXL-M2NDP(MICRO'24)"
+    ],
+    "RISC-V": [
+      "CXL-M2NDP(MICRO'24)"
+    ],
+    "vector ISA": [
+      "CXL-M2NDP(MICRO'24)"
+    ],
+    "FGMT": [
+      "CXL-M2NDP(MICRO'24)"
+    ],
+    "micthreading": [
+      "CXL-M2NDP(MICRO'24)"
+    ],
+    "general-purpose": [
+      "CXL-M2NDP(MICRO'24)"
+    ],
+    "memory-bound": [
+      "CXL-M2NDP(MICRO'24)"
     ]
   }
 }
