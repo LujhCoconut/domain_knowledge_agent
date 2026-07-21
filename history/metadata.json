@@ -1,7 +1,7 @@
 {
   "$schema": "metadata.schema.json",
   "generated_at": "2026-07-21",
-  "total_papers": 191,
+  "total_papers": 192,
   "papers": [
     {
       "canonical_name": "PithTrain(arXiv'26)",
@@ -6559,6 +6559,68 @@
         "r3_relations": "",
         "r4_refute": "模拟器验证无RTL/FPGA/ASIC原型。面积1.5mm²@7nm为估计未report完整synthesis。未与UPMEM等DRAM-PIM深度对比。无multi-CXL-memory P2P实验。编程模型易用性未评估(手写RISC-V汇编?)。工业可用性:medium——需CXL controller厂商采纳"
       }
+    },
+    {
+      "canonical_name": "WeTune(SIGMOD'22)",
+      "title": "WeTune: Automatic Discovery and Verification of Query Rewrite Rules",
+      "authors": [
+        "Zhaoguo Wang",
+        "Zhou Zhou",
+        "Yicun Yang",
+        "Haoran Ding",
+        "Gansen Hu",
+        "Ding Ding",
+        "Chuzhe Tang",
+        "Haibo Chen",
+        "Jinyang Li"
+      ],
+      "conference": "SIGMOD",
+      "year": 2022,
+      "url": "https://ipads.se.sjtu.edu.cn/_media/publications/wetune_final.pdf",
+      "date_read": "2026-07-21",
+      "type": "论文-系统",
+      "tags": [
+        "query rewriting",
+        "superoptimization",
+        "SMT solver",
+        "SQL optimization",
+        "rule discovery",
+        "database",
+        "equivalence verification",
+        "Calcite"
+      ],
+      "techniques": [
+        "brute-force template enumeration",
+        "SMT-based rule verification",
+        "UNSAT conversion trick",
+        "interesting constraints heuristic",
+        "promising rule filtering",
+        "SPES integration",
+        "constraint-based symbolic rewriting"
+      ],
+      "builds_on": [
+        "compiler superoptimization(Massalin 1987)",
+        "SPES(VLDB'20)",
+        "Calcite"
+      ],
+      "contrasts_with": [
+        "learned query optimization(Neo/Bao)",
+        "equality saturation(EGG)",
+        "manual rule crafting"
+      ],
+      "industrial_applicability": "high",
+      "applicability_why": "发现的43条规则直接可集成到Calcite等优化器。247条真实查询被优化(现有MySQL/PostgreSQL/SQL Server无法优化)。离线36小时(120核)一次性计算→规则永久使用",
+      "prerequisites": "SMT solver (Z3), database with rewrite rule framework (Calcite), real-world query workload",
+      "knowledge_locations": [
+        "performance/optimization-paradigms/",
+        "algorithms/"
+      ],
+      "review_rounds": {
+        "r1_tldr": "借鉴compiler superoptimization暴力枚举query plan template+SMT验证等价性，自动发现SQL重写规则。43条新规则，优化247条现有DB无法优化的真实查询",
+        "r2_insights": "1. Superoptimization首次应用于SQL domain:枚举所有模板对+约束组合→SMT验证等价。2. UNSAT转化使SMT验证可行:证明negation UNSAT→solver找contradiction即停→比证明tautology快得多。3. 保守timeout=false策略:超时视为不正确→牺牲recall换precision→安全关键系统的正确选择。4. Interesting constraints heuristic缩小搜索空间:仅枚举关联模板间表和属性的约束。5. 规则是conditional equivalence(C⇒q_src≡q_dest):外键/唯一约束等schema属性使能更多优化",
+        "r3_relations": "",
+        "r4_refute": "搜索空间限于size≤4 operators→更复杂规则无法发现。timeout的保守策略可能漏掉正确但复杂的规则。SQL子集限制(无window function/CTE/lateral join)。性能基于MS SQL Server cost estimate非实际执行时间。Agg+UNION依赖SPES→SPES不支持完整性约束→交集无法验证。整体可信度:high——实验扎实(50真实issue+20Web应用+247查询)，工程完整"
+      }
     }
   ],
   "technique_index": {
@@ -7047,6 +7109,27 @@
     ],
     "fine-grained μthread creation": [
       "CXL-M2NDP(MICRO'24)"
+    ],
+    "brute-force template enumeration": [
+      "WeTune(SIGMOD'22)"
+    ],
+    "SMT-based rule verification": [
+      "WeTune(SIGMOD'22)"
+    ],
+    "UNSAT conversion trick": [
+      "WeTune(SIGMOD'22)"
+    ],
+    "interesting constraints heuristic": [
+      "WeTune(SIGMOD'22)"
+    ],
+    "promising rule filtering": [
+      "WeTune(SIGMOD'22)"
+    ],
+    "SPES integration": [
+      "WeTune(SIGMOD'22)"
+    ],
+    "constraint-based symbolic rewriting": [
+      "WeTune(SIGMOD'22)"
     ]
   },
   "tag_index": {
@@ -8193,6 +8276,30 @@
     ],
     "memory-bound": [
       "CXL-M2NDP(MICRO'24)"
+    ],
+    "query rewriting": [
+      "WeTune(SIGMOD'22)"
+    ],
+    "superoptimization": [
+      "WeTune(SIGMOD'22)"
+    ],
+    "SMT solver": [
+      "WeTune(SIGMOD'22)"
+    ],
+    "SQL optimization": [
+      "WeTune(SIGMOD'22)"
+    ],
+    "rule discovery": [
+      "WeTune(SIGMOD'22)"
+    ],
+    "database": [
+      "WeTune(SIGMOD'22)"
+    ],
+    "equivalence verification": [
+      "WeTune(SIGMOD'22)"
+    ],
+    "Calcite": [
+      "WeTune(SIGMOD'22)"
     ]
   }
 }

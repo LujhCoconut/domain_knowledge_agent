@@ -34,8 +34,8 @@ domain-knowledge/
 
 <!-- 以下区域由 /domain-knowledge 后置操作自动更新，请勿手动编辑本节 -->
 
-- **总计**: 191 篇
-- **会议分布**: OSDI 133 篇（'26），FAST 43 篇（'26），NSDI 4 篇（'26），ASPLOS 4 篇（'22–'26），arXiv 2 篇（'26），SOSP 2 篇（'25），ATC 1 篇（'25），HPCA 1 篇（'24），MICRO 1 篇（'24）
+- **总计**: 192 篇
+- **会议分布**: OSDI 133 篇（'26），FAST 43 篇（'26），NSDI 4 篇（'26），ASPLOS 4 篇（'22–'26），arXiv 2 篇（'26），SOSP 2 篇（'25），ATC 1 篇（'25），HPCA 1 篇（'24），MICRO 1 篇（'24），SIGMOD 1 篇（'22）
 - **领域分布**:
   - LLM 推理/GPU-AI/训练: 45 篇（Strata(OSDI'26)、ECHO(OSDI'26)、DirectKV(OSDI'26)…） — 见 `performance/gpu-ai-performance/KNOWLEDGE.md`
   - 存储/文件系统: 34 篇（ByteDance DataPipeline(OSDI'26)、DeLFS(OSDI'26)、Espresso(OSDI'26)…） — 见 `performance/storage-filesystem/KNOWLEDGE.md`
