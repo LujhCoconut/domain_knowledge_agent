@@ -1,7 +1,7 @@
 {
   "$schema": "metadata.schema.json",
   "generated_at": "2026-07-21",
-  "total_papers": 189,
+  "total_papers": 190,
   "papers": [
     {
       "canonical_name": "PithTrain(arXiv'26)",
@@ -6432,6 +6432,67 @@
         "r3_relations": "",
         "r4_refute": "最脆弱claim: 11.6× vs BG-1（naive组合baseline），vs 真正SOTA SmartSage about 10×。无复杂GNN模型测试(GAT/heterogeneous)，无真实工业图数据验证，无多SSD扩展实验。整体可信度medium——设计空间探索扎实但缺乏真实硬件验证"
       }
+    },
+    {
+      "canonical_name": "FastServe(NSDI'26)",
+      "title": "FastServe: Iteration-Level Preemptive Scheduling for Large Language Model Inference",
+      "authors": [
+        "Bingyang Wu",
+        "Yinmin Zhong",
+        "Zili Zhang",
+        "Shengyu Liu",
+        "Fangyue Liu",
+        "Yuanhang Sun",
+        "Gang Huang",
+        "Xuanzhe Liu",
+        "Xin Jin"
+      ],
+      "conference": "NSDI",
+      "year": 2026,
+      "url": "https://www.usenix.org/system/files/nsdi26-wu-bingyang.pdf",
+      "date_read": "2026-07-21",
+      "type": "论文-系统",
+      "tags": [
+        "LLM serving",
+        "preemptive scheduling",
+        "MLFQ",
+        "KV cache",
+        "GPU memory management",
+        "distributed inference",
+        "head-of-line blocking"
+      ],
+      "techniques": [
+        "skip-join MLFQ",
+        "iteration-level preemption",
+        "proactive KV cache swapping",
+        "ENST-based swap ordering",
+        "starvation prevention",
+        "pipeline parallelism scheduling"
+      ],
+      "builds_on": [
+        "Orca(OSDI'22)",
+        "vLLM(SOSP'23)"
+      ],
+      "contrasts_with": [
+        "FasterTransformer",
+        "vLLM",
+        "Sarathi-Serve(chunked prefill)",
+        "Splitwise",
+        "DistServe"
+      ],
+      "industrial_applicability": "high",
+      "applicability_why": "11K行C++/CUDA+Python实现，直接集成PagedAttention和iteration-level scheduling，可在现有vLLM部署上替换调度器。Skip-join MLFQ算法简单、无ML依赖、可解释性强",
+      "prerequisites": "NVIDIA GPU (A100+), PCIe 4.0, LLM serving stack",
+      "knowledge_locations": [
+        "performance/gpu-ai-performance/",
+        "algorithms/resource-scheduling/"
+      ],
+      "review_rounds": {
+        "r1_tldr": "利用LLM autoregressive pattern实现token粒度抢占式调度，skip-join MLFQ + proactive KV cache swapping消除FCFS head-of-line blocking，吞吐最高6.1× vLLM",
+        "r2_insights": "1. Semi information-agnostic设定(input length已知/output未知)是LLM serving的精确刻画。2. Skip-join利用已知prefill time减少MLFQ降级次数——确定性info比ML预测更可靠。3. Proactive KV swap用ENST预测job下次调度时间→预先swap→与compute重叠→swap time<5%。4. Pipeline parallelism下MLFQ语义:各stage独立调度，用pending state最高优先级规则保持MLFQ近似。5. Starvation prevention(α=300ms)保障了P95 tail latency不恶化",
+        "r3_relations": "",
+        "r4_refute": "ENST公式假设高优先级job都依次降级到当前优先级→可能保守。α=300ms的选择可能workload-sensitive。无真实生产trace验证(Poisson+ShareGPT)。未与disaggregated serving(Splitwise/DistServe)对比。整体可信度: high——设计优雅、消融完整、工程扎实"
+      }
     }
   ],
   "technique_index": {
@@ -6878,6 +6939,24 @@
     ],
     "bus-attached spatial accelerator": [
       "BeaconGNN(HPCA'24)"
+    ],
+    "skip-join MLFQ": [
+      "FastServe(NSDI'26)"
+    ],
+    "iteration-level preemption": [
+      "FastServe(NSDI'26)"
+    ],
+    "proactive KV cache swapping": [
+      "FastServe(NSDI'26)"
+    ],
+    "ENST-based swap ordering": [
+      "FastServe(NSDI'26)"
+    ],
+    "starvation prevention": [
+      "FastServe(NSDI'26)"
+    ],
+    "pipeline parallelism scheduling": [
+      "FastServe(NSDI'26)"
     ]
   },
   "tag_index": {
@@ -7974,6 +8053,27 @@
     ],
     "SSD architecture": [
       "BeaconGNN(HPCA'24)"
+    ],
+    "LLM serving": [
+      "FastServe(NSDI'26)"
+    ],
+    "preemptive scheduling": [
+      "FastServe(NSDI'26)"
+    ],
+    "MLFQ": [
+      "FastServe(NSDI'26)"
+    ],
+    "KV cache": [
+      "FastServe(NSDI'26)"
+    ],
+    "GPU memory management": [
+      "FastServe(NSDI'26)"
+    ],
+    "distributed inference": [
+      "FastServe(NSDI'26)"
+    ],
+    "head-of-line blocking": [
+      "FastServe(NSDI'26)"
     ]
   }
 }

@@ -8,6 +8,7 @@
 |------|--------|------|
 | 信号感知 DAG 调度与动态供给 | signal-aware scheduling, DAG relative importance, carbon-aware, online threshold policy, joint scheduling-provisioning | SPADE(OSDI'26) |
 | 市场机制 ML 训练芯片分配 | dynamic pricing, market clearing, Pareto efficiency, max-min fairness, credits, heterogeneous values | Quota Marketplace(OSDI'26) |
+| Semi 信息感知抢占式 MLFQ 调度 | skip-join MLFQ, iteration-level preemption, semi information-agnostic, ENST, starvation prevention, head-of-line blocking | FastServe(NSDI'26) |
 
 ---
 
@@ -61,3 +62,28 @@ ML 训练芯片需求 8 年增长 100M 倍，但传统 static pools 每季度做
 - **市场机制的 user adoption 关键不是经济理论，而是 UX 自动化**：QM 的 automated bidder + default settings 让大多数用户无需理解定价算法即可受益——这是市场机制从学术走向产品的关键设计决策。
 - **价格信息作为透明信号的价值常被低估**：dashboard 展示实时价格+历史 → 团队自己就能做出更优的资源使用决策，不需要中心化调度器理解每项工作的机会成本。
 - **Nested binary search 可以在实际系统中运行**：三层定价方程在理论上看起来复杂，但 binary search + 正确预处理后几乎线性时间可解——每 ~1 分钟一次的 frequency 完全可行。
+
+---
+
+## Semi 信息感知抢占式 MLFQ 调度 (FastServe)
+
+### 核心问题
+调度问题一般有三类设定：全知（SRPT，需预知 job size）、全盲（经典 MLFQ，零先验知识）、semi 盲（部分信息已知）。LLM 推理的调度恰好落在 semi 盲区——input length 已知（可精确 profile prefill 时间）但 output length 未知。经典 MLFQ 假设全盲 → 所有 job 从最高优先级开始 → 但在 LLM 中 prefill 时间长 → 第一轮 quantum 就耗尽 → 要么抢占（浪费 prefill 计算）要么不抢占（违反 MLFQ 语义 → HOL blocking 重现）。需要一种利用已知 input length 信息但又不需要预测 output length 的 MLFQ 变体。
+
+### 关键洞察
+
+1. **"Skip-join = 用确定性信息替代 ML 预测 → 在 MLFQ 框架中优雅嵌入已知信息"**：不是预测 output length（高 variance、不能用 ML 可靠预测），而是利用 deterministic prefill time → 新 job 直接 skip-join 到 `q_i ≥ t_prefill` 的最高优先级队列 → 跳过不必要的高优先级队列 → 消除 prefill 时的两难抉择。
+
+2. **"MLFQ 的 quantum 设置与 LLM 的两阶段执行天然契合"**：最小 quantum = 最小 decode iteration time → prefill (长) > 最小 quantum → skip-join 自然将其放在低优先级。Decode tokens (< quantum) 自然保持在高优先级。不需要特殊处理两阶段——quantum 的值本身就编码了"prefill=长, decode=短"的信息。
+
+3. **"Starvation prevention 是 tail latency 的保障——不是 MLFQ 的附加功能而是核心组件"**：periodic promotion to Q1 → 确保长 job 不会被永久饥饿。α=300ms 的选择基于 SLO（用户可容忍的延迟上限）。这个设计证明了"抢占式调度 + 公平性保障"可以在 LLM serving 中共存。
+
+4. **"Skip-join MLFQ 在不同 input/output ratio (0.25–256×) 下始终最优"**：这一实验设计回答了 "如果用 fixed priority (by input length) 会怎样" 和 "如果用 naive MLFQ (全盲) 会怎样"——证明了 semi 盲是 LLM serving 的正确信息设定。
+
+- 来源：FastServe(NSDI'26)
+
+### 实践启发
+- **"Semi information-agnostic 是一个被忽视的调度问题类"**：全知和全盲已经被大量研究，但很多实际系统恰好处于中间——部分信息已知、部分需要学习。FastServe 的 skip-join 是一个通用的半信息嵌入模式。
+- **"MLFQ 的 quantum 设置如果与工作负载的自然阶段边界对齐，可以消除显式的阶段检测"**：FastServe 不需要显式区 prefill/decode——quantum 的值自动完成了这一区分。这是 MLFQ 设计的深层智慧：用时间窗口（而非显式分类）做调度决策。
+- **"SPADE 的 relative importance 归一化和 FastServe 的 ENST 共享同一设计哲学"**：两个 NSDI/OSDI '26 调度论文都使用"综合多个信号到一个标量 ranking"的方法——SPADE 用 relative importance 归一化、FastServe 用 ENST 综合 promotion deadline + execution pipeline —— 都是将多维调度问题降维为单标量排序。
+- **"抢占式调度在 GPU 上的可行性已经被 OS-level (Nixie) 和 application-level (FastServe) 两条路径验证"**：Nixie 在 consumer GPU 上做 temporal multiplexing、FastServe 在 datacenter GPU 上做 iteration-level preemption——两者互补。共同证明：GPU 不是"不可抢占"的。
