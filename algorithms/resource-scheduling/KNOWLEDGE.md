@@ -10,6 +10,7 @@
 | 市场机制 ML 训练芯片分配 | dynamic pricing, market clearing, Pareto efficiency, max-min fairness, credits, heterogeneous values | Quota Marketplace(OSDI'26) |
 | Semi 信息感知抢占式 MLFQ 调度 | skip-join MLFQ, iteration-level preemption, semi information-agnostic, ENST, starvation prevention, head-of-line blocking | FastServe(NSDI'26) |
 | 自动重写规则发现 (Superoptimization for SQL) | brute-force enumeration, SMT verification, query plan template, constraint-based rewriting, UNSAT trick, Calcite | WeTune(SIGMOD'22) |
+| MoE 动态自适应 Expert 复制 | expert parallelism, load-aware replication, popularity-proportional scheduling, per-iteration rebalancing, token load balancing, optimizer state decoupling | Symi(NSDI'26) |
 
 ---
 
@@ -116,3 +117,27 @@ ML 训练芯片需求 8 年增长 100M 倍，但传统 static pools 每季度做
 - **"UNSAT > tautology 的 SMT 技巧不限于查询等价性"**：任何 "证明 A ⇒ B" 的问题 → 尝试 "证明 ¬(A ⇒ B) UNSAT" → solver 更容易找 contradiction。适用于形式化验证、程序合成、policy verification 等场景。
 - **"时间换空间的搜索策略"**：36 小时 × 120 cores 的一次性离线计算 → 产出 43 条永久可用的规则 → 边际成本极低。类似 Drs.NAS "zero-cost proxy 替代训练验证"——用大规模离线计算换取在线零成本。
 - **"枚举所有 + 验证 + 真实负载筛选 = 自动知识发现的标准三阶段架构"**：类似 FastServe "枚举调度策略 + 验证正确性 + 真实负载测试"。三阶段各有职责：阶段 1 宽进（穷举）、阶段 2 严出（形式化验证）、阶段 3 真用（经验验证 → 筛选）。可推广到任何 "从大量候选中筛选少量金标准" 的应用。
+
+---
+
+## MoE 动态自适应 Expert 复制 (Symi)
+
+### 核心问题
+MoE 训练中 expert popularity 分布高度偏斜且快速变化——但 expert replication 是静态均匀的。这导致 popular experts 成为延迟瓶颈（容量不足 → drop tokens → 损害收敛），而 unpopular experts 资源闲置。现有 adaptive replication 系统（FlexMoE）每 50-100 iterations 才重分配一次，因为迁移 optimizer state（expert weights 的 8× 大小）的通信成本可达 0.54s——接近整个 iteration 时间。根本矛盾：popularity 变化是 per-iteration 的，但 state migration 的开销阻止了 frequent rebalancing。
+
+### 关键洞察
+
+1. **"不是重新调度计算，而是改变 weight update 的 destination"**：传统 adaptive replication 把 rebalancing 视为"迁移 expert state"→ 必须移动 weights + optimizer state → 昂贵。Symi 把 rebalancing 视为"改变 next iteration 的 expert placement"→ Optimizer 在每次 step 后本来就要发送 updated weights 到 GPU slots → **通信量不变**，只需改变发送到哪个 slot。数学证明：Gradient Comm = `∑ri × G/N = sNG` = static baseline；Weight Comm = `∑ri × W/N = sNW` = static baseline → 总量完全相同。
+
+2. **"Popularity-proportional placement 比 heuristics-based 更有效且更简单"**：Symi 不需要预测模型 → 直接用 previous iteration 的 popularity 按比例分配 replicas（至少 1 instance per expert）。这个简单策略在 GPT 训练中使 token drops 比 FlexMoE-100 减少 64%——因为 popularity 虽然变化快，但相邻 iteration 间足够 smooth → previous iteration is a reliable proxy。
+
+3. **"Dynamic placement 打破了 NCCL replication ceiling"**：传统 EP 限制每个 expert class 最多 N 份 replicas（N = rank 数）。Symi 的 intra+inter rank all-reduce 允许同一 rank 上多个相同 expert class 的实例 → 任意 placement schedule → 消除了 20% 不必要的 token drops。
+
+4. **"Auxiliary loss 从 system necessity 降级为 quality knob"**：传统训练必须精调 auxiliary load-balancing loss 系数来在 latency 和 convergence 间找平衡点。Symi 在所有 coefficient 下保持 ~10% drop rate → 不需要靠高 auxiliary loss 降 drops → auxiliary loss 变为 purely quality-related 的超参。
+
+- 来源：Symi(NSDI'26)
+
+### 实践启发
+- **"调度不等同于"迁移"——可以用"下一轮的选择"实现"本轮的重分配"**：Symi 不是"move expert E from rank A to rank B"，而是"next iteration, send E's updated weights to rank B instead of A"。**本质区别**：前者需要显式迁移已有 state，后者只需改变数据流向。可推广到任何"周期性数据刷新 + 新 destination 选择"的分布式系统。
+- **"Popularity = 调度信号，previous iteration = 预测器——最简单的组合往往最鲁棒"**：类似 FastServe 的 "profile prefill time 替代 ML 预测 output length"、WeTune 的 "穷举 + 验证替代 learned 方法"——确定性/历史信息常被低估。
+- **"任何有 periodic group communication 的系统都应该问：能否改变下一轮的 receiver 而保持通信量不变？"**：Symi 的通信量不变性证明是一个可复用的分析模板——检查 "producer → consumer 链路中，consumer 选择是否影响 total transfer volume"。如果答案为否，receiver 可以任意改变 → 免费实现 redistribution。

@@ -46,6 +46,7 @@ GPU 与 AI/ML 推理和训练的性能优化知识。
 | GPU OS 资源管理 | TPC scheduling, kernel atomization, hardware right-sizing, DVFS, head-of-line blocking, GPU utilization, transparent interposition | LithOS(SOSP'25) |
 | Agent-Native MoE 训练系统设计 | compact Python-native, DualPipeV, torch.compile fullgraph, FP8 weight cache, EP dispatch dedup, agent skills | PithTrain(arXiv'26) |
 | LLM 抢占式 iteration-level 调度 | preemptive scheduling, skip-join MLFQ, proactive KV cache swapping, semi information-agnostic, ENST, head-of-line blocking, GPU memory | FastServe(NSDI'26) |
+| MoE 训练 Model-Optimizer 解耦自适应复制 | expert parallelism, adaptive replication, optimizer state decoupling, per-iteration rebalancing, token load balancing, ZeRO, DeepSpeed | Symi(NSDI'26) |
 
 ---
 
@@ -1138,4 +1139,31 @@ LLM serving 系统（vLLM/Orca）使用 FCFS + run-to-completion 处理推理请
 - **"Skip-join 可推广到任何'部分信息已知'的调度场景"**：已知 prefill time → skip 到合适队列。其他场景：ML 训练已知 epoch 数（但收敛时间未知）、视频编码已知分辨率（但复杂度未知）、数据库查询已知计划 cost（但实际行数未知）→ 都可以用已知信息优化初始 placement，用 feedback 处理未知部分。
 - **"不要让 I/O 成为关键路径上的强制瓶颈"**：类似 Strata 的 bubble filling、DirectKV 的 warp pipelining——FastServe 的 proactive swapping 是第三个"让 I/O 与 compute 重叠"的 NSDI/OSDI '26 方案。共同模式：计算时异步准备下一轮的数据。
 - **"ENST 不仅仅是 swap order —— 是 preemption-aware I/O scheduling 的通用框架"**：任何有 "数据需要根据未来调度决策在 fast/slow 存储间移动" 的场景，都应该同时考虑 promotion deadline 和 execution pipeline length。
+
+---
+
+## MoE 训练 Model-Optimizer 解耦自适应复制 (Symi)
+
+### 核心问题
+MoE 训练中 expert popularity 高度偏斜且快速变化（3 iteration 内可波动 16×），但 expert replication 是均匀且静态的 → popular experts 成为瓶颈（latency 高或 drop tokens → 收敛慢）。Adaptive replication 是理想方案，但现有系统（FlexMoE）每 50-100 iterations 才 rebalance 一次，因为迁移 optimizer state（expert weights 的 **8×**，如 GPT3-175B scale 下单个 expert = 27GB optimizer state）的代价一次可达 0.54s——接近整个 iteration 时间。
+
+### 关键洞察
+
+1. **"解耦 model weights 与 optimizer state —— 利用已有的 weight update 通信做零开销 rebalancing"**：Optimizer state 静态均匀分片到所有 N 个节点（不随 expert placement 移动）；Expert weights 动态按 popularity 复制在 GPU slots 上。每次 optimizer step 后，weight update 的**通信量不变**——无论 updated weights 发送到"旧 expert slot"还是"新 expert slot"，数据量完全相同。**这就是零开销 rebalancing 的核心：借助已有通信改变 destination，不增加数据量。**
+
+2. **"通信量不变性的数学证明"**：Gradient Comm 阶段 `∑ri × G/N = sNG`（Symi）= `rEG = sNG`（static baseline）。Weight Comm 阶段同理。唯一额外开销来自 expert-optimizer locality 变化：`(E-s)/(sN - E(1-BWnet/BWpci))` → 在实践中仅 **1.52%**（GPT3-175B scale, 2048 nodes）。这意味着 Symi 的 per-iteration rebalancing 本质上与 static system 有相同的通信成本。
+
+3. **"Intra+inter rank all-reduce 打破 NCCL 限制"**：传统 NCCL all-reduce 不允许多个同一 expert class 的实例在同一 rank 上 → 限制了 replication degree ≤ N（rank 数）。Symi 的三步方案（elect representative → inter-rank reduce → copy back）突破此限制 → 允许任意 placement schedule → 降低 token drops up to 20%。
+
+4. **"Previous-iteration popularity as proxy — 最简单的预测往往够用"**：不需要 ML 模型预测 expert popularity → 直接用上一 iteration 的 distribution。因为 popularity 虽然变化快但相邻 iteration 间足够 smooth → 这个简单的 proxy 已使 Symi 比 FlexMoE-100 减少 64% token drops。
+
+5. **"Auxiliary loss 退化为 quality knob 而非 system necessity"**：传统方法依赖调大 auxiliary load-balancing loss 系数降低 token drops — 但大系数伤害 expert specialization 和收敛。Symi 在所有 coefficient 下保持 ~10% drop rate → 消除了系统对超参调优的依赖。
+
+- 来源：Symi(NSDI'26)
+
+### 实践启发
+- **"通信量不变 → 免费改变目的地"**：Symi 的核心 insight 可推广到任何有"周期性 group communication → 下一周期接收方可以改变"的场景 — parameter server 梯度聚合、federated learning model aggregation、streaming state redistribution。关键判据：检查"数据 producer → consumer 链路中，consumer 的选择是否影响总传输量"——如果影响为 0，destination 可以任意改变。
+- **"Decouple fast-changing from slow-changing state"**：Optimizer state 大且不需要快速移动 → static partitioning；Expert weights 小且需要快速适应 → dynamic placement。**可推广模式**：任何 stateful distributed system 的 state 可以按"变化速率 × size"做 decoupling — fast-changing + small → dynamic placement; slow-changing + large → static partitioning。
+- **"Intra-rank all-reduce 是 collective communication 中的被忽视优化"**：NCCL 的"一个 rank 一个 contribution"假设是设计选择而非硬件限制。Symi 的 representative election + copy back 模式可推广到任何需要"同一设备上多个实例参与同一 collective"的场景。
+- **"Auxiliary loss as quality knob = 系统设计消除超参依赖的典范"**：类似 FastServe "MLFQ quantum 不再是 workload-sensitive 的 magic number"——好的系统设计应让原来"必须精心调优"的超参变成"可选微调"的 quality knob。这也是 Symi 与 DeepSeek auxiliary-loss-free routing 的互补点——两者从不同方向减少对 auxiliary loss 的依赖。
 

@@ -1,7 +1,7 @@
 {
   "$schema": "metadata.schema.json",
   "generated_at": "2026-07-21",
-  "total_papers": 192,
+  "total_papers": 193,
   "papers": [
     {
       "canonical_name": "PithTrain(arXiv'26)",
@@ -6621,6 +6621,68 @@
         "r3_relations": "",
         "r4_refute": "搜索空间限于size≤4 operators→更复杂规则无法发现。timeout的保守策略可能漏掉正确但复杂的规则。SQL子集限制(无window function/CTE/lateral join)。性能基于MS SQL Server cost estimate非实际执行时间。Agg+UNION依赖SPES→SPES不支持完整性约束→交集无法验证。整体可信度:high——实验扎实(50真实issue+20Web应用+247查询)，工程完整"
       }
+    },
+    {
+      "canonical_name": "Symi(NSDI'26)",
+      "title": "Symi: Efficient Mixture-of-Experts Training via Model and Optimizer State Decoupling",
+      "authors": [
+        "Athinagoras Skiadopoulos",
+        "Mark Zhao",
+        "Swapnil Gandhi",
+        "Thomas Norrie",
+        "Shrijeet Mukherjee",
+        "Christos Kozyrakis"
+      ],
+      "conference": "NSDI",
+      "year": 2026,
+      "url": "https://www.usenix.org/system/files/nsdi26-skiadopoulos.pdf",
+      "date_read": "2026-07-21",
+      "type": "论文-系统",
+      "tags": [
+        "MoE training",
+        "expert parallelism",
+        "adaptive replication",
+        "optimizer state",
+        "load balancing",
+        "GPU",
+        "ZeRO",
+        "DeepSpeed",
+        "collective communication"
+      ],
+      "techniques": [
+        "model-optimizer state decoupling",
+        "per-iteration zero-overhead rebalancing",
+        "intra+inter rank all-reduce",
+        "static optimizer partitioning",
+        "dynamic expert placement",
+        "communication volume invariance",
+        "previous-iteration popularity proxy"
+      ],
+      "builds_on": [
+        "DeepSpeed(ZeRO)",
+        "FlexMoE",
+        "FasterMoE"
+      ],
+      "contrasts_with": [
+        "DeepSpeed",
+        "FlexMoE",
+        "SmartMoE",
+        "MegaBlocks",
+        "Tutel"
+      ],
+      "industrial_applicability": "high",
+      "applicability_why": "基于DeepSpeed实现，兼容ZeRO+TP+PP。decouple设计不需要特定硬件，CPU offload即可。per-iteration rebalancing将auxiliary loss从system necessity降为quality knob。Stanford+NVIDIA+OpenAI作者背景",
+      "prerequisites": "MoE model (8+ experts), ZeRO-style optimizer offloading, NCCL, GPU cluster",
+      "knowledge_locations": [
+        "performance/gpu-ai-performance/",
+        "algorithms/resource-scheduling/"
+      ],
+      "review_rounds": {
+        "r1_tldr": "将MoE expert权重与optimizer state解耦——optimizer静态均匀分片，expert按popularity动态复制——利用已有weight update通信零开销实现per-iteration adaptive replication，30.5%更快收敛vs DeepSpeed",
+        "r2_insights": "1. Decouple model weights from optimizer state → optimizer static uniform partition, expert dynamic. 2. Communication volume invariance proof:无论weight update发到旧expert还是新expert slot，数据量相同→零额外通信。3. Intra+inter rank all-reduce打破NCCL限制→支持任意placement。4. Previous-iteration popularity as proxy→不需要ML预测。5. Auxiliary loss退化为quality knob而非system necessity→消除超参调优负担",
+        "r3_relations": "",
+        "r4_refute": "测试规模限于16 GPU+760M模型→未验证千卡/千亿参数。GPT-only未测试非Transformer MoE。仅Top-k=1 routing。previous-iteration proxy在超chaotic popularity下可能不准。Overall可信度:high——数学分析扎实(通信量不变性+latency-optimality证明)，消融完整"
+      }
     }
   ],
   "technique_index": {
@@ -7130,6 +7192,27 @@
     ],
     "constraint-based symbolic rewriting": [
       "WeTune(SIGMOD'22)"
+    ],
+    "model-optimizer state decoupling": [
+      "Symi(NSDI'26)"
+    ],
+    "per-iteration zero-overhead rebalancing": [
+      "Symi(NSDI'26)"
+    ],
+    "intra+inter rank all-reduce": [
+      "Symi(NSDI'26)"
+    ],
+    "static optimizer partitioning": [
+      "Symi(NSDI'26)"
+    ],
+    "dynamic expert placement": [
+      "Symi(NSDI'26)"
+    ],
+    "communication volume invariance": [
+      "Symi(NSDI'26)"
+    ],
+    "previous-iteration popularity proxy": [
+      "Symi(NSDI'26)"
     ]
   },
   "tag_index": {
@@ -7173,6 +7256,7 @@
       "Sereno(OSDI'26)",
       "SolidAttention(FAST'26)",
       "Strata(OSDI'26)",
+      "Symi(NSDI'26)",
       "Syncopate(OSDI'26)",
       "Tessera(OSDI'26)",
       "TrainMover(OSDI'26)",
@@ -7985,7 +8069,8 @@
       "MOST(FAST'26)"
     ],
     "load balancing": [
-      "MOST(FAST'26)"
+      "MOST(FAST'26)",
+      "Symi(NSDI'26)"
     ],
     "heterogeneous storage": [
       "MOST(FAST'26)"
@@ -8300,6 +8385,27 @@
     ],
     "Calcite": [
       "WeTune(SIGMOD'22)"
+    ],
+    "MoE training": [
+      "Symi(NSDI'26)"
+    ],
+    "expert parallelism": [
+      "Symi(NSDI'26)"
+    ],
+    "adaptive replication": [
+      "Symi(NSDI'26)"
+    ],
+    "optimizer state": [
+      "Symi(NSDI'26)"
+    ],
+    "ZeRO": [
+      "Symi(NSDI'26)"
+    ],
+    "DeepSpeed": [
+      "Symi(NSDI'26)"
+    ],
+    "collective communication": [
+      "Symi(NSDI'26)"
     ]
   }
 }
