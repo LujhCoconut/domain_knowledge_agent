@@ -1,7 +1,7 @@
 {
   "$schema": "metadata.schema.json",
-  "generated_at": "2026-07-20",
-  "total_papers": 188,
+  "generated_at": "2026-07-21",
+  "total_papers": 189,
   "papers": [
     {
       "canonical_name": "PithTrain(arXiv'26)",
@@ -6376,6 +6376,62 @@
         "r3_relations": "",
         "r4_refute": ""
       }
+    },
+    {
+      "canonical_name": "BeaconGNN(HPCA'24)",
+      "title": "BeaconGNN: Large-Scale GNN Acceleration with Out-of-Order Streaming In-Storage Computing",
+      "authors": [
+        "Yuyue Wang",
+        "Xiurui Pan",
+        "Yuda An",
+        "Jie Zhang",
+        "Glenn Reinman"
+      ],
+      "conference": "HPCA",
+      "year": 2024,
+      "url": "https://web.cs.ucla.edu/~yuyue/assets/files/beaconGNN.pdf",
+      "date_read": "2026-07-21",
+      "type": "论文-系统",
+      "tags": [
+        "GNN acceleration",
+        "in-storage computing",
+        "near-data processing",
+        "flash storage",
+        "ULL flash",
+        "hardware-software co-design",
+        "SSD architecture"
+      ],
+      "techniques": [
+        "DirectGraph format",
+        "die-level sampler",
+        "channel-level command router",
+        "out-of-order neighbor sampling",
+        "multi-level NDP",
+        "bus-attached spatial accelerator"
+      ],
+      "builds_on": [
+        "SmartSage(ISCA'22)",
+        "GList(ATC'21)"
+      ],
+      "contrasts_with": [
+        "SmartSage",
+        "GList",
+        "GraphStore"
+      ],
+      "industrial_applicability": "medium",
+      "applicability_why": "需要定制SSD硬件（die-level sampler + channel router）才能获得全部收益，但DirectGraph格式和多级NDP分工思想可复用到其他NDP场景。传统SSD下DirectGraph+die-level sampler仍有效",
+      "prerequisites": "ULL flash SSD (e.g. Samsung Z-NAND), custom ONFI commands, SSD controller hardware modification",
+      "knowledge_locations": [
+        "architecture/memory-storage-hierarchy/",
+        "architecture/accelerators/",
+        "algorithms/graph-processing/"
+      ],
+      "review_rounds": {
+        "r1_tldr": "在SSD多级存储层次(die/channel/controller)上分别部署NDP引擎，配合DirectGraph物理地址嵌入格式支持乱序GNN邻域采样，全流程卸载到ULL flash SSD内部，吞吐11.6× SOTA ISC、能效4×",
+        "r2_insights": "1. 多级NDP分工: die做数据减少(采样)、channel做控制自动化(路由)、controller做计算(聚合)——每级解决该级的瓶颈。2. DirectGraph消除地址翻译打破hop-by-hop串行约束。3. ULL flash改变瓶颈结构: 传统SSD下firmware不是瓶颈→ULL下firmware成为瓶颈→channel router才有价值。4. 优化顺序重要: 先消除page-granular传输(SP)→再叠加乱序(DG)→最后消除firmware瓶颈(router)。5. Die sampler <0.1% die area, channel router 1.26% controller area——极小硬件代价换取大幅提升",
+        "r3_relations": "",
+        "r4_refute": "最脆弱claim: 11.6× vs BG-1（naive组合baseline），vs 真正SOTA SmartSage about 10×。无复杂GNN模型测试(GAT/heterogeneous)，无真实工业图数据验证，无多SSD扩展实验。整体可信度medium——设计空间探索扎实但缺乏真实硬件验证"
+      }
     }
   ],
   "technique_index": {
@@ -6804,6 +6860,24 @@
     ],
     "asynchronous prefetch enforcement": [
       "PageFlex(ATC'25)"
+    ],
+    "DirectGraph format": [
+      "BeaconGNN(HPCA'24)"
+    ],
+    "die-level sampler": [
+      "BeaconGNN(HPCA'24)"
+    ],
+    "channel-level command router": [
+      "BeaconGNN(HPCA'24)"
+    ],
+    "out-of-order neighbor sampling": [
+      "BeaconGNN(HPCA'24)"
+    ],
+    "multi-level NDP": [
+      "BeaconGNN(HPCA'24)"
+    ],
+    "bus-attached spatial accelerator": [
+      "BeaconGNN(HPCA'24)"
     ]
   },
   "tag_index": {
@@ -7440,6 +7514,7 @@
       "RosenBridge(FAST'26)"
     ],
     "near-data processing": [
+      "BeaconGNN(HPCA'24)",
       "RosenBridge(FAST'26)"
     ],
     "virtio": [
@@ -7600,6 +7675,7 @@
       "PolarStore(FAST'26)"
     ],
     "hardware-software co-design": [
+      "BeaconGNN(HPCA'24)",
       "PolarStore(FAST'26)"
     ],
     "FTL": [
@@ -7883,6 +7959,21 @@
     ],
     "madvise batching": [
       "PageFlex(ATC'25)"
+    ],
+    "GNN acceleration": [
+      "BeaconGNN(HPCA'24)"
+    ],
+    "in-storage computing": [
+      "BeaconGNN(HPCA'24)"
+    ],
+    "flash storage": [
+      "BeaconGNN(HPCA'24)"
+    ],
+    "ULL flash": [
+      "BeaconGNN(HPCA'24)"
+    ],
+    "SSD architecture": [
+      "BeaconGNN(HPCA'24)"
     ]
   }
 }

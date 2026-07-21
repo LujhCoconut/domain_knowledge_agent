@@ -193,3 +193,4 @@
 | 2026-07-17 | DPAS(FAST'26) | 论文-系统 | FAST '26, fast26-seo.pdf | knowledge-synthesis | performance/storage-filesystem/ | I/O completion 自适应, per-I/O sleep+PAS+DPAS 动态切换, CPU -21pp, YCSB +9% |
 <!-- 追加新记录时，复制上面一行并修改即可。 -->
 | 2026-07-20 | PageFlex: Flexible and Efficient User-space Delegation of Linux Paging Policies with eBPF | PageFlex(ATC'25) | 论文-系统 | ATC'25 | memory tiering, eBPF, page reclamation, user-space delegation | performance/system-tuning/, architecture/memory-storage-hierarchy/ | R1 done |
+| 2026-07-21 | BeaconGNN: Large-Scale GNN Acceleration with Out-of-Order Streaming In-Storage Computing | BeaconGNN(HPCA'24) | 论文-系统 | HPCA'24, UCLA/PKU | GNN acceleration, in-storage computing, multi-level NDP, ULL flash, DirectGraph | architecture/memory-storage-hierarchy/, architecture/accelerators/, algorithms/graph-processing/ | R1+R2 done. 多级NDP (die sampler + channel router + bus accelerator) + DirectGraph物理地址嵌入支持乱序采样，全流程卸载到SSD，11.6× SOTA ISC

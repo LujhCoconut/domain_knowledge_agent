@@ -9,6 +9,7 @@
 | Spatial 数据流加速器 Tile 编译 | tile-to-core mapping, dataflow planning, MLIR, Triton, spatial architecture, on-chip network, data reuse | TileLoom(OSDI'26) |
 | Microkernel FPGA Shell | μShell, hardware IPC, composable modules, vFPGA, capability isolation, component-aware scheduling | μShell(OSDI'26) |
 | 混合量子-经典加速 | hybrid tensor network, quantum-classical compilation, QPU-GPU co-execution, tensor contraction, declarative hybrid programming | qTPU(OSDI'26) |
+| SSD 总线挂载 GNN 空间加速器 | systolic array, vector aggregation, spatial accelerator, in-storage computing, multi-level NDP, die-level sampler, channel-level router | BeaconGNN(HPCA'24) |
 
 ---
 
@@ -64,3 +65,24 @@ Spatial dataflow accelerators (Tenstorrent/Cerebras/Groq 等) 通过 on-chip net
 ### 实践启发
 - **"hTN 是 quantum-classical 的 IR"**：张量网络作为中间表示统一量子+经典计算→编译器可见全貌→可全局优化。类似 TileLoom "MLIR-based"——统一 IR 是异构编译的基础
 - **"经典计算可以减少量子误差——不是独立目标"**：经典 overhead 和量子 error rate 之间存在 trade-off→多做经典端工作可以降低量子端错误率→编译器需要同时优化两者
+
+---
+
+## SSD 总线挂载 GNN 空间加速器 (BeaconGNN)
+
+### 核心问题
+GNN 计算（embedding aggregation + GEMM update）高度并行适合加速器，但数据（subgraph + feature vectors）存储在 SSD 中。传统方案通过 PCIe 将数据从 SSD→host memory→discrete accelerator → 57% 能耗在 PCIe 传输上。即使将计算卸载到 SSD 内部 FPGA（GList/SmartSage），page-granular 数据传输和 firmware 调度的 overhead 限制了后端吞吐。
+
+### 关键洞察
+
+1. **"Spatial accelerator 挂 SSD 内部总线，而非通过 PCIe"**：1D vector array (aggregation) + 2D systolic array (GEMM) 直接挂在 SSD 内部总线上 → 数据在存储内部完成计算 → 消除 PCIe 往返。类似 TileLoom "on-chip network 转发数据避开 von Neumann 瓶颈"→ BeaconGNN "SSD internal bus 转发数据避开 PCIe 瓶颈"。
+
+2. **"Pipeline 数据准备与计算——不是简单的 offload 串行"**：Firmware GNN engine 将当前 mini-batch 的数据准备（flash backend 采样）与上一 batch 的计算（spatial accelerator）流水线化 → flash backend 和 accelerator 同时工作。关键：需要将上一 batch 的 feature vectors 和 subgraph 结构缓存在 SSD DRAM 中。
+
+3. **"SRAM buffer 共享 + 可配置数据分区——灵活性 > 专用性"**：Accelerator 的 SRAM buffer 由 vector array 和 systolic array 共享，可灵活配置不同的 input/weight/output 数据分区 → 适配不同的 GNN 模型和 batch size，而不是为单一模型 hardcode 数据流。
+
+- 来源：BeaconGNN(HPCA'24)
+
+### 实践启发
+- **"Bus-attached accelerator > PCIe-attached accelerator for data-in-storage workloads"**：当数据已经全部在存储内部时（全流程 offload），bus-attached accelerator 是自然选择——数据走内部总线而非 PCIe。**可推广模式**：任何 "compute follows data" 的架构中，加速器应该挂在数据所在的 bus 上而非独立的 PCIe endpoint。
+- **"GNN 的 compute 和 data prep 天然可流水线"**：GNN 每层只依赖上一层的输出 → mini-batch N 的数据准备可以与 mini-batch N-1 的计算完全重叠。这利用的是 GNN 训练的数据流特性——不是 BeaconGNN 特有的优化。
