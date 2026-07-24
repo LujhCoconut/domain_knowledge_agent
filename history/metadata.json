@@ -1,7 +1,7 @@
 {
   "$schema": "metadata.schema.json",
-  "generated_at": "2026-07-21",
-  "total_papers": 193,
+  "generated_at": "2026-07-24",
+  "total_papers": 194,
   "papers": [
     {
       "canonical_name": "PithTrain(arXiv'26)",
@@ -6683,6 +6683,70 @@
         "r3_relations": "",
         "r4_refute": "测试规模限于16 GPU+760M模型→未验证千卡/千亿参数。GPT-only未测试非Transformer MoE。仅Top-k=1 routing。previous-iteration proxy在超chaotic popularity下可能不准。Overall可信度:high——数学分析扎实(通信量不变性+latency-optimality证明)，消融完整"
       }
+    },
+    {
+      "canonical_name": "TreeSLS(SOSP'23)",
+      "title": "TreeSLS: A Whole-system Persistent Microkernel with Tree-structured State Checkpoint on NVM",
+      "authors": [
+        "Fangnuo Wu",
+        "Mingkai Dong",
+        "Gequan Mo",
+        "Haibo Chen"
+      ],
+      "conference": "SOSP",
+      "year": 2023,
+      "url": "https://ipads.se.sjtu.edu.cn/_media/publications/wu-sosp23.pdf",
+      "doi": "10.1145/3600006.3613160",
+      "dblp_key": "conf/sosp/Wu0M023",
+      "date_read": "2026-07-24",
+      "type": "论文-系统",
+      "tags": [
+        "SOSP",
+        "Best Paper",
+        "single-level store",
+        "microkernel",
+        "NVM",
+        "checkpoint/restore",
+        "whole-system persistence",
+        "capability tree",
+        "external synchrony"
+      ],
+      "techniques": [
+        "capability tree checkpointing",
+        "single-tier SLS on NVM",
+        "hybrid copy (speculative CoW + stop-and-copy)",
+        "dual-function active page list",
+        "delayed external visibility",
+        "versioned checkpoint consistency",
+        "failure-resilient checkpoint manager",
+        "DRAM/NVM hot page migration"
+      ],
+      "builds_on": [
+        "EROS(SOSP'99)",
+        "Aurora(SOSP'21)",
+        "KeyKOS",
+        "ChCore",
+        "seL4"
+      ],
+      "contrasts_with": [
+        "Aurora(SOSP'21)",
+        "EROS(SOSP'99)",
+        "WSP(ASPLOS'12)",
+        "Zhuque(ATC'23)"
+      ],
+      "industrial_applicability": "medium",
+      "applicability_why": "核心思想可复用——capability tree作为checkpoint结构、hybrid copy减少page fault开销、delayed external visibility实现透明外部同步在容器快照/微服务状态管理/边缘计算等场景可借鉴。但需要NVM硬件+定制microkernel，直接部署门槛极高。代码开源（~5K LOC kernel + ChCore），学术原型",
+      "prerequisites": "Intel Optane PM with eADR, ChCore microkernel, specific hardware (Xeon Gold 6330)",
+      "knowledge_locations": [
+        "architecture/memory-storage-hierarchy/",
+        "performance/system-tuning/"
+      ],
+      "review_rounds": {
+        "r1_tldr": "SOSP'23 Best Paper: 基于微内核capability tree + NVM单层存储的全系统持久化SLS，~100μs级checkpoint、1ms高频checkpoint、透明外部同步，Redis吞吐达WAL方案的2.2×",
+        "r2_insights": "1. Capability tree = whole-system state的天然表示，checkpoint简化为树遍历。2. NVM消除两层架构的write amplification和checkpoint频率天花板。3. Hybrid copy: hot page→DRAM stop-and-copy + cold page→NVM CoW + idle core并行复制，page fault开销-49%。4. Delayed external visibility: driver callback在checkpoint完成后才对外暴露操作，零应用修改。5. 版本号+最多1备份(NVM运行时页即备份)的极简一致性协议",
+        "r3_relations": "",
+        "r4_refute": "评价: 实验仅在单NUMA节点+eADR Optane上测试，未验证更大规模或不同NVM硬件。external synchrony仅实现local network server，未在真实网卡驱动完成。uniform persistence模型不考虑应用差异化需求。整体可信度: high——设计优雅(利用现有capability tree而非重新发明)、实验全面(覆盖微基准+Redis/Memcached/RocksDB/SQLite)、SOSP Best Paper背书"
+      }
     }
   ],
   "technique_index": {
@@ -7213,6 +7277,30 @@
     ],
     "previous-iteration popularity proxy": [
       "Symi(NSDI'26)"
+    ],
+    "capability tree checkpointing": [
+      "TreeSLS(SOSP'23)"
+    ],
+    "single-tier SLS on NVM": [
+      "TreeSLS(SOSP'23)"
+    ],
+    "hybrid copy (speculative CoW + stop-and-copy)": [
+      "TreeSLS(SOSP'23)"
+    ],
+    "dual-function active page list": [
+      "TreeSLS(SOSP'23)"
+    ],
+    "delayed external visibility": [
+      "TreeSLS(SOSP'23)"
+    ],
+    "versioned checkpoint consistency": [
+      "TreeSLS(SOSP'23)"
+    ],
+    "failure-resilient checkpoint manager": [
+      "TreeSLS(SOSP'23)"
+    ],
+    "DRAM/NVM hot page migration": [
+      "TreeSLS(SOSP'23)"
     ]
   },
   "tag_index": {
@@ -7750,6 +7838,7 @@
     ],
     "SOSP": [
       "LithOS(SOSP'25)",
+      "TreeSLS(SOSP'23)",
       "μFork(SOSP'25)"
     ],
     "FAST": [
@@ -8406,6 +8495,30 @@
     ],
     "collective communication": [
       "Symi(NSDI'26)"
+    ],
+    "Best Paper": [
+      "TreeSLS(SOSP'23)"
+    ],
+    "single-level store": [
+      "TreeSLS(SOSP'23)"
+    ],
+    "microkernel": [
+      "TreeSLS(SOSP'23)"
+    ],
+    "NVM": [
+      "TreeSLS(SOSP'23)"
+    ],
+    "checkpoint/restore": [
+      "TreeSLS(SOSP'23)"
+    ],
+    "whole-system persistence": [
+      "TreeSLS(SOSP'23)"
+    ],
+    "capability tree": [
+      "TreeSLS(SOSP'23)"
+    ],
+    "external synchrony": [
+      "TreeSLS(SOSP'23)"
     ]
   }
 }

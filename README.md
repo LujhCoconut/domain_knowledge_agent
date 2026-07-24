@@ -34,16 +34,16 @@ domain-knowledge/
 
 <!-- 以下区域由 /domain-knowledge 后置操作自动更新，请勿手动编辑本节 -->
 
-- **总计**: 193 篇
-- **会议分布**: OSDI 133 篇（'26），FAST 43 篇（'26），NSDI 5 篇（'26），ASPLOS 4 篇（'22–'26），arXiv 2 篇（'26），SOSP 2 篇（'25），ATC 1 篇（'25），HPCA 1 篇（'24），MICRO 1 篇（'24），SIGMOD 1 篇（'22）
+- **总计**: 194 篇
+- **会议分布**: OSDI 133 篇（'26），FAST 43 篇（'26），NSDI 5 篇（'26），ASPLOS 4 篇（'22–'26），SOSP 3 篇（'23–'25），arXiv 2 篇（'26），ATC 1 篇（'25），HPCA 1 篇（'24），MICRO 1 篇（'24），SIGMOD 1 篇（'22）
 - **领域分布**:
   - LLM 推理/GPU-AI/训练: 46 篇（Strata(OSDI'26)、ECHO(OSDI'26)、DirectKV(OSDI'26)…） — 见 `performance/gpu-ai-performance/KNOWLEDGE.md`
   - 存储/文件系统: 34 篇（ByteDance DataPipeline(OSDI'26)、DeLFS(OSDI'26)、Espresso(OSDI'26)…） — 见 `performance/storage-filesystem/KNOWLEDGE.md`
   - OS 安全/隐私/程序分析: 18 篇（USEC(OSDI'26)、Mohabi(OSDI'26)、Ichnaea(OSDI'26)…） — 见 `security/os-security/KNOWLEDGE.md`
   - CXL/内存系统/stall 回收: 16 篇（PACT(ASPLOS'26)、TMO(ASPLOS'22)、M5(ASPLOS'25)…） — 见 `performance/system-tuning/KNOWLEDGE.md`
   - 云基础设施/虚拟化: 12 篇（mwait-sched(OSDI'26)、Janus(OSDI'26)、Nested SEV(OSDI'26)…） — 见 `operations/cloud-infrastructure/KNOWLEDGE.md`
+  - 存储层次/体系结构: 11 篇（Soul/GCP(OSDI'26)、Duhu(OSDI'26)、Blowfish(OSDI'26)…） — 见 `architecture/memory-storage-hierarchy/KNOWLEDGE.md`
   - 网络系统: 10 篇（PolicyCache(NSDI'26)、SBB(OSDI'26)、Rakaia(OSDI'26)…） — 见 `network/os-networking/KNOWLEDGE.md`
-  - 存储层次/体系结构: 10 篇（Soul/GCP(OSDI'26)、Duhu(OSDI'26)、Blowfish(OSDI'26)…） — 见 `architecture/memory-storage-hierarchy/KNOWLEDGE.md`
   - 监控/可观测性: 9 篇（CoreSec(OSDI'26)、StriaTrace(OSDI'26)、gigiprofiler(OSDI'26)…） — 见 `operations/monitoring-observability/KNOWLEDGE.md`
   - 云原生/解耦式服务: 7 篇（RamRyder(OSDI'26)、DGC(OSDI'26)、OpenTela(OSDI'26)…） — 见 `architecture/cloud-native/KNOWLEDGE.md`
   - 分布式共识: 6 篇（Bodega(OSDI'26)、Pompē-SRO(OSDI'26)、Jetpack(OSDI'26)…） — 见 `algorithms/distributed-consensus/KNOWLEDGE.md`
@@ -57,7 +57,7 @@ domain-knowledge/
   - 缓存算法: 2 篇（Merlin(OSDI'26)、S4-FIFO/LAH(OSDI'26)） — 见 `algorithms/cache-algorithms/KNOWLEDGE.md`
   - 图处理: 1 篇（Pluto(OSDI'26)） — 见 `algorithms/graph-processing/KNOWLEDGE.md`
 - **🚀 新增功能**: JSON 结构化元数据 (`history/metadata.json`) + 技术倒排索引 + 四轮递进阅读 (R1-R4) + 工业可用性评分 + DBLP 自动元数据补全 + BibTeX 收集导出
-- **最后更新**: 2026-07-21
+- **最后更新**: 2026-07-24
 
 <!-- 自动更新区域结束 -->
 
